@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 const crypto = require('crypto');
 
 // Use the correct URI from .env
-const mongoUri = 'mongodb+srv://chaturvedipuneet200_db_user:4BN60fzjPQIbeWn4@gdc.tbnbiig.mongodb.net/ai-guardian?appName=gdc';
+const mongoUri = 'key';
 
 const clientSchema = new mongoose.Schema({
   name: String,
