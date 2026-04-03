@@ -1,6 +1,7 @@
 const axios = require('axios');
 
-const apiKey = 'YOUR_HUGGINGFACE_API_KEY';
+// Set via environment variable: HUGGINGFACE_API_KEY
+const apiKey = process.env.HUGGINGFACE_API_KEY || 'YOUR_HUGGINGFACE_API_KEY';
 const newEndpoint = 'https://router.huggingface.co/models/facebook/bart-large-mnli';
 
 async function testNewEndpoint() {

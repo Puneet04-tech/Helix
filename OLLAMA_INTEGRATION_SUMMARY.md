@@ -74,7 +74,7 @@ node test_ollama.js
 ```
 OLLAMA_URL=http://localhost:11434
 OLLAMA_MODEL=mistral
-HUGGINGFACE_API_KEY=YOUR_API_KEY
+HUGGINGFACE_API_KEY=your_huggingface_api_key_here
 ```
 
 **Models available:**
