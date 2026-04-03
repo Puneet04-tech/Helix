@@ -27,27 +27,6 @@ export default function Home() {
     </div>
   );
 }
-          <p className="text-slate-400 mb-8">
-            Sign in to your account to continue
-          </p>
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            {/* Email Field */}
-            <div>
-              <label className="block text-sm font-medium text-slate-300 mb-2">
-                Email Address
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="w-full bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg px-4 py-2.5 text-slate-200 placeholder-slate-500 focus:border-[#2979CC] focus:outline-none transition-colors"
-              />
-            </div>
-
-            {/* Password Field */}
-            <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">
                 Password
               </label>
