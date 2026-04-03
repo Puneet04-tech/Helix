@@ -131,10 +131,8 @@ export class AuthService {
       projectIds: user.projectIds,
     };
 
-    const expiresIn = process.env.JWT_EXPIRATION || '24h';
-
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn }),
+      access_token: this.jwtService.sign(payload, { expiresIn: '24h' }),
       user: {
         id: user._id,
         email: user.email,
@@ -144,7 +142,7 @@ export class AuthService {
         organizationId: user.organizationId,
         projectIds: user.projectIds,
       },
-      expiresIn,
+      expiresIn: '24h',
     };
   }
 
