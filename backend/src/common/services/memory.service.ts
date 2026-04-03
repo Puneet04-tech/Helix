@@ -1,0 +1,90 @@
+import { Injectable, Logger } from '@nestjs/common';
+
+interface ClientEvent {
+  type: string;
+  timestamp: number;
+  data: any;
+}
+
+@Injectable()
+export class MemoryService {
+  private readonly logger = new Logger(MemoryService.name);
+  private clientEvents: Map<string, ClientEvent[]> = new Map();
+  private readonly RETENTION_TIME = 5 * 60 * 1000; // 5 minutes window
+  private readonly PATTERN_THRESHOLD = 3; // 3+ events trigger pattern
+
+  addEvent(projectId: string, event: ClientEvent): void {
+    if (!this.clientEvents.has(projectId)) {
+      this.clientEvents.set(projectId, []);
+    }
+
+    const events = this.clientEvents.get(projectId);
+    if (events) {
+      events.push(event);
+
+      // Clean old events outside 5-minute window
+      const cutoffTime = Date.now() - this.RETENTION_TIME;
+      const filtered = events.filter(e => e.timestamp > cutoffTime);
+      this.clientEvents.set(projectId, filtered);
+
+      this.logger.debug(
+        `Event added for ${projectId}. Total events: ${filtered.length}`,
+      );
+    }
+  }
+
+  hasSuspiciousPattern(projectId: string, eventType: string): boolean {
+    const events = this.clientEvents.get(projectId) || [];
+    const now = Date.now();
+    const cutoffTime = now - this.RETENTION_TIME;
+
+    const suspiciousEvents = events.filter(
+      e => e.type === eventType && e.timestamp > cutoffTime,
+    );
+
+    const hasPattern = suspiciousEvents.length >= this.PATTERN_THRESHOLD;
+    if (hasPattern) {
+      this.logger.debug(
+        `Suspicious pattern detected for ${projectId}: ${suspiciousEvents.length} events of type ${eventType}`,
+      );
+    }
+
+    return hasPattern;
+  }
+
+  getClientEvents(projectId: string): ClientEvent[] {
+    const events = this.clientEvents.get(projectId) || [];
+    const cutoffTime = Date.now() - this.RETENTION_TIME;
+    return events.filter(e => e.timestamp > cutoffTime);
+  }
+
+  getAllEventsForAnalysis(projectId: string, limit: number = 15): string {
+    const events = this.getClientEvents(projectId);
+    const sortedEvents = events.sort((a, b) => b.timestamp - a.timestamp);
+    const recentEvents = sortedEvents.slice(0, limit);
+
+    return recentEvents
+      .map(
+        e =>
+          `[${new Date(e.timestamp).toISOString()}] Type: ${e.type}, Data: ${JSON.stringify(e.data)}`,
+      )
+      .join('\n');
+  }
+
+  clearProjectEvents(projectId: string): void {
+    this.clientEvents.delete(projectId);
+    this.logger.debug(`Cleared events for ${projectId}`);
+  }
+
+  getStats(): { projectsTracked: number; totalEvents: number } {
+    let totalEvents = 0;
+    this.clientEvents.forEach(events => {
+      totalEvents += events.length;
+    });
+
+    return {
+      projectsTracked: this.clientEvents.size,
+      totalEvents,
+    };
+  }
+}
