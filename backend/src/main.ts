@@ -22,7 +22,7 @@ async function bootstrap() {
     origin: [
       'http://localhost:3000',
       'http://localhost:3001',
-      process.env.FRONTEND_URL || 'https://ai-guardian.netlify.app',
+      process.env.FRONTEND_URL || 'https://helix.netlify.app',
     ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -31,7 +31,7 @@ async function bootstrap() {
 
   const port = process.env.PORT || 5000;
   await app.listen(port);
-  console.log(`🚀 AI Guardian Backend running on port ${port}`);
+  console.log(`🚀 Helix Backend running on port ${port}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
 }
 

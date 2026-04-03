@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
@@ -20,6 +20,22 @@ export class AuthService {
     organizationId: string,
     role: string = 'developer',
   ) {
+    // Validate email format
+    if (!this.isValidEmail(email)) {
+      throw new BadRequestException('Invalid email format');
+    }
+
+    // Validate password strength
+    if (password.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters long');
+    }
+
+    // Check if user already exists
+    const existingUser = await this.userModel.findOne({ email });
+    if (existingUser) {
+      throw new BadRequestException('User already exists');
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = new this.userModel({
@@ -30,6 +46,7 @@ export class AuthService {
       organizationId,
       role,
       projectIds: [],
+      isActive: true,
     });
 
     const savedUser = await user.save();
@@ -37,13 +54,55 @@ export class AuthService {
   }
 
   async login(email: string, password: string) {
+    if (!email || !password) {
+      throw new BadRequestException('Email and password are required');
+    }
+
     const user = await this.userModel.findOne({ email });
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('User account is inactive');
+    }
+
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
     return this.generateTokenResponse(user);
+  }
+
+  async validateUser(payload: any) {
+    const user = await this.userModel.findById(payload.userId);
+    if (!user || !user.isActive) {
+      throw new UnauthorizedException('User not found or inactive');
+    }
+    return user;
+  }
+
+  async getProfile(userId: string) {
+    const user = await this.userModel.findById(userId).select('-password');
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    return user;
+  }
+
+  async updateProfile(userId: string, updateData: any) {
+    const user = await this.userModel.findByIdAndUpdate(
+      userId,
+      { firstName: updateData.firstName, lastName: updateData.lastName, preferences: updateData.preferences },
+      { new: true },
+    ).select('-password');
+
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    return user;
   }
 
   async validateApiKey(apiKey: string) {
@@ -72,8 +131,10 @@ export class AuthService {
       projectIds: user.projectIds,
     };
 
+    const expiresIn = process.env.JWT_EXPIRATION || '24h';
+
     return {
-      access_token: this.jwtService.sign(payload),
+      access_token: this.jwtService.sign(payload, { expiresIn }),
       user: {
         id: user._id,
         email: user.email,
@@ -83,6 +144,12 @@ export class AuthService {
         organizationId: user.organizationId,
         projectIds: user.projectIds,
       },
+      expiresIn,
     };
+  }
+
+  private isValidEmail(email: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
   }
 }

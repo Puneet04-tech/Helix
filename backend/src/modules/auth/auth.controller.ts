@@ -1,11 +1,13 @@
-import { Controller, Post, Body, UnauthorizedException } from '@nestjs/common';
+import { Controller, Post, Get, Put, Body, UseGuards, Req, HttpCode } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
+  @HttpCode(201)
   async register(
     @Body()
     body: {
@@ -28,10 +30,26 @@ export class AuthController {
   }
 
   @Post('login')
+  @HttpCode(200)
   async login(
     @Body() body: { email: string; password: string },
   ) {
     return this.authService.login(body.email, body.password);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  async getProfile(@Req() req: any) {
+    return this.authService.getProfile(req.user.userId);
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(
+    @Req() req: any,
+    @Body() body: { firstName?: string; lastName?: string; preferences?: any },
+  ) {
+    return this.authService.updateProfile(req.user.userId, body);
   }
 
   @Post('validate-api-key')

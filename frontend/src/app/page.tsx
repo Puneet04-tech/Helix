@@ -1,53 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert } from 'lucide-react';
+import { useEffect } from 'react';
 
-export default function LoginPage() {
+export default function Home() {
+  const { isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    try {
-      // In production, connect to backend API
-      if (email && password) {
-        // Simulated login
-        localStorage.setItem('token', 'demo-token');
+  useEffect(() => {
+    if (!isLoading) {
+      if (isAuthenticated) {
         router.push('/dashboard');
       } else {
-        setError('Please enter email and password');
+        router.push('/login');
       }
-    } catch (err) {
-      setError('Login failed. Please try again.');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [isAuthenticated, isLoading, router]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0D1B3E] to-[#1A3A6E] flex items-center justify-center">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="flex justify-center mb-8">
-          <div className="flex items-center gap-3">
-            <ShieldAlert className="w-10 h-10 text-[#5BA4F5]" />
-            <h1 className="text-3xl font-bold text-[#5BA4F5]">AI Guardian</h1>
-          </div>
-        </div>
-
-        {/* Card */}
-        <div className="bg-[#112D5E] border border-[#1E3A5F] rounded-2xl p-8">
-          <h2 className="text-2xl font-bold text-slate-100 mb-2">
-            Welcome Back
-          </h2>
+    <div className="min-h-screen bg-[#0D1B3E] flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5BA4F5] mx-auto mb-4"></div>
+        <p className="text-slate-400">Loading...</p>
+      </div>
+    </div>
+  );
+}
           <p className="text-slate-400 mb-8">
             Sign in to your account to continue
           </p>

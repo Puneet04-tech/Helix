@@ -3,6 +3,7 @@
 import React from 'react';
 import Sidebar from '@/components/Sidebar';
 import Header from '@/components/Header';
+import { ProtectedRoute } from '@/components/ProtectedRoute';
 
 export default function DashboardLayout({
   children,
@@ -10,20 +11,22 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex h-screen bg-[#0D1B3E]">
-      {/* Sidebar Navigation */}
-      <Sidebar />
+    <ProtectedRoute>
+      <div className="flex h-screen bg-[#0D1B3E]">
+        {/* Sidebar Navigation */}
+        <Sidebar />
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Header */}
-        <Header />
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Header */}
+          <Header />
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto p-6 bg-[#0D1B3E]">
-          {children}
-        </main>
+          {/* Content */}
+          <main className="flex-1 overflow-auto p-6 bg-[#0D1B3E]">
+            {children}
+          </main>
+        </div>
       </div>
-    </div>
+    </ProtectedRoute>
   );
 }

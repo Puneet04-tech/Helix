@@ -1,9 +1,10 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import { AuthProvider } from '@/context/AuthContext';
 
 export const metadata: Metadata = {
-  title: 'AI Guardian - Crisis Intelligence Dashboard',
-  description: 'Autonomous crisis detection and response platform',
+  title: 'Helix - Autonomous Threat Detection & Response',
+  description: 'Autonomous threat detection and response platform',
 };
 
 export default function RootLayout({
@@ -13,7 +14,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body>{children}</body>
+      <body>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
+      </body>
     </html>
   );
 }

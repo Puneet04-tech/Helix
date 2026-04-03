@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import {
   ShieldAlert,
   Home,
@@ -15,6 +16,7 @@ import {
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const { logout, user } = useAuth();
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
@@ -31,8 +33,16 @@ export default function Sidebar() {
       {/* Logo */}
       <div className="flex items-center gap-2 mb-8 px-3 py-2.5">
         <ShieldAlert className="w-6 h-6 text-[#5BA4F5]" />
-        <span className="text-xl font-bold text-[#5BA4F5]">AI Guardian</span>
+        <span className="text-xl font-bold text-[#5BA4F5]">Helix</span>
       </div>
+
+      {/* User Info */}
+      {user && (
+        <div className="px-3 py-3 mb-6 bg-[#1A3A6E] rounded-lg border border-[#2979CC]">
+          <p className="text-xs text-slate-400">Logged in as</p>
+          <p className="text-sm font-medium text-slate-200">{user.email}</p>
+        </div>
+      )}
 
       {/* Navigation */}
       <nav className="flex-1 space-y-1">
@@ -58,7 +68,10 @@ export default function Sidebar() {
       </nav>
 
       {/* Logout */}
-      <button className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-red-900/20 transition-colors">
+      <button
+        onClick={logout}
+        className="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:text-red-400 hover:bg-red-900/20 transition-colors"
+      >
         <LogOut className="w-4.5 h-4.5" />
         Logout
       </button>
