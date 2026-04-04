@@ -2,10 +2,30 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { ShieldAlert } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+
+function ShieldAlert(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      {...props}
+    >
+      <path d="M12 22s8-4 8-10V6l-8-3-8 3v6c0 6 8 10 8 10z" />
+      <path d="M12 8v4" />
+      <path d="M12 16h.01" />
+    </svg>
+  );
+}
 
 export default function LoginPage() {
   const router = useRouter();
+  const { login: contextLogin, register: contextRegister } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -21,22 +41,8 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
-      }
-
-      // Save token to localStorage
-      localStorage.setItem('auth_token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
+      await contextLogin(email, password);
+      // Navigate after successful login
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
@@ -51,29 +57,15 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/auth/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email,
-          password,
-          firstName,
-          lastName,
-          organizationId,
-          role: 'developer',
-        }),
+      await contextRegister({
+        email,
+        password,
+        firstName,
+        lastName,
+        organizationId,
+        role: 'developer',
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Registration failed');
-      }
-
-      // Save token to localStorage
-      localStorage.setItem('auth_token', data.access_token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-
+      // Navigate after successful registration
       router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Registration failed');
@@ -167,6 +159,7 @@ export default function LoginPage() {
                 onChange={(e) => setEmail(e.target.value)}
                 className="w-full bg-[#0A1428] border border-[#1E3A5F] rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:border-[#2979CC] focus:outline-none"
                 placeholder="you@example.com"
+                autoComplete="email"
                 required
               />
             </div>
@@ -180,6 +173,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                autoComplete="current-password"
                 className="w-full bg-[#0A1428] border border-[#1E3A5F] rounded-lg px-4 py-2 text-white placeholder-slate-500 focus:border-[#2979CC] focus:outline-none"
                 placeholder="••••••••"
                 required
@@ -213,6 +207,16 @@ export default function LoginPage() {
                 {isRegister ? 'Login' : 'Register'}
               </button>
             </p>
+          </div>
+
+          {/* Back to Home Link */}
+          <div className="mt-4 text-center">
+            <a
+              href="/"
+              className="text-slate-400 hover:text-slate-200 text-sm transition-colors inline-flex items-center gap-1"
+            >
+              ← Back to Home
+            </a>
           </div>
         </div>
       </div>

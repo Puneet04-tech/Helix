@@ -33,20 +33,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Check if user is already logged in on mount
   useEffect(() => {
-    const storedToken = localStorage.getItem('auth_token');
-    const storedUser = localStorage.getItem('user');
-
-    if (storedToken && storedUser) {
+    const restoreAuth = () => {
       try {
-        setToken(storedToken);
-        setUser(JSON.parse(storedUser));
+        const storedToken = localStorage.getItem('auth_token');
+        const storedUser = localStorage.getItem('user');
+
+        if (storedToken && storedUser) {
+          setToken(storedToken);
+          setUser(JSON.parse(storedUser));
+        }
       } catch (error) {
         console.error('Failed to restore auth:', error);
         localStorage.removeItem('auth_token');
         localStorage.removeItem('user');
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+
+    restoreAuth();
   }, []);
 
   const login = async (email: string, password: string) => {

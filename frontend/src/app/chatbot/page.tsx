@@ -1,24 +1,32 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { Send, MessageSquare } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ChatbotPage() {
+  const { user, token } = useAuth();
   const [messages, setMessages] = useState<any[]>([
     {
       id: 1,
-      text: "Hello! I'm AI Guardian's intelligent assistant. Ask me anything about your incidents, services, or system status.",
+      text: "Hello! I'm Helix's intelligent assistant. Ask me anything about your incidents, services, or system status.",
       sender: 'ai',
       timestamp: new Date(),
     },
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Auto-scroll to bottom on new messages
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim()) return;
+    if (!input.trim() || !user || !token) return;
 
     // Add user message
     const userMessage = {
@@ -29,21 +37,58 @@ export default function ChatbotPage() {
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const userInput = input;
     setInput('');
     setLoading(true);
 
-    // Simulate AI response
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      const projectId = user.projectIds?.[0];
+      
+      // Call backend chatbot endpoint
+      const response = await fetch(
+        'http://localhost:5000/chatbot/query',
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: userInput,
+            projectId,
+          }),
+        }
+      );
 
-    const aiMessage = {
-      id: messages.length + 2,
-      text: 'Based on your incidents, I can see that your service has been operating smoothly with 99.97% uptime. Would you like more details about recent events?',
-      sender: 'ai',
-      timestamp: new Date(),
-    };
+      if (!response.ok) {
+        throw new Error('Failed to get response from AI');
+      }
 
-    setMessages(prev => [...prev, aiMessage]);
-    setLoading(false);
+      const data = await response.json();
+
+      const aiMessage = {
+        id: messages.length + 2,
+        text: data.response || 'I encountered an error processing your request.',
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, aiMessage]);
+    } catch (error: any) {
+      console.error('Chatbot error:', error);
+
+      // Fallback response if backend is not available
+      const fallbackMessage = {
+        id: messages.length + 2,
+        text: 'Sorry, I could not connect to the backend. Please make sure the server is running. In the meantime, I can tell you that the chatbot will provide insights about your incidents based on your question.',
+        sender: 'ai',
+        timestamp: new Date(),
+      };
+
+      setMessages(prev => [...prev, fallbackMessage]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -51,10 +96,10 @@ export default function ChatbotPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-100">
-            AI Guardian Assistant
+            Helix AI Assistant
           </h1>
           <p className="text-slate-400 mt-1">
-            Ask natural language questions about your incidents
+            Ask natural language questions about your incidents and system status
           </p>
         </div>
 
@@ -88,6 +133,7 @@ export default function ChatbotPage() {
                 </div>
               </div>
             )}
+            <div ref={messagesEndRef} />
           </div>
 
           {/* Input Bar */}
@@ -99,13 +145,13 @@ export default function ChatbotPage() {
               type="text"
               value={input}
               onChange={e => setInput(e.target.value)}
-              disabled={loading}
+              disabled={loading || !user || !token}
               placeholder="What would you like to know?"
               className="flex-1 bg-[#0D1B3E] border border-[#1E3A5F] rounded-xl px-4 py-2 text-slate-200 text-sm placeholder-slate-500 focus:border-[#2979CC] focus:outline-none disabled:opacity-50"
             />
             <button
               type="submit"
-              disabled={loading || !input.trim()}
+              disabled={loading || !input.trim() || !user || !token}
               className="bg-[#2979CC] hover:bg-[#1A56A0] text-white rounded-xl p-2 disabled:opacity-50 transition-colors"
             >
               <Send className="w-5 h-5" />

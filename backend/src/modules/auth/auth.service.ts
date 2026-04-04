@@ -38,6 +38,9 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create a default projectId for the user
+    const defaultProjectId = organizationId || `project_${Date.now()}`;
+
     const user = new this.userModel({
       email,
       password: hashedPassword,
@@ -45,7 +48,7 @@ export class AuthService {
       lastName,
       organizationId,
       role,
-      projectIds: [],
+      projectIds: [defaultProjectId], // Assign default project
       isActive: true,
     });
 

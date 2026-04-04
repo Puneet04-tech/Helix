@@ -29,6 +29,9 @@ import { HuggingFaceService } from './common/services/huggingface.service';
 import { OllamaService } from './common/services/ollama.service';
 import { PlaywrightService } from './common/services/playwright.service';
 
+// Gateways
+import { EventsGateway } from './common/gateways/events.gateway';
+
 @Module({
   imports: [
     MongooseModule.forRoot(
@@ -58,6 +61,6 @@ import { PlaywrightService } from './common/services/playwright.service';
     ComplianceModule,
   ],
   controllers: [AppController],
-  providers: [AppService, MemoryService, OllamaService, HuggingFaceService, PlaywrightService],
+  providers: [AppService, MemoryService, OllamaService, HuggingFaceService, PlaywrightService, EventsGateway],
 })
 export class AppModule {}

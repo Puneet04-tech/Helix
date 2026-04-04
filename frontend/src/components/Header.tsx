@@ -2,8 +2,14 @@
 
 import React from 'react';
 import { Bell, User, Search } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 export default function Header() {
+  const { user } = useAuth();
+  
+  const displayName = user ? `${user.firstName} ${user.lastName}`.trim() : 'User';
+  const userRole = user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User';
+
   return (
     <header className="bg-[#112D5E] border-b border-[#1E3A5F] px-6 py-4 flex items-center justify-between">
       {/* Search Bar */}
@@ -31,7 +37,10 @@ export default function Header() {
           <div className="w-8 h-8 bg-[#2979CC] rounded-full flex items-center justify-center">
             <User className="w-4 h-4 text-white" />
           </div>
-          <span className="text-sm font-medium text-slate-200">Admin</span>
+          <div className="text-left">
+            <div className="text-sm font-medium text-slate-200">{displayName}</div>
+            <div className="text-xs text-slate-400">{userRole}</div>
+          </div>
         </button>
       </div>
     </header>
