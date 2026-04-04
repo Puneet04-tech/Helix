@@ -35,7 +35,7 @@ export class IncidentsService {
       type: incidentData.type,
       service: incidentData.service,
       title: incidentData.title || `${incidentData.type.replace(/_/g, ' ').toUpperCase()} detected on ${incidentData.service}`,
-      description: incidentData.description || incidentData.analysis?.reasoning || 'Incident detected by AI Guardian',
+      description: incidentData.description || incidentData.analysis?.reasoning || 'Incident detected by Helix',
       status: 'detecting',
       eventIds: recentEvents.map(e => e._id.toString()),
       detectedAt: new Date(),

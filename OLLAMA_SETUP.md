@@ -69,7 +69,7 @@ Change `OLLAMA_MODEL` if you prefer a different model:
 
 ## How It Works
 
-1. **Tier 0 (First)**: AI Guardian tries Ollama locally
+1. **Tier 0 (First)**: Helix tries Ollama locally
    - ✅ Instant response (no network latency)
    - ✅ Free (no API costs)
    - ✅ Completely offline
@@ -128,7 +128,7 @@ curl http://localhost:5000/system-status
 ## Production Notes
 
 - Ollama runs locally, so no cloud dependencies
-- AI Guardian automatically detects if Ollama is available
+- Helix automatically detects if Ollama is available
 - If unavailable, seamlessly falls back to other methods
 - Zero configuration needed after initial setup
 

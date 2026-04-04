@@ -1,6 +1,6 @@
 # Quick Setup Guide
 
-This guide will get AI Guardian running locally in 15 minutes.
+This guide will get Helix running locally in 15 minutes.
 
 ## 1. Install Dependencies
 
@@ -55,7 +55,7 @@ npm run dev
 
 You should see:
 ```
-🚀 AI Guardian Backend running on port 5000
+🚀 Helix Backend running on port 5000
 ```
 
 ## 5. Run Frontend (new terminal)

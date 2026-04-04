@@ -53,11 +53,11 @@ export class AIGuardian {
     });
 
     this.isInitialized = true;
-    console.log('[AI Guardian] SDK initialized');
+    console.log('[Helix] SDK initialized');
   }
 
   /**
-   * Send a single event to AI Guardian backend
+   * Send a single event to Helix backend
    */
   public async sendEvent(event: EventData): Promise<void> {
     if (!this.config.enabled || !this.isInitialized) {
@@ -79,12 +79,12 @@ export class AIGuardian {
       });
     } catch (error) {
       // Silently fail - don't interrupt application
-      console.debug('[AI Guardian] Event send failed (non-critical)', error);
+      console.debug('[Helix] Event send failed (non-critical)', error);
     }
   }
 
   /**
-   * Intercept errors and send to AI Guardian
+   * Intercept errors and send to Helix
    */
   public interceptErrors(): void {
     if (typeof window !== 'undefined') {

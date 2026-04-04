@@ -143,7 +143,7 @@ Return the response as plain text with clear section headers.`;
         doc.pipe(stream);
 
         // Header
-        doc.fontSize(20).font('Helvetica-Bold').text('AI Guardian Incident Postmortem', { align: 'center' });
+        doc.fontSize(20).font('Helvetica-Bold').text('Helix Incident Postmortem', { align: 'center' });
         doc.moveDown(0.5);
         doc.fontSize(12).font('Helvetica').text(`Generated: ${new Date().toISOString()}`, { align: 'center' });
         doc.moveDown();
@@ -187,7 +187,7 @@ Return the response as plain text with clear section headers.`;
 
         // Compliance Statement
         doc.fontSize(10).font('Helvetica-Italic').text(
-          'All incidents in this report were logged automatically by AI Guardian without human modification. ' +
+          'All incidents in this report were logged automatically by Helix without human modification. ' +
           'This report is suitable for regulatory compliance review.',
           { align: 'center' },
         );

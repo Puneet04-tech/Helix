@@ -1,4 +1,4 @@
-# AI Guardian SDK
+# Helix SDK
 
 Autonomous Crisis Detection and Response for your application.
 
@@ -58,7 +58,7 @@ guardian.track('warning', 'User action completed', {
 
 ```typescript
 const guardian = new AIGuardian({
-  apiKey: string;              // Required: Your API key from AI Guardian dashboard
+  apiKey: string;              // Required: Your API key from Helix dashboard
   backendUrl?: string;          // Optional: Backend URL (defaults to Render deployment)
   enabled?: boolean;            // Optional: Enable/disable SDK (default: true)
   sampleRate?: number;          // Optional: Event sample rate 0-1 (default: 1.0)
@@ -133,7 +133,7 @@ const status = guardian.getStatus();
 ## How It Works
 
 1. **Event Collection**: SDK silently collects errors and events from your app
-2. **Transmission**: Events are sent to AI Guardian backend (fire-and-forget, non-blocking)
+2. **Transmission**: Events are sent to Helix backend (fire-and-forget, non-blocking)
 3. **Detection**: Backend analyzes event patterns in real-time
 4. **Response**: When suspicious patterns detected, autonomous agents take action
 5. **Notification**: Your team is notified with role-based emails

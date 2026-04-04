@@ -144,7 +144,7 @@ npm install ai-guardian-sdk
 ### Test Backend Health:
 ```bash
 curl https://ai-guardian-backend-xxxx.onrender.com/health
-# Should return: { status: "ok", service: "AI Guardian Backend" }
+# Should return: { status: "ok", service: "Helix Backend" }
 ```
 
 ### Test Frontend:

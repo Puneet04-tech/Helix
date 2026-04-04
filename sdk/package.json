@@ -1,7 +1,7 @@
 {
   "name": "ai-guardian-sdk",
   "version": "1.0.0",
-  "description": "AI Guardian SDK - Autonomous Crisis Detection for your app",
+  "description": "Helix SDK - Autonomous Crisis Detection for your app",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {

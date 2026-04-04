@@ -83,7 +83,7 @@ A: Make sure Ollama is running: `ollama serve`
 
 ---
 
-## Next: Test with AI Guardian
+## Next: Test with Helix
 
 Once Ollama is running:
 ```bash

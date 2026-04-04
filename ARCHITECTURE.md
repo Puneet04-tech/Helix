@@ -1,8 +1,8 @@
-# AI Guardian - Architecture Deep Dive
+# Helix - Architecture Deep Dive
 
 ## System Architecture Overview
 
-AI Guardian follows a **multi-tenant, event-driven, serverless architecture** optimized for zero-polling and autonomous response.
+Helix follows a **multi-tenant, event-driven, serverless architecture** optimized for zero-polling and autonomous response.
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -14,7 +14,7 @@ AI Guardian follows a **multi-tenant, event-driven, serverless architecture** op
                      │ npm install ai-guardian-sdk
                      ▼
         ┌──────────────────────────────┐
-        │   AI Guardian SDK            │ ← 100 lines of code
+        │   Helix SDK            │ ← 100 lines of code
         │ • HTTP middleware            │   Non-blocking
         │ • Error interception         │   < 10ms latency
         │ • Custom event tracking      │

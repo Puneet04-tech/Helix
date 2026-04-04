@@ -118,7 +118,7 @@ Response shows:
 2. **Install** → Run installer
 3. **Pull model** → `ollama pull mistral`
 4. **Test** → `node test_ollama.js`
-5. **Done!** → AI Guardian is ready
+5. **Done!** → Helix is ready
 
 ## Support
 
@@ -128,5 +128,5 @@ Response shows:
 
 ---
 
-**Result**: Your AI Guardian now runs threat analysis for FREE with zero dependencies.
+**Result**: Your Helix now runs threat analysis for FREE with zero dependencies.
 No more HuggingFace token issues. No more API costs. Just local, reliable intelligence.
