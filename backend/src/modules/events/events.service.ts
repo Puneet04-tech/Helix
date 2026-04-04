@@ -43,6 +43,50 @@ export class EventsService {
       this.logger.error(`Failed to save event: ${err.message}`);
     });
 
+    // ===== HOTEL MANAGEMENT INTEGRATION =====
+    // Direct incident creation for hotel complaints (bypass pattern detection)
+    if (eventData.service === 'hotel-management' || eventData.service === 'complaint-management') {
+      this.logger.log(`Hotel complaint detected: ${eventData.message}`);
+      
+      try {
+        const incident = await this.incidentsService.createIncident(
+          projectId,
+          {
+            type: 'guest_complaint',
+            severity: eventData.metadata?.severity || 'warning',
+            service: 'hotel-management',
+            title: eventData.message || 'Guest Complaint',
+            description: `Complaint ID: ${eventData.metadata?.complaintId || 'unknown'} - ${eventData.message}`,
+            analysis: {
+              category: 'operational_issue',
+              confidence: 1.0,
+              isAnomaly: true,
+            },
+            events: [eventData],
+          },
+        );
+
+        return {
+          received: true,
+          analyzed: true,
+          anomalyDetected: true,
+          incidentId: incident.incidentId,
+          category: 'operational_issue',
+          source: 'hotel-integration',
+        };
+      } catch (error) {
+        const err = error as Error;
+        this.logger.error(`Failed to create incident from complaint: ${err.message}`);
+        return {
+          received: true,
+          analyzed: true,
+          incidentCreated: false,
+          error: err.message,
+        };
+      }
+    }
+
+    // ===== STANDARD THREAT DETECTION PIPELINE =====
     // Step 3: Add to in-memory Map for pattern detection
     this.memoryService.addEvent(projectId, {
       type: eventData.type || 'info',

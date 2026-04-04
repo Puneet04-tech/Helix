@@ -4,12 +4,14 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import * as bcrypt from 'bcryptjs';
 import { User, UserDocument } from '../../common/schemas/user.schema';
+import { ClientsService } from '../clients/clients.service';
 
 @Injectable()
 export class AuthService {
   constructor(
     @InjectModel(User.name) private userModel: Model<UserDocument>,
     private jwtService: JwtService,
+    private clientsService: ClientsService,
   ) {}
 
   async register(
@@ -106,6 +108,17 @@ export class AuthService {
       throw new BadRequestException('User not found');
     }
     return user;
+  }
+
+  async generateApiKey(userId: string, organizationId: string) {
+    // Generate API key for the user's organization
+    const clientName = `api-key-${userId}`;
+    const result = await this.clientsService.createClient(
+      organizationId,
+      clientName,
+      ['complaint-management', 'incident-tracking', 'status-monitoring'],
+    );
+    return result;
   }
 
   async validateApiKey(apiKey: string) {

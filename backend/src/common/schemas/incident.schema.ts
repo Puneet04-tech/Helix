@@ -27,6 +27,8 @@ export class Incident {
       'rate_limit_exceeded',
       'resource_exhaustion',
       'reliability',
+      'guest_complaint',
+      'operational_issue',
     ],
   })
   type: string;

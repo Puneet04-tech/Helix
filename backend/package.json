@@ -27,6 +27,7 @@
     "@nestjs/mongoose": "^10.0.1",
     "@nestjs/passport": "^10.0.2",
     "@nestjs/platform-express": "^10.2.10",
+    "@nestjs/platform-socket.io": "^10.4.22",
     "@nestjs/schedule": "^4.0.1",
     "@nestjs/websockets": "^10.2.10",
     "add": "^2.0.6",

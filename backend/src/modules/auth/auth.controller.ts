@@ -52,6 +52,12 @@ export class AuthController {
     return this.authService.updateProfile(req.user.userId, body);
   }
 
+  @Post('api-key/generate')
+  @UseGuards(JwtAuthGuard)
+  async generateApiKey(@Req() req: any) {
+    return this.authService.generateApiKey(req.user.userId, req.user.organizationId);
+  }
+
   @Post('validate-api-key')
   async validateApiKey(@Body() body: { apiKey: string }) {
     return this.authService.validateApiKey(body.apiKey);

@@ -34,8 +34,8 @@ export class IncidentsService {
       severity: incidentData.severity || 'warning',
       type: incidentData.type,
       service: incidentData.service,
-      title: `${incidentData.type.replace(/_/g, ' ').toUpperCase()} detected on ${incidentData.service}`,
-      description: incidentData.analysis?.reasoning || 'Incident detected by AI Guardian',
+      title: incidentData.title || `${incidentData.type.replace(/_/g, ' ').toUpperCase()} detected on ${incidentData.service}`,
+      description: incidentData.description || incidentData.analysis?.reasoning || 'Incident detected by AI Guardian',
       status: 'detecting',
       eventIds: recentEvents.map(e => e._id.toString()),
       detectedAt: new Date(),
@@ -126,6 +126,15 @@ export class IncidentsService {
 
   async getIncidentDetail(incidentId: string) {
     return this.incidentModel.findOne({ incidentId }).lean();
+  }
+
+  async getAllIncidents(limit: number = 100) {
+    // Public method for demo - returns all incidents across all projects
+    return this.incidentModel
+      .find()
+      .sort({ detectedAt: -1 })
+      .limit(limit)
+      .lean();
   }
 
   async checkForCorrelation(projectId: string): Promise<void> {

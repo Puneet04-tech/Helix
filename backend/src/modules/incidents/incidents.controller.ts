@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Param, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Put, Post, Param, Body, UseGuards, Req, Headers } from '@nestjs/common';
 import { IncidentsService } from './incidents.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -38,11 +38,10 @@ export class IncidentsController {
     return this.incidentsService.getIncidentsByProjectId(projectId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get()
   async getAllIncidents() {
-    // Return empty array when no projectId specified
-    return [];
+    // Public endpoint for demo - returns all incidents regardless of project
+    return this.incidentsService.getAllIncidents();
   }
 
   @UseGuards(JwtAuthGuard)
@@ -71,6 +70,28 @@ export class IncidentsController {
   ) {
     return this.incidentsService.updateIncidentStatus(incidentId, body.status, {
       notes: body.notes,
+    });
+  }
+
+  @Post('create')
+  async createIncidentDirect(
+    @Body() body: {
+      projectId?: string;
+      title: string;
+      description: string;
+      severity: string;
+      type: string;
+      service: string;
+    },
+    @Headers('x-api-key') apiKey?: string,
+  ) {
+    const projectId = body.projectId || 'hotel-org-001';
+    return this.incidentsService.createIncident(projectId, {
+      title: body.title,
+      description: body.description,
+      severity: body.severity,
+      type: body.type,
+      service: body.service,
     });
   }
 }

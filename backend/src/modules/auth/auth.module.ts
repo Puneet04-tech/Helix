@@ -6,6 +6,7 @@ import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtStrategy } from './jwt.strategy';
 import { User, UserSchema } from '../../common/schemas/user.schema';
+import { ClientsModule } from '../clients/clients.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { User, UserSchema } from '../../common/schemas/user.schema';
       secret: process.env.JWT_SECRET || 'your-secret-key',
       signOptions: { expiresIn: '24h' },
     }),
+    ClientsModule,
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy],
