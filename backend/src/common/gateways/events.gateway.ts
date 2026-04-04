@@ -7,7 +7,6 @@ import {
   OnGatewayDisconnect,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { IncidentsService } from '@/modules/incidents/incidents.service';
 import { Logger } from '@nestjs/common';
 
 @WebSocketGateway({
@@ -23,9 +22,9 @@ export class EventsGateway
 {
   @WebSocketServer() server: Server;
   private logger: Logger = new Logger('EventsGateway');
-  private liveSimulationInterval: NodeJS.Timer;
+  private liveSimulationInterval: NodeJS.Timeout | null = null;
 
-  constructor(private incidentsService: IncidentsService) {}
+  constructor() {}
 
   afterInit(server: Server) {
     this.logger.log('WebSocket Gateway initialized');
