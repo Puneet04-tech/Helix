@@ -1,13 +1,23 @@
 # Helix SDK
 
-Autonomous Crisis Detection and Response for your application.
+✨ **Autonomous Crisis Detection & Incident Management with 7 AI-powered features**
+
+Integrate Helix into your application to enable predictive crisis detection, NLP incident queries, automated postmortems, compliance tracking, and more.
+
+## Features
+
+- 🔮 **Predictive Crisis Detection** - Detect patterns 28 days before incidents
+- 🤖 **NLP Incident Queries** - Ask questions about incidents in natural language
+- 📧 **Role-Based Alerts** - Different notifications for developers, managers, owners
+- 📋 **Automatic Postmortems** - LLM-generated 5-section PDF reports
+- 🌐 **Public Status Page** - Guest-facing status updates
+- 🔗 **Multi-System Correlation** - Find shared root causes across services
+- 📊 **Compliance Logging** - Audit-ready incident reports
 
 ## Installation
 
 ```bash
-npm install ai-guardian-sdk
-# or
-yarn add ai-guardian-sdk
+npm install helix-sdk
 ```
 
 ## Quick Start
@@ -15,168 +25,178 @@ yarn add ai-guardian-sdk
 ### For Node.js / Express / NestJS
 
 ```javascript
-import AIGuardian from 'ai-guardian-sdk';
-import express from 'express';
+import Helix from 'helix-sdk';
 
-const app = express();
-const guardian = new AIGuardian({
-  apiKey: 'your-api-key-from-dashboard',
-  backendUrl: 'https://ai-guardian-backend.render.com', // optional
+const helix = new Helix({
+  apiKey: 'your-api-key',
+  backendUrl: 'https://helix-backend.render.com', // optional
 });
 
-// Add middleware to track HTTP requests
-app.use(guardian.createMiddleware());
+// Track HTTP errors automatically
+app.use(helix.createMiddleware());
 
-// Optionally intercept client-side errors (if using with frontend)
-guardian.interceptErrors();
-
-app.listen(3000);
+// Intercept unhandled errors
+helix.interceptErrors();
 ```
 
 ### For React / Frontend
 
 ```javascript
-import AIGuardian from 'ai-guardian-sdk';
+import Helix from 'helix-sdk';
 
-const guardian = new AIGuardian({
-  apiKey: 'your-api-key-from-dashboard',
-});
-
-// Automatically capture unhandled errors
-guardian.interceptErrors();
-
-// Manual event tracking
-guardian.track('warning', 'User action completed', {
-  userId: user.id,
-  action: 'profile_update',
-});
+const helix = new Helix({ apiKey: 'your-api-key' });
+helix.interceptErrors();
 ```
 
-## API
+## API Reference
 
 ### Constructor
 
 ```typescript
-const guardian = new AIGuardian({
-  apiKey: string;              // Required: Your API key from Helix dashboard
-  backendUrl?: string;          // Optional: Backend URL (defaults to Render deployment)
-  enabled?: boolean;            // Optional: Enable/disable SDK (default: true)
-  sampleRate?: number;          // Optional: Event sample rate 0-1 (default: 1.0)
+const helix = new Helix({
+  apiKey: string;              // Required: Your Helix API key
+  backendUrl?: string;          // Optional: Backend URL (default: Render deployment)
+  enabled?: boolean;            // Optional: Enable/disable (default: true)
+  sampleRate?: number;          // Optional: Event sampling 0-1 (default: 1.0)
 });
 ```
 
-### Methods
+### Core Methods
 
-#### `sendEvent(event)`
-
-Send a custom event:
+#### Error Tracking
 
 ```typescript
-guardian.sendEvent({
-  type: 'warning|error|info|security_threat|performance_degradation|...',
-  service: 'my-service',
-  message: 'Something happened',
-  metadata: {
-    userId: 'user123',
-    endpoint: '/api/users',
-    // ... any additional data
-  },
+helix.interceptErrors();        // Auto-capture unhandled JS errors
+helix.createMiddleware();       // Track HTTP requests (Express/NestJS)
+helix.track(type, message, metadata); // Manual event tracking
+```
+
+#### Feature-Specific Methods
+
+```typescript
+// Feature 1: Predictive Crisis Detection
+helix.trackCrisisPrediction('database', 'error_spike_pattern', 'high');
+
+// Feature 2: NLP Events
+helix.trackNLPEvent('What failed this week?', 15);
+
+// Feature 3: Role-Based Alerts
+helix.trackAlertDispatch('manager', 'INC-123', 'critical');
+
+// Feature 4: Postmortem Tracking
+helix.trackPostmortemGenerated('INC-123', 5);
+
+// Feature 5: Status Updates
+helix.trackStatusUpdate('client-1', [
+  { name: 'API', status: 'operational' },
+  { name: 'DB', status: 'degraded' }
+]);
+
+// Feature 6-7: Correlation
+helix.trackCorrelation(['INC-1', 'INC-2', 'INC-3'], 'Database crash', 0.95);
+
+// Feature 8: Compliance Events
+helix.trackComplianceEvent('incident_logged', 'INC-123', 'SOC2');
+```
+
+#### Status
+
+```typescript
+const status = helix.getStatus();
+// { initialized: true, enabled: true, features: [...] }
+```
+
+## Examples
+
+### Express Middleware Integration
+
+```javascript
+import express from 'express';
+import Helix from 'helix-sdk';
+
+const app = express();
+const helix = new Helix({ apiKey: process.env.HELIX_API_KEY });
+
+app.use(helix.createMiddleware());
+app.use(express.json());
+
+app.get('/api/users', (req, res) => {
+  res.json({ users: [] });
 });
+
+app.listen(3000);
 ```
 
-#### `track(type, message, metadata)`
+### React Error Boundary
 
-Convenience method for tracking:
+```jsx
+import { useEffect } from 'react';
+import Helix from 'helix-sdk';
 
-```typescript
-guardian.track('warning', 'Payment processing slow', {
-  userId: 'user123',
-  processingTime: 2500,
-});
+const helix = new Helix({ apiKey: process.env.REACT_APP_HELIX_KEY });
+
+export function App() {
+  useEffect(() => {
+    helix.interceptErrors();
+  }, []);
+
+  return <div>Your App</div>;
+}
 ```
 
-#### `interceptErrors()`
+### Manual Crisis Tracking
 
-Automatically capture JavaScript errors and unhandled promise rejections:
+```javascript
+// When you detect a pattern
+helix.trackCrisisPrediction('payment-service', 'timeout_pattern', 'medium');
 
-```typescript
-guardian.interceptErrors();
+// When generating compliance reports
+helix.trackComplianceEvent('report_generated', 'REP-001', 'ISO27001');
+
+// When incidents correlate
+helix.trackCorrelation(['INC-10', 'INC-11', 'INC-12'], 'DNS resolution failure', 0.92);
 ```
-
-#### `createMiddleware()`
-
-Express/NestJS middleware that automatically tracks HTTP requests:
-
-```typescript
-app.use(guardian.createMiddleware());
-```
-
-#### `getStatus()`
-
-Get SDK status:
-
-```typescript
-const status = guardian.getStatus();
-// { initialized: true, enabled: true, apiKey: 'ag_xxxxxxxxx...' }
-```
-
-## Event Types
-
-- `error` - Application errors
-- `warning` - Warnings and issues
-- `info` - Informational events
-- `security_threat` - Security incidents
-- `performance_degradation` - Performance issues
-- `unauthorized_access` - Auth failures
-- `rate_limit_exceeded` - Rate limits hit
-
-## How It Works
-
-1. **Event Collection**: SDK silently collects errors and events from your app
-2. **Transmission**: Events are sent to Helix backend (fire-and-forget, non-blocking)
-3. **Detection**: Backend analyzes event patterns in real-time
-4. **Response**: When suspicious patterns detected, autonomous agents take action
-5. **Notification**: Your team is notified with role-based emails
 
 ## Configuration
 
-### Sample Rate
-
-Reduce event volume by sampling:
+### Sampling (Reduce Volume)
 
 ```typescript
-const guardian = new AIGuardian({
+const helix = new Helix({
   apiKey: 'your-key',
-  sampleRate: 0.1, // Send only 10% of events
+  sampleRate: 0.1, // Send 10% of events
 });
 ```
 
-### Disable in Development
+### Environment-Based Config
 
 ```typescript
-const guardian = new AIGuardian({
-  apiKey: 'your-key',
+const helix = new Helix({
+  apiKey: process.env.HELIX_API_KEY,
   enabled: process.env.NODE_ENV === 'production',
 });
 ```
 
-## Security
-
-- API keys are transmitted over HTTPS only
-- Events are encrypted in transit
-- No sensitive data (passwords, tokens) should be included in events
-- SDK is non-intrusive and doesn't interfere with app execution
-
 ## Performance
 
-- **Latency**: < 10ms impact on application (fire-and-forget)
-- **Bandwidth**: Minimal - event compression and sampling reduce volume
+- **Latency**: < 10ms (fire-and-forget async)
 - **Memory**: < 5MB footprint
+- **Bandwidth**: Compressed events, minimal overhead
+
+## Security
+
+- Events encrypted in transit (HTTPS)
+- API keys validated server-side
+- Never log sensitive data (passwords, tokens, PII)
+- Non-blocking, doesn't interfere with app
 
 ## License
 
 MIT
 
 ## Support
+
+📧 support@helix.dev  
+🐛 [Report Issues](https://github.com/yourusername/helix-sdk/issues)
 
 [https://ai-guardian.dev/docs](https://ai-guardian.dev/docs)

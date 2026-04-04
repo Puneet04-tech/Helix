@@ -1,27 +1,38 @@
 {
-  "name": "ai-guardian-sdk",
+  "name": "helix-sdk",
   "version": "1.0.0",
-  "description": "Helix SDK - Autonomous Crisis Detection for your app",
+  "description": "Helix SDK - Autonomous Crisis Detection & Incident Management with AI-powered analytics",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "publish": "npm publish"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/ai-guardian-sdk.git"
+    "url": "https://github.com/yourusername/helix-sdk.git"
   },
   "keywords": [
+    "helix",
     "monitoring",
-    "crisis",
-    "detection",
+    "incident-management",
+    "crisis-detection",
     "ai",
-    "guardian",
-    "automation"
+    "predictive-analytics",
+    "compliance",
+    "autonomous",
+    "threat-detection",
+    "postmortem",
+    "nlp",
+    "correlation"
   ],
-  "author": "Your Name",
+  "author": "Helix Team",
   "license": "MIT",
+  "homepage": "https://github.com/yourusername/helix-sdk#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/helix-sdk/issues"
+  },
   "dependencies": {
     "axios": "^1.6.2"
   },
@@ -32,5 +43,8 @@
   "files": ["dist"],
   "engines": {
     "node": ">=14.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
