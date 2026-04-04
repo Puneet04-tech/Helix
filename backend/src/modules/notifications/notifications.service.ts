@@ -237,4 +237,32 @@ export class NotificationsService {
       this.logger.error(`Failed to send predictive alert: ${err.message}`);
     }
   }
+
+  /**
+   * Generic method to send email (used by predictive crisis service)
+   */
+  async sendEmail(to: string, subject: string, message: string): Promise<void> {
+    try {
+      const htmlContent = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2>${subject}</h2>
+          <pre style="white-space: pre-wrap; word-wrap: break-word;">${message}</pre>
+          <hr>
+          <p><small>This is an automated message from AI Guardian</small></p>
+        </div>
+      `;
+
+      await this.transporter.sendMail({
+        from: process.env.NODEMAILER_EMAIL,
+        to,
+        subject,
+        html: htmlContent,
+      });
+
+      this.logger.debug(`Email sent to ${to}: ${subject}`);
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`Failed to send email: ${err.message}`);
+    }
+  }
 }

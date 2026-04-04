@@ -105,6 +105,65 @@ const guardian = new AIGuardian({
 });
 
 console.log('✅ Helix SDK Initialized');
+console.log('📊 Tracking: ENABLED - All HTTP requests and events being tracked');
+console.log('🤖 Browser Automation: AVAILABLE - Use /api/demo/auto-test endpoint');
+
+// ===== BROWSER AUTOMATION (for demo) =====
+let demoRunning = false;
+
+app.get('/api/demo/auto-test', async (req: Request, res: Response) => {
+  if (demoRunning) {
+    return res.json({ status: 'running', message: 'Demo already running' });
+  }
+  
+  demoRunning = true;
+  res.json({ status: 'started', message: 'Automated demo starting...' });
+  
+  // Run automation in background
+  setTimeout(() => runAutomatedDemo().catch(console.error), 1000);
+});
+
+async function runAutomatedDemo() {
+  try {
+    console.log('\n' + '='.repeat(70));
+    console.log('🤖 AUTOMATED DEMO - Creating 5 Test Complaints');
+    console.log('='.repeat(70));
+    
+    const testComplaints = [
+      { guestId: 'guest-demo-1', description: 'WiFi connection dropped', severity: 'high' },
+      { guestId: 'guest-demo-2', description: 'Bathroom sink leaking', severity: 'critical' },
+      { guestId: 'guest-demo-3', description: 'AC not cooling properly', severity: 'medium' },
+      { guestId: 'guest-demo-4', description: 'TV remote not working', severity: 'low' },
+      { guestId: 'guest-demo-5', description: 'Room is too cold', severity: 'high' },
+    ];
+    
+    for (let i = 0; i < testComplaints.length; i++) {
+      const complaint = testComplaints[i];
+      console.log(`\n[${i+1}/5] 📝 ${complaint.description}`);
+      
+      try {
+        const res = await axios.post('http://localhost:4000/api/complaints', complaint);
+        console.log(`   ✅ Incident created in Helix (${res.data.id?.substring(0, 8)})`);
+        console.log(`   📊 Severity: ${complaint.severity}`);
+      } catch (e: any) {
+        console.log(`   ⚠️  Error: ${e.message}`);
+      }
+      
+      await new Promise(resolve => setTimeout(resolve, 1200));
+    }
+    
+    console.log('\n' + '='.repeat(70));
+    console.log('✅ DEMO COMPLETE - Check Helix Dashboard!');
+    console.log('   📊 URL: http://localhost:3000');
+    console.log('   🎯 All 5 incidents should now appear');
+    console.log('='.repeat(70) + '\n');
+    
+  } catch (error: any) {
+    console.error('❌ Demo failed:', error.message);
+  } finally {
+    demoRunning = false;
+  }
+}
 
 // ===== MIDDLEWARE =====
 app.use(cors());
@@ -245,6 +304,11 @@ app.delete('/api/guests/:id', (req: Request, res: Response) => {
 
 // ===== ROOMS ENDPOINTS =====
 app.get('/api/rooms', (req: Request, res: Response) => {
+  guardian.track('info', 'Fetched room status', {
+    totalRooms: rooms.length,
+    occupiedRooms: rooms.filter((r: any) => r.occupancy === 'occupied').length,
+    service: 'room-service'
+  });
   res.json(rooms);
 });
 
@@ -301,6 +365,11 @@ app.post('/api/complaints', (req: Request, res: Response) => {
 });
 
 app.get('/api/complaints', (req: Request, res: Response) => {
+  guardian.track('info', 'Fetched all complaints', {
+    totalComplaints: complaints.length,
+    pendingComplaints: complaints.filter(c => !c.resolved).length,
+    service: 'complaint-management'
+  });
   res.json(complaints);
 });
 

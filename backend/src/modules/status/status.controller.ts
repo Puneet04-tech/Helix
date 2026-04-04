@@ -1,5 +1,6 @@
-import { Controller, Get, Param, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Param, UseGuards, Req, HttpException, HttpStatus } from '@nestjs/common';
 import { StatusService } from './status.service';
+import { PublicStatusService } from './public-status.service';
 import { IncidentsService } from '../incidents/incidents.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
@@ -7,8 +8,30 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class StatusController {
   constructor(
     private statusService: StatusService,
+    private publicStatusService: PublicStatusService,
     private incidentsService: IncidentsService,
   ) {}
+
+  /**
+   * Feature 5: Public Status Page
+   * GET /status/:clientId
+   * NO authentication required - suitable for embedding or public display
+   */
+  @Get(':clientId')
+  async getPublicStatus(@Param('clientId') clientId: string) {
+    try {
+      const statusData = await this.publicStatusService.getPublicStatusPage(clientId);
+      
+      if (statusData.error) {
+        throw new HttpException(statusData.error, HttpStatus.NOT_FOUND);
+      }
+
+      return statusData;
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 
   @UseGuards(JwtAuthGuard)
   @Get('project/:projectId')

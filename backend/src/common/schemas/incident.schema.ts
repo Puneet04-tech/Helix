@@ -95,6 +95,24 @@ export class Incident {
   @Prop()
   postmortemUrl?: string;
 
+  @Prop()
+  postmortemPath?: string;
+
+  @Prop({ type: Date })
+  postmortemGeneratedAt?: Date;
+
+  @Prop({ default: false })
+  isCorrelated?: boolean;
+
+  @Prop({ type: [String], default: [] })
+  correlatedIncidentIds?: string[];
+
+  @Prop()
+  rootCause?: string;
+
+  @Prop({ default: 0 })
+  affectedUsers?: number;
+
   @Prop({ type: Date })
   detectedAt: Date;
 
