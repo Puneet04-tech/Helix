@@ -2,174 +2,68 @@ import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
 import bodyParser from 'body-parser';
 import { v4 as uuidv4 } from 'uuid';
-import axios from 'axios';
-
-// Helix SDK Integration - Simple HTTP client wrapper
-class HelixGuardian {
-  private apiKey: string;
-  private backendUrl: string;
-
-  constructor(config: { apiKey: string; backendUrl: string; enabled?: boolean; sampleRate?: number }) {
-    this.apiKey = config.apiKey;
-    this.backendUrl = config.backendUrl;
-  }
-
-  async createIncident(title: string, description: string, severity: string) {
-    try {
-      const response = await axios.post(`${this.backendUrl}/incidents/create`, {
-        projectId: 'hotel-org-001',
-        title,
-        description,
-        severity,
-        type: 'guest_complaint',
-        service: 'hotel-management'
-      }, {
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000
-      });
-      console.log('✓ Incident created in Helix:', response.data._id || response.data.incidentId);
-      return response.data;
-    } catch (error) {
-      console.error('[Hotel System] Failed to create incident:', error);
-    }
-  }
-
-  async track(type: string, message: string, metadata?: any) {
-    try {
-      await axios.post(`${this.backendUrl}/events/ingest`, {
-        type,
-        service: metadata?.service || 'hotel-management',
-        message,
-        metadata: metadata || {},
-        timestamp: new Date().toISOString()
-      }, {
-        headers: {
-          'x-api-key': this.apiKey,
-          'Content-Type': 'application/json'
-        },
-        timeout: 5000
-      });
-    } catch (error) {
-      console.debug('[Hotel System] Event tracking failed (non-critical):', error);
-    }
-  }
-
-  async sendEvent(event: any) {
-    await this.track(event.type, event.message, event.metadata);
-  }
-
-  createMiddleware() {
-    const self = this;
-    return (req: Request, res: Response, next: NextFunction) => {
-      const startTime = Date.now();
-      const originalSend = res.send;
-
-      res.send = function (data: any) {
-        const duration = Date.now() - startTime;
-        if ((res as any).statusCode >= 400 || duration > 5000) {
-          self.track(res.statusCode >= 500 ? 'error' : 'warning', 
-            `HTTP ${res.statusCode} on ${req.method} ${req.path}`, {
-            statusCode: res.statusCode,
-            endpoint: req.path,
-            method: req.method,
-            responseTime: duration,
-            service: 'hotel-api'
-          });
-        }
-        return originalSend.call(this, data);
-      };
-      next();
-    };
-  }
-
-  interceptErrors() {}
-  getStatus() {
-    return { initialized: true, enabled: true, apiKey: this.apiKey.substring(0, 10) + '***' };
-  }
-}
-
-const AIGuardian = HelixGuardian;
+import Helix from 'hotel-management-api-helix';
 
 const app: Express = express();
 const PORT = process.env.PORT || 4000;
 
 // ===== HELIX SDK INITIALIZATION =====
-const guardian = new AIGuardian({
+const helix = new Helix({
   apiKey: process.env.HELIX_API_KEY || 'ag_18e67af6-3598-4199-9440-993a843ee8c9',
   backendUrl: process.env.HELIX_URL || 'http://localhost:5000',
   enabled: true,
   sampleRate: 1.0
 });
 
-console.log('✅ Helix SDK Initialized');
-console.log('📊 Tracking: ENABLED - All HTTP requests and events being tracked');
-console.log('🤖 Browser Automation: AVAILABLE - Use /api/demo/auto-test endpoint');
+console.log('✅ Helix SDK Initialized (hotel-management-api-helix v1.0.0)');
+console.log('📊 Hotel Tracking: ENABLED');
+console.log('🎯 Features: Crisis Detection, NLP, Postmortem, Compliance');
+console.log('🏨 Service: Hotel Management System\n');
 
-// ===== BROWSER AUTOMATION (for demo) =====
-let demoRunning = false;
-
-app.get('/api/demo/auto-test', async (req: Request, res: Response) => {
-  if (demoRunning) {
-    return res.json({ status: 'running', message: 'Demo already running' });
+// ===== HOTEL-SPECIFIC TRACKING HELPERS =====
+const hotelTracking = {
+  trackCrisisAlert: (alert: string, severity: string) => {
+    helix.trackCrisisPrediction('hotel-system', alert, severity as 'low' | 'medium' | 'high');
+    helix.track('warning', alert, { severity, service: 'hotel-crisis' });
+  },
+  trackComplianceEvent: (eventType: string, details: any) => {
+    helix.trackComplianceEvent(eventType, details.entityId || 'hotel-system', 'hotel-operations');
+    helix.track('compliance_event', eventType, { ...details, service: 'hotel-compliance' });
+  },
+  trackAlertDispatch: (alert: string, severity: string) => {
+    helix.trackAlertDispatch('manager', `hotel-${Date.now()}`, severity);
+    helix.track('info', alert, { severity, dispatched: true, service: 'hotel-alerts' });
   }
-  
-  demoRunning = true;
-  res.json({ status: 'started', message: 'Automated demo starting...' });
-  
-  // Run automation in background
-  setTimeout(() => runAutomatedDemo().catch(console.error), 1000);
-});
-
-async function runAutomatedDemo() {
-  try {
-    console.log('\n' + '='.repeat(70));
-    console.log('🤖 AUTOMATED DEMO - Creating 5 Test Complaints');
-    console.log('='.repeat(70));
-    
-    const testComplaints = [
-      { guestId: 'guest-demo-1', description: 'WiFi connection dropped', severity: 'high' },
-      { guestId: 'guest-demo-2', description: 'Bathroom sink leaking', severity: 'critical' },
-      { guestId: 'guest-demo-3', description: 'AC not cooling properly', severity: 'medium' },
-      { guestId: 'guest-demo-4', description: 'TV remote not working', severity: 'low' },
-      { guestId: 'guest-demo-5', description: 'Room is too cold', severity: 'high' },
-    ];
-    
-    for (let i = 0; i < testComplaints.length; i++) {
-      const complaint = testComplaints[i];
-      console.log(`\n[${i+1}/5] 📝 ${complaint.description}`);
-      
-      try {
-        const res = await axios.post('http://localhost:4000/api/complaints', complaint);
-        console.log(`   ✅ Incident created in Helix (${res.data.id?.substring(0, 8)})`);
-        console.log(`   📊 Severity: ${complaint.severity}`);
-      } catch (e: any) {
-        console.log(`   ⚠️  Error: ${e.message}`);
-      }
-      
-      await new Promise(resolve => setTimeout(resolve, 1200));
-    }
-    
-    console.log('\n' + '='.repeat(70));
-    console.log('✅ DEMO COMPLETE - Check Helix Dashboard!');
-    console.log('   📊 URL: http://localhost:3000');
-    console.log('   🎯 All 5 incidents should now appear');
-    console.log('='.repeat(70) + '\n');
-    
-  } catch (error: any) {
-    console.error('❌ Demo failed:', error.message);
-  } finally {
-    demoRunning = false;
-  }
-}
+};
 
 // ===== MIDDLEWARE =====
 app.use(cors());
 app.use(bodyParser.json());
-app.use(guardian.createMiddleware()); // Track all HTTP requests
-guardian.interceptErrors();
+
+// Custom middleware for request tracking
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const startTime = Date.now();
+  const originalSend = res.send;
+
+  res.send = function (data: any) {
+    const duration = Date.now() - startTime;
+    if ((res as any).statusCode >= 400 || duration > 5000) {
+      helix.track(
+        res.statusCode >= 500 ? 'error' : 'warning',
+        `HTTP ${res.statusCode} on ${req.method} ${req.path}`,
+        {
+          statusCode: res.statusCode,
+          endpoint: req.path,
+          method: req.method,
+          responseTime: duration,
+          service: 'hotel-api'
+        }
+      );
+    }
+    return originalSend.call(this, data);
+  };
+  next();
+});
 
 // ===== MOCK DATA STORAGE =====
 interface Guest {
@@ -242,7 +136,7 @@ let complaints: Complaint[] = [];
 
 // ===== GUESTS ENDPOINTS =====
 app.get('/api/guests', (req: Request, res: Response) => {
-  guardian.track('info', 'Fetched all guests', { count: guests.length, service: 'guest-service' });
+  helix.track('info', 'Fetched all guests', { count: guests.length, service: 'guest-service' });
   res.json(guests);
 });
 
@@ -255,8 +149,7 @@ app.post('/api/guests', (req: Request, res: Response) => {
   };
   
   guests.push(newGuest);
-  
-  guardian.track('info', `New guest registered: ${newGuest.name}`, {
+  helix.track('info', `New guest registered: ${newGuest.name}`, {
     guestId: newGuest.id,
     roomNumber: newGuest.roomNumber,
     service: 'guest-service'
@@ -269,13 +162,12 @@ app.put('/api/guests/:id', (req: Request, res: Response) => {
   const guest = guests.find(g => g.id === req.params.id);
   
   if (!guest) {
-    guardian.track('warning', 'Guest not found for update', { guestId: req.params.id });
+    helix.track('warning', 'Guest not found for update', { guestId: req.params.id });
     return res.status(404).json({ error: 'Guest not found' });
   }
   
   Object.assign(guest, req.body);
-  
-  guardian.track('info', `Guest updated: ${guest.name}`, {
+  helix.track('info', `Guest updated: ${guest.name}`, {
     guestId: guest.id,
     changes: Object.keys(req.body),
     service: 'guest-service'
@@ -292,8 +184,7 @@ app.delete('/api/guests/:id', (req: Request, res: Response) => {
   }
   
   const removedGuest = guests.splice(index, 1)[0];
-  
-  guardian.track('info', `Guest checkout: ${removedGuest.name}`, {
+  helix.track('info', `Guest checkout: ${removedGuest.name}`, {
     guestId: removedGuest.id,
     roomNumber: removedGuest.roomNumber,
     service: 'guest-service'
@@ -304,7 +195,7 @@ app.delete('/api/guests/:id', (req: Request, res: Response) => {
 
 // ===== ROOMS ENDPOINTS =====
 app.get('/api/rooms', (req: Request, res: Response) => {
-  guardian.track('info', 'Fetched room status', {
+  helix.track('info', 'Fetched room status', {
     totalRooms: rooms.length,
     occupiedRooms: rooms.filter((r: any) => r.occupancy === 'occupied').length,
     service: 'room-service'
@@ -324,7 +215,8 @@ app.put('/api/rooms/:id', (req: Request, res: Response) => {
   
   // Track room maintenance issues
   if (req.body.status === 'maintenance') {
-    guardian.track('warning', `Room ${room.roomNumber} sent to maintenance`, {
+    hotelTracking.trackCrisisAlert(`Room ${room.roomNumber} maintenance needed`, 'medium');
+    helix.track('warning', `Room ${room.roomNumber} sent to maintenance`, {
       roomNumber: room.roomNumber,
       roomType: room.type,
       service: 'room-management'
@@ -333,7 +225,7 @@ app.put('/api/rooms/:id', (req: Request, res: Response) => {
   
   // Track room availability changes
   if (req.body.status !== oldStatus && req.body.status === 'available') {
-    guardian.track('info', `Room ${room.roomNumber} now available`, {
+    helix.track('info', `Room ${room.roomNumber} now available`, {
       roomNumber: room.roomNumber,
       previousStatus: oldStatus,
       service: 'room-management'
@@ -353,19 +245,13 @@ app.post('/api/complaints', (req: Request, res: Response) => {
   };
   
   complaints.push(newComplaint);
-  
-  // Create incident directly in Helix
-  guardian.createIncident(
-    `Guest Complaint`,
-    newComplaint.description,
-    newComplaint.severity === 'critical' ? 'critical' : 'warning'
-  ).catch(err => console.error('Incident creation failed:', err));
+  hotelTracking.trackComplianceEvent('complaint_filed', { entityId: newComplaint.id, guestId: newComplaint.guestId, severity: newComplaint.severity });
   
   res.json(newComplaint);
 });
 
 app.get('/api/complaints', (req: Request, res: Response) => {
-  guardian.track('info', 'Fetched all complaints', {
+  helix.track('info', 'Fetched all complaints', {
     totalComplaints: complaints.length,
     pendingComplaints: complaints.filter(c => !c.resolved).length,
     service: 'complaint-management'
@@ -381,8 +267,7 @@ app.put('/api/complaints/:id/resolve', (req: Request, res: Response) => {
   }
   
   complaint.resolved = true;
-  
-  guardian.track('info', `Complaint resolved: ${complaint.description}`, {
+  helix.track('info', `Complaint resolved: ${complaint.description}`, {
     complaintId: complaint.id,
     severity: complaint.severity,
     service: 'complaint-management'
@@ -409,7 +294,8 @@ app.get('/api/occupancy', (req: Request, res: Response) => {
   
   // Alert if occupancy is very high or very low
   if (occupancyRate > 90) {
-    guardian.track('info', 'High occupancy rate alert', {
+    hotelTracking.trackCrisisAlert('High occupancy detected', 'high');
+    helix.track('info', 'High occupancy rate alert', {
       occupancyRate,
       occupiedRooms,
       totalRooms,
@@ -418,7 +304,8 @@ app.get('/api/occupancy', (req: Request, res: Response) => {
   }
   
   if (occupancyRate < 20 && occupiedRooms > 0) {
-    guardian.track('warning', 'Low occupancy rate detected', {
+    hotelTracking.trackCrisisAlert('Low occupancy detected', 'low');
+    helix.track('warning', 'Low occupancy rate detected', {
       occupancyRate,
       occupiedRooms,
       availableRooms,
@@ -435,7 +322,7 @@ app.post('/api/bookings', (req: Request, res: Response) => {
   
   // Validation
   if (!guestName || !roomType || !checkInDate || !checkOutDate) {
-    guardian.track('warning', 'Invalid booking request', {
+    helix.track('warning', 'Invalid booking request', {
       missingFields: ['guestName', 'roomType', 'checkInDate', 'checkOutDate'].filter(
         f => !req.body[f]
       ),
@@ -450,7 +337,8 @@ app.post('/api/bookings', (req: Request, res: Response) => {
   );
   
   if (!availableRoom) {
-    guardian.track('warning', `No available rooms of type: ${roomType}`, {
+    hotelTracking.trackAlertDispatch(`No rooms available for type: ${roomType}`, 'medium');
+    helix.track('warning', `No available rooms of type: ${roomType}`, {
       requestedType: roomType,
       numberOfGuests,
       service: 'booking-service'
@@ -473,8 +361,7 @@ app.post('/api/bookings', (req: Request, res: Response) => {
   
   guests.push(newGuest);
   availableRoom.status = 'occupied';
-  
-  guardian.track('info', `New booking confirmed: ${guestName}`, {
+  helix.track('info', `New booking confirmed: ${guestName}`, {
     guestId: newGuest.id,
     roomNumber: availableRoom.roomNumber,
     roomType: availableRoom.type,
@@ -541,7 +428,8 @@ app.get('/api/dashboard/stats', (req: Request, res: Response) => {
 
 // ===== ERROR HANDLING =====
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
-  guardian.track('error', `Server error: ${err.message}`, {
+  hotelTracking.trackComplianceEvent('server_error', { error: err.message });
+  helix.track('error', `Server error: ${err.message}`, {
     endpoint: req.path,
     method: req.method,
     statusCode: 500,
@@ -556,10 +444,10 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 app.listen(PORT, () => {
   console.log(`\n🏨 Hotel Management System Backend`);
   console.log(`🚀 Running on http://localhost:${PORT}`);
-  console.log(`📊 Helix Integration: ACTIVE`);
-  console.log(`✅ All APIs initialized\n`);
+  console.log(`📊 Helix SDK Integration: ACTIVE (v1.0.0)`);
+  console.log(`✅ All APIs initialized with advanced tracking\n`);
   
-  guardian.track('info', 'Hotel Management System started', {
+  helix.track('info', 'Hotel Management System started', {
     port: PORT,
     initialGuests: guests.length,
     initialRooms: rooms.length,

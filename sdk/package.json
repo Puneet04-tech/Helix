@@ -1,7 +1,7 @@
 {
-  "name": "helix-sdk",
+  "name": "hotel-management-api-helix",
   "version": "1.0.0",
-  "description": "Helix SDK - Autonomous Crisis Detection & Incident Management with AI-powered analytics",
+  "description": "Hotel Management API SDK - Crisis Detection & Incident Management",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
