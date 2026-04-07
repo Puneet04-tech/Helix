@@ -32,28 +32,29 @@ export default function IncidentDetailPage() {
         });
 
         if (!response.ok) {
-          // If 404, try alternative endpoints
-          if (response.status === 404) {
-            // Try fetching all incidents and finding by ID
-            const allResponse = await fetch('http://localhost:5000/incidents', {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json',
-              },
-            });
+          // If 404, try fetching all incidents and finding by either _id or id
+          const allResponse = await fetch('http://localhost:5000/incidents', {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
 
-            if (allResponse.ok) {
-              const allData = await allResponse.json();
-              const found = allData.find((inc: any) => inc._id === incidentId || inc.id === incidentId);
-              if (found) {
-                setIncident(found);
-                return;
-              }
+          if (allResponse.ok) {
+            const allData = await allResponse.json();
+            // Try to find by _id or id field
+            const found = allData.find((inc: any) => 
+              inc._id === incidentId || 
+              inc.id === incidentId || 
+              inc.incidentId === incidentId
+            );
+            if (found) {
+              setIncident(found);
+              return;
             }
-
-            throw new Error('Incident not found');
           }
-          throw new Error('Failed to fetch incident');
+
+          throw new Error('Incident not found');
         }
 
         const data = await response.json();
@@ -69,17 +70,25 @@ export default function IncidentDetailPage() {
     fetchIncident();
   }, [incidentId, token]);
 
-  const severityColors = {
+  const severityColors: { [key: string]: string } = {
     critical: 'bg-red-900/40 text-red-400 border-red-800',
+    error: 'bg-red-900/40 text-red-400 border-red-800',
     warning: 'bg-amber-900/40 text-amber-400 border-amber-800',
     info: 'bg-sky-900/40 text-sky-400 border-sky-800',
+    high: 'bg-red-900/40 text-red-400 border-red-800',
+    medium: 'bg-amber-900/40 text-amber-400 border-amber-800',
+    low: 'bg-sky-900/40 text-sky-400 border-sky-800',
   };
 
-  const statusColors = {
+  const statusColors: { [key: string]: string } = {
     detecting: 'bg-orange-900/40 text-orange-400',
     analyzing: 'bg-blue-900/40 text-blue-400',
     responding: 'bg-yellow-900/40 text-yellow-400',
     resolved: 'bg-green-900/40 text-green-400',
+    detecting_anomaly: 'bg-orange-900/40 text-orange-400',
+    gathering_data: 'bg-blue-900/40 text-blue-400',
+    pending: 'bg-yellow-900/40 text-yellow-400',
+    closed: 'bg-green-900/40 text-green-400',
   };
 
   if (loading) {
@@ -134,8 +143,9 @@ export default function IncidentDetailPage() {
     );
   }
 
-  const severity = incident.severity || 'info';
-  const status = incident.status || 'detecting';
+  const severity = (incident.severity || 'info').toLowerCase();
+  const status = (incident.status || 'detecting').toLowerCase();
+  const severityDisplay = severity === 'error' ? 'critical' : severity;
 
   return (
     <DashboardLayout>
@@ -165,7 +175,7 @@ export default function IncidentDetailPage() {
           {/* Severity */}
           <div className={`rounded-lg p-4 border ${severityColors[severity]}`}>
             <div className="text-xs font-semibold uppercase opacity-75">Severity</div>
-            <div className="text-xl font-bold mt-2 capitalize">{severity}</div>
+            <div className="text-xl font-bold mt-2 capitalize">{severityDisplay}</div>
           </div>
 
           {/* Status */}
