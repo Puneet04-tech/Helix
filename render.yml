@@ -1,22 +1,26 @@
 # Render Configuration for Helix Backend
 # Reference: https://render.com/docs/deploy-from-git
+# NOTE: Requires at least Standard instance (1GB RAM) for NestJS + MongoDB connection
 
 services:
   - type: web
     name: helix-api
     env: node
     
-    # Build settings
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    # Build settings (separated for clarity)
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm run start:prod
     
     # Root directory
-    rootDir: backend
+    rootDir: .
     
     # Region
     region: oregon
     
-    # Instance type
+    # Instance type - IMPORTANT: Must be Standard or higher (512MB not enough)
+    # Starter (512MB) -> Memory issues ❌
+    # Standard (1GB) -> Recommended minimum ✅
+    # Standard+ (2GB) -> Better for production ✅✅
     plan: standard
     
     # Auto-deploy
@@ -32,14 +36,14 @@ services:
         value: production
       - key: PORT
         value: "3000"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=1024"  # Optimize memory for 1GB instance
       - key: LOG_LEVEL
         value: info
       
-      # Database (CHANGE THESE!)
+      # Database - Use MongoDB Atlas (set via dashboard)
       - key: MONGODB_URI
-        fromDatabase:
-          name: helix-mongodb
-          property: connectionString
+        sync: false  # Secure variable: set via dashboard with your MongoDB Atlas connection string
       
       # Authentication (GENERATE NEW SECRETS!)
       - key: JWT_SECRET
@@ -111,19 +115,19 @@ services:
       - type: ws
         path: /socket.io/*
     
-    # Disk
+    # Optional: Database disk for persistent storage
     disk:
       name: helix-data
       mountPath: /var/data
       sizeGB: 10
     
-    # Timeout
-    preDeployCommand: npm run migrate  # Optional: run DB migrations
+    # Optional: Run migrations or setup before starting
+    # preDeployCommand: npm run migrate
     
-    # Cron jobs (Optional: scheduled tasks)
-    schedules:
-      - fromValue: "0 2 * * *"  # Daily at 2 AM UTC
-        toValue: npm run cleanup-old-events
+    # Optional: Cron jobs for scheduled tasks
+    # schedules:
+    #   - fromValue: "0 2 * * *"  # Daily at 2 AM UTC
+    #     toValue: npm run cleanup-old-events
 
 # Optional: PostgreSQL Database (if not using MongoDB Atlas)
 # databases:
