@@ -38,8 +38,19 @@ export default function IncidentDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-[#112D5E] border border-[#1E3A5F] rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div 
+      className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+      onClick={(e) => {
+        // Only close if clicking the backdrop itself, not the modal content
+        if (e.target === e.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <div 
+        className="bg-[#112D5E] border border-[#1E3A5F] rounded-xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col"
+        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
+      >
         {/* Header */}
         <div className="bg-[#0D1B3E] border-b border-[#1E3A5F] px-8 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">

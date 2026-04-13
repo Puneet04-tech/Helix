@@ -69,7 +69,10 @@ export class Helix {
   }
 
   public track(type: EventData['type'], message: string, metadata?: Record<string, any>): void {
-    this.send({ type, service: 'custom', message, metadata });
+    const service = metadata?.service || 'custom';
+    const cleanMetadata = { ...metadata };
+    delete cleanMetadata.service; // Remove service from metadata to avoid duplication
+    this.send({ type, service, message, metadata: cleanMetadata });
   }
 
   public getStatus(): { enabled: boolean; features: number } {

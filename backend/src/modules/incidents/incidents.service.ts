@@ -155,4 +155,17 @@ export class IncidentsService {
       await this.agentsService.analyzeCorrelation(projectId, recentIncidents);
     }
   }
+
+  async deleteIncident(incidentId: string) {
+    const result = await this.incidentModel.findOneAndDelete({ incidentId });
+    if (!result) {
+      throw new Error('Incident not found');
+    }
+    return { message: `Incident ${incidentId} deleted`, deleted: true };
+  }
+
+  async deleteByType(type: string) {
+    const result = await this.incidentModel.deleteMany({ type });
+    return { message: `Deleted ${result.deletedCount} incidents of type ${type}`, deleted: result.deletedCount };
+  }
 }

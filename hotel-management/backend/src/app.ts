@@ -245,18 +245,36 @@ app.post('/api/complaints', (req: Request, res: Response) => {
   };
   
   complaints.push(newComplaint);
-  hotelTracking.trackComplianceEvent('complaint_filed', { entityId: newComplaint.id, guestId: newComplaint.guestId, severity: newComplaint.severity });
+  
+  // Send complaint to Helix as an event that triggers incident creation
+  helix.track(
+    'error',
+    `Guest Complaint - ${newComplaint.description}`,
+    {
+      type: 'complaint',
+      service: 'complaint-management',
+      complaintId: newComplaint.id,
+      guestId: newComplaint.guestId,
+      severity: newComplaint.severity,
+      description: newComplaint.description,
+      timestamp: newComplaint.timestamp,
+      source: 'hotel-system'
+    }
+  );
   
   res.json(newComplaint);
 });
 
 app.get('/api/complaints', (req: Request, res: Response) => {
-  helix.track('info', 'Fetched all complaints', {
-    totalComplaints: complaints.length,
-    pendingComplaints: complaints.filter(c => !c.resolved).length,
-    service: 'complaint-management'
-  });
+  // Don't track GET requests - only track when complaints are FILED
   res.json(complaints);
+});
+
+// Delete all complaints
+app.delete('/api/complaints', (req: Request, res: Response) => {
+  const count = complaints.length;
+  complaints.length = 0;
+  res.json({ message: `Deleted ${count} complaints`, deleted: count });
 });
 
 app.put('/api/complaints/:id/resolve', (req: Request, res: Response) => {

@@ -48,12 +48,23 @@ export class EventsService {
     if (eventData.service === 'hotel-management' || eventData.service === 'complaint-management') {
       this.logger.log(`Hotel complaint detected: ${eventData.message}`);
       
+      // Map hotel system severities to incident schema severities
+      const severityMap: Record<string, string> = {
+        'critical': 'critical',
+        'high': 'critical',      // Map high -> critical
+        'medium': 'warning',      // Map medium -> warning
+        'low': 'info',           // Map low -> info
+        'warning': 'warning',
+        'info': 'info',
+      };
+      const mappedSeverity = severityMap[eventData.metadata?.severity] || 'warning';
+      
       try {
         const incident = await this.incidentsService.createIncident(
           projectId,
           {
             type: 'guest_complaint',
-            severity: eventData.metadata?.severity || 'warning',
+            severity: mappedSeverity,
             service: 'hotel-management',
             title: eventData.message || 'Guest Complaint',
             description: `Complaint ID: ${eventData.metadata?.complaintId || 'unknown'} - ${eventData.message}`,

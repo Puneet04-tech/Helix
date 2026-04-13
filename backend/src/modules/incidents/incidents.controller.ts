@@ -1,4 +1,4 @@
-import { Controller, Get, Put, Post, Param, Body, UseGuards, Req, Headers, Res, HttpException, HttpStatus, Query } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Param, Body, UseGuards, Req, Headers, Res, HttpException, HttpStatus, Query } from '@nestjs/common';
 import { IncidentsService } from './incidents.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PostmortemPDFService } from '../postmortem/postmortem-pdf.service';
@@ -152,5 +152,16 @@ export class IncidentsController {
       const err = error as Error;
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
+  }
+
+  // DELETE endpoint for risk cleanup
+  @Delete('cleanup/:type')
+  async deleteByType(@Param('type') type: string) {
+    return this.incidentsService.deleteByType(type);
+  }
+
+  @Delete(':incidentId')
+  async deleteIncident(@Param('incidentId') incidentId: string) {
+    return this.incidentsService.deleteIncident(incidentId);
   }
 }
