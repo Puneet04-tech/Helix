@@ -1,0 +1,136 @@
+# Render Configuration for Helix Backend
+# Reference: https://render.com/docs/deploy-from-git
+
+services:
+  - type: web
+    name: helix-api
+    env: node
+    
+    # Build settings
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    
+    # Root directory
+    rootDir: backend
+    
+    # Region
+    region: oregon
+    
+    # Instance type
+    plan: standard
+    
+    # Auto-deploy
+    autoDeploy: true
+    branch: main
+    
+    # Port
+    port: 3000
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: LOG_LEVEL
+        value: info
+      
+      # Database (CHANGE THESE!)
+      - key: MONGODB_URI
+        fromDatabase:
+          name: helix-mongodb
+          property: connectionString
+      
+      # Authentication (GENERATE NEW SECRETS!)
+      - key: JWT_SECRET
+        sync: false  # Don't auto-sync: provide via dashboard
+      - key: JWT_EXPIRATION
+        value: "24h"
+      
+      # Groq AI
+      - key: GROQ_API_KEY
+        sync: false  # Secure variable: set via dashboard
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      
+      # Ollama (Optional)
+      - key: OLLAMA_HOST
+        value: "http://ollama:11434"
+      - key: OLLAMA_MODEL
+        value: mistral
+      
+      # HuggingFace (Optional)
+      - key: HUGGING_FACE_API_TOKEN
+        sync: false  # Secure variable: set via dashboard
+      - key: HUGGING_FACE_MODEL
+        value: "mistralai/Mistral-7B-Instruct-v0.1"
+      
+      # Email Configuration
+      - key: EMAIL_HOST
+        value: smtp.gmail.com
+      - key: EMAIL_PORT
+        value: "587"
+      - key: EMAIL_USER
+        sync: false  # Secure variable: set via dashboard
+      - key: EMAIL_PASSWORD
+        sync: false  # Secure variable: set via dashboard
+      - key: EMAIL_FROM
+        value: noreply@helix-alerts.com
+      
+      # CORS Configuration (UPDATE THIS!)
+      - key: CORS_ORIGIN
+        value: "https://your-netlify-domain.netlify.app"
+      
+      # Business Logic Configuration
+      - key: INCIDENT_THRESHOLD
+        value: "3"
+      - key: PATTERN_MATCH_THRESHOLD
+        value: "0.75"
+      - key: ANOMALY_SENSITIVITY
+        value: "0.8"
+      
+      # Optional: Monitoring & Logging
+      - key: LOG_FORMAT
+        value: json
+      - key: DEBUG_MODE
+        value: "false"
+    
+    # Health check
+    healthCheckPath: /health
+    healthCheckTimeout: 30
+    
+    # Build cache (useful for faster builds)
+    staticPublishPath: dist
+    
+    # Public routes
+    routes:
+      - type: http
+        path: /
+      - type: http
+        path: /api/*
+      - type: ws
+        path: /socket.io/*
+    
+    # Disk
+    disk:
+      name: helix-data
+      mountPath: /var/data
+      sizeGB: 10
+    
+    # Timeout
+    preDeployCommand: npm run migrate  # Optional: run DB migrations
+    
+    # Cron jobs (Optional: scheduled tasks)
+    schedules:
+      - fromValue: "0 2 * * *"  # Daily at 2 AM UTC
+        toValue: npm run cleanup-old-events
+
+# Optional: PostgreSQL Database (if not using MongoDB Atlas)
+# databases:
+#   - name: helix-mongodb
+#     engine: mongodb
+#     version: "5.0"
+#     plan: standard
+#     region: oregon
+#     ipAllowList:
+#       - 0.0.0.0/0  # Allow all (restrict in production)
