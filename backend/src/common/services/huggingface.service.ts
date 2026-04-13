@@ -1,13 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { OllamaService } from './ollama.service';
+import { GroqService } from './groq.service';
 
 interface AnalysisResult {
   isAnomaly: boolean;
   category: string;
   confidence: number;
   reasoning: string;
-  source: 'ollama' | 'hf_api' | 'statistical' | 'behavioral' | 'pattern' | 'fallback';
+  source: 'ollama' | 'groq' | 'hf_api' | 'statistical' | 'behavioral' | 'pattern' | 'fallback';
   details?: {
     scores?: { [key: string]: number };
     signals?: string[];
@@ -44,7 +45,10 @@ export class HuggingFaceService {
   private readonly API_URL =
     'https://router.huggingface.co/models/facebook/bart-large-mnli';
 
-  constructor(private readonly ollamaService: OllamaService) {}
+  constructor(
+    private readonly ollamaService: OllamaService,
+    private readonly groqService: GroqService,
+  ) {}
 
   async analyzeEvents(projectId: string, eventText: string): Promise<AnalysisResult> {
     // Check cache
@@ -62,11 +66,18 @@ export class HuggingFaceService {
     // Update baseline with this event
     this.updateBaseline(projectId, eventText);
 
-    // Try analysis chain: Ollama → HF API → Statistical → Behavioral → Pattern → Fallback
+    // Try analysis chain: Ollama → Groq → HF API → Statistical → Behavioral → Pattern → Fallback
     let result: AnalysisResult | null = null;
 
     // Tier 0: Ollama (Local LLM - BEST if available)
     result = await this.ollamaService.analyzeWithOllama(eventText);
+    if (result) {
+      this.analysisCache.set(cacheKey, { result, timestamp: Date.now() });
+      return result;
+    }
+
+    // Tier 0.5: Groq API (Fast cloud LLM - Great if available)
+    result = await this.groqService.analyzeWithGroq(eventText);
     if (result) {
       this.analysisCache.set(cacheKey, { result, timestamp: Date.now() });
       return result;

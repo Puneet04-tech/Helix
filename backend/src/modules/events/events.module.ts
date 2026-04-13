@@ -7,6 +7,7 @@ import { Client, ClientSchema } from '../../common/schemas/client.schema';
 import { MemoryService } from '../../common/services/memory.service';
 import { HuggingFaceService } from '../../common/services/huggingface.service';
 import { OllamaService } from '../../common/services/ollama.service';
+import { GroqService } from '../../common/services/groq.service';
 import { IncidentsModule } from '../incidents/incidents.module';
 
 @Module({
@@ -18,7 +19,7 @@ import { IncidentsModule } from '../incidents/incidents.module';
     forwardRef(() => IncidentsModule),
   ],
   controllers: [EventsController],
-  providers: [EventsService, MemoryService, HuggingFaceService, OllamaService],
-  exports: [EventsService, MemoryService, HuggingFaceService, OllamaService],
+  providers: [EventsService, MemoryService, OllamaService, GroqService, HuggingFaceService],
+  exports: [EventsService, MemoryService, OllamaService, GroqService, HuggingFaceService],
 })
 export class EventsModule {}
