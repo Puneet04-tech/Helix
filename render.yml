@@ -11,10 +11,10 @@ services:
     # This makes Render treat the 'backend' folder as the service root
     # so 'npm install' and 'npm run start' happen inside 'backend/'
     # without needing 'cd backend' in every command.
-    rootDir: backend
+    rootDir: .
     
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && node dist/main
     
     # Auto-deploy
     autoDeploy: true
