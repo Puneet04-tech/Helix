@@ -48,7 +48,10 @@ export default function Dashboard() {
 
   // Fetch incidents and metrics from backend
   const fetchDashboardData = async () => {
-    if (!user || !token) return;
+    if (!user || !token) {
+      console.log('Skipping fetch: No user or token');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -86,6 +89,14 @@ export default function Dashboard() {
       );
 
       const responses = await Promise.all(endpoints);
+
+      // Check for 401s specifically
+      const unauthorized = responses.find(r => r.status === 401);
+      if (unauthorized) {
+        console.error('Unauthorized request detected in dashboard data fetch');
+        setError('Session expired. Please log in again.');
+        return;
+      }
 
       // Check if requests succeeded
       let statsData = null;
