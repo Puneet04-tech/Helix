@@ -186,15 +186,28 @@ export class IncidentsService {
 
     this.logger.debug(`Manually triggering agent chain for incident ${incident.incidentId || incident._id}`);
     
-    // Trigger the agent chain manually
-    this.agentsService.runAgentChain(incident.projectId, incident).catch(err => {
-      this.logger.error(`Manual agent chain failed: ${err.message}`);
-    });
+    // Initialize agentReasoning if not present
+    if (!incident.agentReasoning) {
+      incident.agentReasoning = {};
+    }
+    
+    // WAIT for the agent chain to complete (don't fire and forget)
+    try {
+      await this.agentsService.runAgentChain(incident.projectId, incident);
+    } catch (err) {
+      this.logger.error(`Agent chain execution error: ${err.message}`);
+      throw err;
+    }
+
+    // Refresh incident from database to get all populated data
+    const refreshedIncident = await this.incidentModel.findById(incident._id);
 
     return { 
-      message: 'Analysis triggered for incident', 
-      incidentId: incident.incidentId || incident._id,
-      status: 'analysis_started'
+      message: 'Analysis completed for incident', 
+      incidentId: refreshedIncident.incidentId || refreshedIncident._id,
+      status: refreshedIncident.status,
+      agentReasoning: refreshedIncident.agentReasoning,
+      automaticActions: refreshedIncident.automaticActions
     };
   }
 
@@ -210,6 +223,12 @@ export class IncidentsService {
 
     this.logger.debug(`Manually generating postmortem for incident ${incident.incidentId || incident._id}`);
     
+    // Ensure agent reasoning exists
+    if (!incident.agentReasoning) {
+      incident.agentReasoning = {};
+    }
+
+    // Generate postmortem
     const postmortem = await this.agentsService.generatePostmortem(incident);
     
     // Store postmortem content in incident
@@ -217,9 +236,14 @@ export class IncidentsService {
     incident.postmortemGeneratedAt = new Date();
     await incident.save();
 
+    // Refresh to get latest data
+    const refreshedIncident = await this.incidentModel.findById(incident._id);
+
     return {
-      ...postmortem,
-      incidentId: incident.incidentId || incident._id
+      content: postmortem.content,
+      timestamp: postmortem.timestamp,
+      incidentId: refreshedIncident.incidentId || refreshedIncident._id,
+      postmortemGeneratedAt: refreshedIncident.postmortemGeneratedAt
     };
   }
 }

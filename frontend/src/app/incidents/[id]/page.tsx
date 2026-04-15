@@ -58,24 +58,27 @@ export default function IncidentDetailPage() {
   }, [incidentId, token]);
 
   const handleAnalyzeIncident = async () => {
-    if (!incidentId || !token) return;
+    if (!incidentId) return;
     
     setAnalyzing(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/analyze`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
       });
 
       if (response.ok) {
+        // Small delay to ensure backend has saved all data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Re-fetch the incident data
         const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
           },
         });
 
@@ -87,6 +90,9 @@ export default function IncidentDetailPage() {
             sessionStorage.setItem(`incident_${incidentId}`, JSON.stringify(data));
           }
         }
+      } else {
+        const errorData = await response.json();
+        console.error('Analysis failed:', errorData);
       }
     } catch (err) {
       console.error('Failed to analyze incident:', err);
@@ -96,24 +102,27 @@ export default function IncidentDetailPage() {
   };
 
   const handleGeneratePostmortem = async () => {
-    if (!incidentId || !token) return;
+    if (!incidentId) return;
     
     setGeneratingPostmortem(true);
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/postmortem/generate`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` }),
         },
       });
 
       if (response.ok) {
+        // Small delay to ensure backend has saved all data
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
         // Re-fetch the incident data
         const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
           headers: {
-            Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
           },
         });
 

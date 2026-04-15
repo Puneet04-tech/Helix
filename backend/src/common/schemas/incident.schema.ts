@@ -71,13 +71,19 @@ export class Incident {
       timestamp: Date;
     };
     responseAgent?: {
-      actions: Array<{ action: string; target: string; result: string }>;
+      actions: Array<{ 
+        action: string; 
+        target: string; 
+        result: string;
+        success: boolean;
+      }>;
       timestamp: Date;
     };
     commsAgent?: {
       notifications: Array<{ recipient: string; channel: string; status: string }>;
       timestamp: Date;
     };
+  };
   };
 
   @Prop({ type: Object })
