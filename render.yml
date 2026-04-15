@@ -17,11 +17,10 @@ services:
     # Region
     region: oregon
     
-    # Instance type - IMPORTANT: Must be Standard or higher (512MB not enough)
-    # Starter (512MB) -> Memory issues ❌
-    # Standard (1GB) -> Recommended minimum ✅
-    # Standard+ (2GB) -> Better for production ✅✅
-    plan: standard
+    # Instance type - Starter (512MB) with memory optimization
+    # Current: Starter (512MB) - with NODE_OPTIONS optimized
+    # If issues persist: upgrade to Standard (1GB)
+    plan: starter
     
     # Auto-deploy
     autoDeploy: true
@@ -37,7 +36,9 @@ services:
       - key: PORT
         value: "3000"
       - key: NODE_OPTIONS
-        value: "--max-old-space-size=1024"  # Optimize memory for 1GB instance
+        value: "--max-old-space-size=400 --optimize-for-size --gc-interval=100"
+      - key: WEB_CONCURRENCY
+        value: "1"
       - key: LOG_LEVEL
         value: info
       
