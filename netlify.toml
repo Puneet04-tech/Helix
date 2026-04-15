@@ -1,9 +1,9 @@
 # Netlify Configuration for Helix Frontend
 
 [build]
-publish = ".next"
-command = "npm install && npm run build"
-base = "frontend"
+publish = "frontend/.next"
+command = "cd frontend && npm install && npm run build"
+# Remove base to ensure Netlify finds the repo-level netlify.toml correctly during the parse phase
 
 [build.environment]
 NODE_VERSION = "22.22.0"
