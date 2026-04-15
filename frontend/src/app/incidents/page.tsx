@@ -105,8 +105,12 @@ export default function IncidentsPage() {
                 Loading incidents...
               </div>
             ) : incidents.length > 0 ? (
-              incidents.map(incident => (
-                <IncidentCard key={incident.id} {...incident} />
+              incidents.map((incident, index) => (
+                <IncidentCard 
+                  key={incident.id || index} 
+                  {...incident} 
+                  id={incident.id || ""}
+                />
               ))
             ) : (
               <div className="px-6 py-8 text-center text-slate-400">

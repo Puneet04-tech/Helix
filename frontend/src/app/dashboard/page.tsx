@@ -321,13 +321,19 @@ export default function Dashboard() {
                 Loading incidents...
               </div>
             ) : incidents.length > 0 ? (
-              incidents.map(incident => (
+              incidents.map((incident, index) => (
                 <div
-                  key={incident.id}
+                  key={incident.id || incident._id || incident.incidentId || index}
                   onClick={() => handleOpenIncident(incident)}
                   className="cursor-pointer hover:bg-[#1E3A5F]/50 transition-colors"
                 >
-                  <IncidentCard {...incident} />
+                  <IncidentCard 
+                    {...incident} 
+                    id={incident.id || incident._id || incident.incidentId || ""} 
+                    severity={incident.severity === 'active' ? 'critical' : (incident.severity as any)}
+                    status={incident.status === 'active' ? 'detecting' : (incident.status as any)}
+                    timestamp={incident.timestamp || ""}
+                  />
                 </div>
               ))
             ) : (

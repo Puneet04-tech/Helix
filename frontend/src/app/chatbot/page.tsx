@@ -106,9 +106,9 @@ export default function ChatbotPage() {
         <div className="bg-[#112D5E] rounded-xl border border-[#1E3A5F] h-96 flex flex-col">
           {/* Chat Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map(msg => (
+            {messages.map((msg, idx) => (
               <div
-                key={msg.id}
+                key={msg.id || idx}
                 className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
