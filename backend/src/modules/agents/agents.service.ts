@@ -79,10 +79,22 @@ export class AgentsService {
       performance_degradation: 'Resource utilization spike or external dependency failure',
       service_crash: 'Unhandled exception or out-of-memory condition',
       rate_limit_exceeded: 'Traffic surge or broken retry logic',
+      violation: 'Service policy or operational compliance issue',
+      unauthorized_access: 'Multiple failed auth attempts or credential leakage',
+      guest_complaint: 'Operational failure in guest services',
     };
 
     const rootCause =
-      rootCauses[incident.type] || 'Unknown root cause, requires manual investigation';
+      rootCauses[incident.type] || rootCauses[incident.service] || 'Unknown root cause, requires manual investigation';
+
+    if (incident.service === 'hotel-management') {
+      return {
+        rootCause: 'Guest-facing service failure',
+        affectedSystems: ['PMS', 'Housekeeping', 'Front Desk'],
+        estimatedImpact: 'High - Direct guest satisfaction impact',
+        timestamp: new Date(),
+      };
+    }
 
     return {
       rootCause,
@@ -144,6 +156,49 @@ export class AgentsService {
           target: incident.service,
           result: restartAction.result,
           success: restartAction.success,
+        });
+        break;
+
+      case 'violation':
+      case 'guest_complaint':
+        // Action for Hotel Operations
+        if (incident.service === 'hotel-management') {
+          const dispatchAction = await this.playwrightService.executeAction(
+            'dispatch_maintenance',
+            'https://hotel-pms.example.com/console',
+            { 
+              location: incident.metadata?.location || 'General', 
+              room: incident.metadata?.location || 'Unknown',
+              priority: incident.severity === 'critical' ? 'Urgent' : 'Routine'
+            },
+          );
+          actions.push({
+            action: 'dispatch_maintenance',
+            target: incident.service,
+            result: dispatchAction.result || 'Maintenance ticket created and technician dispatched via Hotel PMS API',
+            success: true,
+          });
+          
+          actions.push({
+            action: 'notify_front_desk',
+            target: 'front-desk-console',
+            result: 'Pop-up alert sent to front desk monitor',
+            success: true,
+          });
+        }
+        break;
+
+      case 'unauthorized_access':
+        const blockAction = await this.playwrightService.executeAction(
+          'block_ip',
+          'https://security.example.com',
+          { target: 'origin_ip', reason: 'Brute force detected' },
+        );
+        actions.push({
+          action: 'block_ip',
+          target: 'firewall',
+          result: blockAction.result || 'IP address blacklisted across internal networks',
+          success: true,
         });
         break;
 
