@@ -30,7 +30,8 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 5000;
-  await app.listen(port);
+  console.log(`Setting up listener on port ${port}...`);
+  await app.listen(port, '0.0.0.0');
   console.log(`🚀 Helix Backend running on port ${port}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
 }
