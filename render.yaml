@@ -1,23 +1,20 @@
 services:
   - type: web
     name: helix-api
+    # Initial setup for Render
+    # Using the backend directory as the source for this service
     env: node
-    
-    # Build and start commands - explicitly cd to backend
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && npm run start:prod
-    
-    # Root directory
-    rootDir: .
-    
-    # Root directory
-    rootDir: .
-    
-    # Region
+    plan: starter
     region: oregon
     
-    # Instance type - Starter (512MB) with memory optimization
-    plan: starter
+    # Root directory for the backend service
+    # This makes Render treat the 'backend' folder as the service root
+    # so 'npm install' and 'npm run start' happen inside 'backend/'
+    # without needing 'cd backend' in every command.
+    rootDir: backend
+    
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
     
     # Auto-deploy
     autoDeploy: true
