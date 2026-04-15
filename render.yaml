@@ -3,12 +3,12 @@ services:
     name: helix-api
     env: node
     
-    # Build and start commands
-    buildCommand: npm install && npm run build
-    startCommand: npm run start:prod
+    # Build and start commands - explicitly cd to backend
+    buildCommand: cd backend && npm install && npm run build
+    startCommand: cd backend && npm run start:prod
     
-    # Working directory must be backend
-    workingDirectory: backend
+    # Root directory
+    rootDir: .
     
     # Root directory
     rootDir: .
