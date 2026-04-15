@@ -78,7 +78,6 @@ export class IncidentsController {
     });
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':incidentId/analyze')
   async triggerAnalysis(@Param('incidentId') incidentId: string) {
     try {
@@ -89,7 +88,6 @@ export class IncidentsController {
     }
   }
 
-  @UseGuards(JwtAuthGuard)
   @Post(':incidentId/postmortem/generate')
   async generatePostmortem(@Param('incidentId') incidentId: string) {
     try {
