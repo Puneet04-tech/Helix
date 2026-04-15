@@ -84,7 +84,6 @@ export class Incident {
       timestamp: Date;
     };
   };
-  };
 
   @Prop({ type: Object })
   automaticActions: Array<{

@@ -195,12 +195,16 @@ export class IncidentsService {
     try {
       await this.agentsService.runAgentChain(incident.projectId, incident);
     } catch (err) {
-      this.logger.error(`Agent chain execution error: ${err.message}`);
+      this.logger.error(`Agent chain execution error: ${(err as Error).message}`);
       throw err;
     }
 
     // Refresh incident from database to get all populated data
     const refreshedIncident = await this.incidentModel.findById(incident._id);
+    
+    if (!refreshedIncident) {
+      throw new Error('Incident was deleted during analysis');
+    }
 
     return { 
       message: 'Analysis completed for incident', 
@@ -238,6 +242,10 @@ export class IncidentsService {
 
     // Refresh to get latest data
     const refreshedIncident = await this.incidentModel.findById(incident._id);
+    
+    if (!refreshedIncident) {
+      throw new Error('Incident was deleted during postmortem generation');
+    }
 
     return {
       content: postmortem.content,
