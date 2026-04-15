@@ -17,15 +17,11 @@ async function bootstrap() {
     }),
   );
 
-  // CORS - handle Netlify frontend and local dev
+  // CORS - allow all origins in production for stability, or specific ones
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      process.env.FRONTEND_URL || 'https://helix.netlify.app',
-    ],
+    origin: true, // This will reflect the request origin, allowing any domain to access
     credentials: true,
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Authorization',
   });
 
