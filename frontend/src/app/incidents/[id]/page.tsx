@@ -198,7 +198,7 @@ export default function IncidentDetailPage() {
           </div>
         )}
 
-        {/* Detection Features & Results */}
+        {/* Detection Features & Results - Real Agent Data */}
         <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-white mb-6 flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-400" />
@@ -206,93 +206,159 @@ export default function IncidentDetailPage() {
           </h2>
           
           <div className="grid grid-cols-2 gap-6">
-            {/* ML Detection */}
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-blue-300 mb-3">ML Anomaly Detection</h3>
-              <div className="space-y-2 text-sm text-slate-300">
-                <p>• Pattern Anomaly Score: <span className="font-bold text-blue-300">94.2%</span></p>
-                <p>• Deviation from Baseline: <span className="font-bold text-blue-300">High</span></p>
-                <p>• Detection Model: <span className="font-bold">Isolation Forest</span></p>
-                <p>• Confidence Level: <span className="font-bold text-green-300">Very High</span></p>
+            {/* Detection Agent */}
+            {incident.agentReasoning?.detectionAgent ? (
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-blue-300 mb-3">Detection Agent</h3>
+                <div className="space-y-2 text-sm text-slate-300">
+                  <p>• Analysis: <span className="font-bold text-blue-300">{incident.agentReasoning.detectionAgent.analysis || 'N/A'}</span></p>
+                  <p>• Confidence: <span className="font-bold text-blue-300">{incident.agentReasoning.detectionAgent.confidence || 'N/A'}</span></p>
+                  <p>• Detected: <span className="font-bold">{new Date(incident.agentReasoning.detectionAgent.timestamp).toLocaleString()}</span></p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-700/20 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-400 mb-3">Detection Agent</h3>
+                <p className="text-sm text-slate-400">No detection data available</p>
+              </div>
+            )}
 
-            {/* Threat Intelligence */}
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-red-300 mb-3">Threat Intelligence</h3>
-              <div className="space-y-2 text-sm text-slate-300">
-                <p>• CVSS Score: <span className="font-bold text-red-300">8.9 (High)</span></p>
-                <p>• Attack Vector: <span className="font-bold">Network</span></p>
-                <p>• Threat Actor: <span className="font-bold">Automated/Unknown</span></p>
-                <p>• Risk Level: <span className="font-bold text-red-300">Critical</span></p>
+            {/* Analysis Agent */}
+            {incident.agentReasoning?.analysisAgent ? (
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-red-300 mb-3">Analysis Agent</h3>
+                <div className="space-y-2 text-sm text-slate-300">
+                  <p>• Root Cause: <span className="font-bold text-red-300">{incident.agentReasoning.analysisAgent.rootCause || 'N/A'}</span></p>
+                  <p>• Affected Systems: <span className="font-bold">{incident.agentReasoning.analysisAgent.affectedSystems?.join(', ') || 'N/A'}</span></p>
+                  <p>• Estimated Impact: <span className="font-bold text-orange-300">{incident.agentReasoning.analysisAgent.estimatedImpact || 'N/A'}</span></p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-700/20 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-400 mb-3">Analysis Agent</h3>
+                <p className="text-sm text-slate-400">No analysis data available</p>
+              </div>
+            )}
 
-            {/* Performance Impact */}
-            <div className="bg-orange-500/10 border border-orange-500/30 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-orange-300 mb-3">Performance Impact</h3>
-              <div className="space-y-2 text-sm text-slate-300">
-                <p>• Latency Increase: <span className="font-bold">+245ms</span></p>
-                <p>• CPU Usage: <span className="font-bold">78%</span></p>
-                <p>• Memory Usage: <span className="font-bold">62%</span></p>
-                <p>• Error Rate: <span className="font-bold text-orange-300">12.5%</span></p>
+            {/* Response Agent */}
+            {incident.agentReasoning?.responseAgent ? (
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-green-300 mb-3">Response Agent</h3>
+                <div className="space-y-2 text-sm text-slate-300">
+                  <p>• Actions Executed: <span className="font-bold text-green-300">{incident.agentReasoning.responseAgent.actions?.length || 0}</span></p>
+                  <p>• Success Rate: <span className="font-bold text-green-300">
+                    {incident.agentReasoning.responseAgent.actions?.length > 0 
+                      ? `${Math.round((incident.agentReasoning.responseAgent.actions.filter((a: any) => a.success).length / incident.agentReasoning.responseAgent.actions.length) * 100)}%`
+                      : 'N/A'
+                    }
+                  </span></p>
+                  <p>• Executed: <span className="font-bold">{new Date(incident.agentReasoning.responseAgent.timestamp).toLocaleString()}</span></p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-700/20 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-400 mb-3">Response Agent</h3>
+                <p className="text-sm text-slate-400">No response data available</p>
+              </div>
+            )}
 
-            {/* Isolation Results */}
-            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-green-300 mb-3">Isolation Results</h3>
-              <div className="space-y-2 text-sm text-slate-300">
-                <p>• Quarantine Status: <span className="font-bold text-green-300">Active</span></p>
-                <p>• Requests Blocked: <span className="font-bold">1,247</span></p>
-                <p>• Sources Isolated: <span className="font-bold">3</span></p>
-                <p>• Duration: <span className="font-bold">47 minutes</span></p>
+            {/* Communications Agent */}
+            {incident.agentReasoning?.commsAgent ? (
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-purple-300 mb-3">Communications Agent</h3>
+                <div className="space-y-2 text-sm text-slate-300">
+                  <p>• Notifications Sent: <span className="font-bold text-purple-300">{incident.agentReasoning.commsAgent.notifications?.length || 0}</span></p>
+                  <p>• Channels: <span className="font-bold">{incident.agentReasoning.commsAgent.notifications?.map((n: any) => n.channel).join(', ') || 'N/A'}</span></p>
+                  <p>• Sent: <span className="font-bold">{new Date(incident.agentReasoning.commsAgent.timestamp).toLocaleString()}</span></p>
+                </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-slate-700/20 border border-slate-600 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-slate-400 mb-3">Communications Agent</h3>
+                <p className="text-sm text-slate-400">No communication data available</p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Automated Response Actions */}
-        <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-green-400 mb-6 flex items-center gap-2">
-            <CheckCircle className="w-5 h-5" />
-            Automated Response Actions Executed
-          </h2>
-          
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-green-500/10 rounded p-4 border border-green-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="font-semibold text-green-300">AI Agent Protocol Initiated</span>
-              </div>
-              <p className="text-sm text-slate-300">Automatic threat response triggered at 19:28:39</p>
+        {incident.agentReasoning?.responseAgent?.actions && 
+         incident.agentReasoning.responseAgent.actions.length > 0 ? (
+          <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-green-400 mb-6 flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" />
+              Automated Response Actions Executed
+            </h2>
+            
+            <div className="grid grid-cols-1 gap-4">
+              {incident.agentReasoning.responseAgent.actions.map((action: any, idx: number) => (
+                <div 
+                  key={idx} 
+                  className={`rounded p-4 border ${
+                    action.success 
+                      ? 'bg-green-500/10 border-green-500/30' 
+                      : 'bg-red-500/10 border-red-500/30'
+                  }`}
+                >
+                  <div className="flex items-center gap-2 mb-3">
+                    <div className={`w-3 h-3 rounded-full ${
+                      action.success ? 'bg-green-400' : 'bg-red-400'
+                    }`}></div>
+                    <span className={`font-semibold ${
+                      action.success ? 'text-green-300' : 'text-red-300'
+                    }`}>
+                      {action.action.replace(/_/g, ' ').toUpperCase()}
+                    </span>
+                    {action.success && <span className="text-xs text-green-400 ml-auto">✓ EXECUTED</span>}
+                  </div>
+                  <div className="text-sm text-slate-300 mb-2">
+                    <p><span className="font-semibold">Target:</span> {action.target}</p>
+                    <p className="mt-2"><span className="font-semibold">Result:</span> {action.result}</p>
+                  </div>
+                  
+                  {/* Show blocked IPs if applicable */}
+                  {action.action === 'block_ip' && (
+                    <div className="bg-red-500/20 border border-red-500/30 rounded p-3 mt-3">
+                      <p className="text-xs font-semibold text-red-300 mb-2">BLOCKED IP ADDRESSES:</p>
+                      <p className="text-sm text-slate-300 font-mono">
+                        {incident.metadata?.sourceIp || incident.metadata?.originIp || 'See firewall logs for details'}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Show maintenance ticket if applicable */}
+                  {action.action === 'dispatch_maintenance' && (
+                    <div className="bg-blue-500/20 border border-blue-500/30 rounded p-3 mt-3">
+                      <p className="text-xs font-semibold text-blue-300 mb-2">MAINTENANCE TICKET:</p>
+                      <div className="text-sm text-slate-300 space-y-1">
+                        <p>Location: <span className="font-mono">{incident.metadata?.location || 'General'}</span></p>
+                        <p>Room: <span className="font-mono">{incident.metadata?.room || incident.metadata?.location || 'Unknown'}</span></p>
+                        <p>Priority: <span className="font-mono">{incident.severity === 'critical' ? 'URGENT' : 'ROUTINE'}</span></p>
+                        <p>Status: <span className="text-green-300">Ticket Created</span></p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
 
-            <div className="bg-green-500/10 rounded p-4 border border-green-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="font-semibold text-green-300">Threat Isolation Activated</span>
+            {/* Response Summary */}
+            {incident.agentReasoning.responseAgent.timestamp && (
+              <div className="mt-6 pt-4 border-t border-green-500/30">
+                <p className="text-sm text-slate-400">
+                  Response executed at: <span className="text-slate-200">
+                    {new Date(incident.agentReasoning.responseAgent.timestamp).toLocaleString()}
+                  </span>
+                </p>
               </div>
-              <p className="text-sm text-slate-300">Malicious IPs and requests blocked</p>
-            </div>
-
-            <div className="bg-green-500/10 rounded p-4 border border-green-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="font-semibold text-green-300">Service Readiness Check</span>
-              </div>
-              <p className="text-sm text-slate-300">Recovery actions initialized</p>
-            </div>
-
-            <div className="bg-green-500/10 rounded p-4 border border-green-500/30">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 rounded-full bg-green-400"></div>
-                <span className="font-semibold text-green-300">Compliance Check Completed</span>
-              </div>
-              <p className="text-sm text-slate-300">All regulatory requirements validated</p>
-            </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-yellow-400 mb-3">Response Status</h2>
+            <p className="text-slate-300">No automated response actions executed for this incident yet.</p>
+          </div>
+        )}
 
         {/* Incident Type Details */}
         {incident.type && (
