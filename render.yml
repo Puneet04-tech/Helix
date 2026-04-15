@@ -7,14 +7,10 @@ services:
     plan: starter
     region: oregon
     
-    # Root directory for the backend service
-    # This makes Render treat the 'backend' folder as the service root
-    # so 'npm install' and 'npm run start' happen inside 'backend/'
-    # without needing 'cd backend' in every command.
-    rootDir: .
-    
-    buildCommand: cd backend && npm install && npm run build
-    startCommand: cd backend && node dist/main
+    # Consolidating build to ensure dist is generated in the correct context
+    # and preventing potential cache/layer issues with nested 'cd'
+    buildCommand: npm install --prefix backend && npm run build --prefix backend
+    startCommand: node backend/dist/main.js
     
     # Auto-deploy
     autoDeploy: true
