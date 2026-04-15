@@ -171,44 +171,6 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [user, token]);
 
-  useEffect(() => {
-    if (liveMode && wsIncidents.length > 0) {
-      // Add new WebSocket incidents to the beginning
-      setIncidents((prev) => {
-        // Filter out incidents that are already in the list by checking ID
-        const currentIds = new Set(prev.map(i => i.id));
-        
-        const newIncidents = wsIncidents
-          .filter((inc: any) => !currentIds.has(inc.id))
-          .map((inc: any) => ({
-            id: inc.id,
-            type: inc.type,
-            service: inc.service,
-            severity: inc.severity,
-            status: inc.status,
-            timestamp: inc.timestamp ? new Date(inc.timestamp).toLocaleString() : new Date().toLocaleString(),
-            description: inc.description,
-            rootCause: inc.rootCause,
-            affectedUsers: inc.affectedUsers,
-            confidence: inc.confidence,
-            isLive: true,
-          }));
-        
-        if (newIncidents.length === 0) return prev;
-        return [...newIncidents, ...prev].slice(0, 20); // Keep latest 20
-      });
-
-      // Update metrics
-      const newActiveCount = wsIncidents.filter((i: any) => i.status === 'active' || i.status === 'detecting' || i.status === 'responding').length;
-      if (newActiveCount > 0) {
-        setMetrics((prev) => ({
-          ...prev,
-          active: prev.active + newActiveCount,
-        }));
-      }
-    }
-  }, [wsIncidents, liveMode]);
-
   const handleRefresh = async () => {
     await fetchDashboardData();
   };
