@@ -201,9 +201,34 @@ export default function Dashboard() {
     }
   };
 
-  const handleOpenIncident = (incident: Incident) => {
-    setSelectedIncident(incident);
-    setIsModalOpen(true);
+  const handleOpenIncident = async (incident: Incident) => {
+    const id = incident.id || incident._id || incident.incidentId;
+    if (!id || !token) return;
+
+    try {
+      // Pre-fetch detail before opening to avoid 401s in background
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.status === 401) {
+        console.error('Unauthorized access to incident details');
+        setError('Session expired. Please log in again.');
+        return;
+      }
+
+      const detail = await response.json();
+      setSelectedIncident({ ...incident, ...detail });
+      setIsModalOpen(true);
+    } catch (err) {
+      console.error('Failed to fetch incident detail:', err);
+      // Fallback to basic incident data if detail fetch fails
+      setSelectedIncident(incident);
+      setIsModalOpen(true);
+    }
   };
 
   return (
