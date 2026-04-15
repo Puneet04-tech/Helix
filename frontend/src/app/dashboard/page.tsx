@@ -294,7 +294,11 @@ export default function Dashboard() {
               incidents.map((incident, index) => (
                 <div
                   key={incident.id || incident._id || incident.incidentId || index}
-                  onClick={() => handleOpenIncident(incident)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleOpenIncident(incident);
+                  }}
                   className="cursor-pointer hover:bg-[#1E3A5F]/50 transition-colors"
                 >
                   <IncidentCard 
