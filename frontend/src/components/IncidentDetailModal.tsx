@@ -52,21 +52,24 @@ export default function IncidentDetailModal({
         onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside modal
       >
         {/* Header */}
-        <div className="bg-[#0D1B3E] border-b border-[#1E3A5F] px-8 py-6 flex items-center justify-between">
+        <div className="bg-[#0D1B3E] border-b border-[#1E3A5F] px-8 py-6 flex items-center justify-between pointer-events-auto">
           <div className="flex items-center gap-4">
             <div className={`px-3 py-1 rounded-lg border ${getSeverityColor(incident.severity)}`}>
-              {incident.severity.toUpperCase()}
+              {(incident.severity || 'info').toUpperCase()}
             </div>
             <div>
               <h2 className="text-2xl font-bold text-white">
-                {incident.type.replace(/_/g, ' ').toUpperCase()}
+                {(incident.type || 'UNKNOWN').replace(/_/g, ' ').toUpperCase()}
               </h2>
-              <p className="text-sm text-slate-400 mt-1">{incident.id}</p>
+              <p className="text-sm text-slate-400 mt-1">{incident.id || incident._id}</p>
             </div>
           </div>
           <button
-            onClick={onClose}
-            className="p-2 hover:bg-[#1E3A5F] rounded-lg transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              onClose();
+            }}
+            className="p-2 hover:bg-[#1E3A5F] rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-6 h-6 text-slate-400" />
           </button>
