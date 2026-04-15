@@ -3,7 +3,7 @@
 [build]
 publish = "frontend/.next"
 command = "cd frontend && npm install && npm run build"
-base = "."
+base = "frontend"
 
 [build.environment]
 NODE_VERSION = "22.22.0"
