@@ -46,7 +46,7 @@ export default function ChatbotPage() {
       
       // Call backend chatbot endpoint
       const response = await fetch(
-        'http://localhost:5000/chatbot/query',
+        `${process.env.NEXT_PUBLIC_API_URL}/chatbot/query`,
         {
           method: 'POST',
           headers: {

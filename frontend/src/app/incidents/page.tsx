@@ -32,8 +32,8 @@ export default function IncidentsPage() {
       try {
         const projectId = user.projectIds?.[0];
         const url = projectId
-          ? `http://localhost:5000/incidents/project/${projectId}`
-          : 'http://localhost:5000/incidents';
+          ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
 
         const response = await fetch(url, {
           headers: {

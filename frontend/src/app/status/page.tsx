@@ -30,8 +30,8 @@ export default function StatusPage() {
         // Try to fetch from status endpoint
         const response = await fetch(
           projectId
-            ? `http://localhost:5000/status/project/${projectId}`
-            : 'http://localhost:5000/status',
+            ? `${process.env.NEXT_PUBLIC_API_URL}/status/project/${projectId}`
+            : `${process.env.NEXT_PUBLIC_API_URL}/status`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -46,8 +46,8 @@ export default function StatusPage() {
         } else {
           // Fallback: get services from incidents
           const incidentsUrl = projectId
-            ? `http://localhost:5000/incidents/project/${projectId}`
-            : 'http://localhost:5000/incidents';
+            ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}`
+            : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
 
           const incidentsResponse = await fetch(incidentsUrl, {
             headers: {

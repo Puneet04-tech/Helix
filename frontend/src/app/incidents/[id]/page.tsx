@@ -24,7 +24,7 @@ export default function IncidentDetailPage() {
       setError('');
 
       try {
-        const response = await fetch(`http://localhost:5000/incidents/${incidentId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -33,7 +33,7 @@ export default function IncidentDetailPage() {
 
         if (!response.ok) {
           // If 404, try fetching all incidents and finding by either _id or id
-          const allResponse = await fetch('http://localhost:5000/incidents', {
+          const allResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents`, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',

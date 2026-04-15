@@ -62,7 +62,7 @@ export default function Dashboard() {
       // Try stats endpoint first
       if (projectId) {
         endpoints.push(
-          fetch(`http://localhost:5000/incidents/project/${projectId}/stats`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}/stats`, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
@@ -73,8 +73,8 @@ export default function Dashboard() {
 
       // Always fetch incidents (with or without projectId)
       const incidentUrl = projectId
-        ? `http://localhost:5000/incidents/project/${projectId}`
-        : 'http://localhost:5000/incidents';
+        ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
       
       endpoints.push(
         fetch(incidentUrl, {
