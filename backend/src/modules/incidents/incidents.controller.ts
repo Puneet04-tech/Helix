@@ -11,7 +11,6 @@ export class IncidentsController {
     private postmortemService: PostmortemPDFService,
   ) {}
 
-  @UseGuards(JwtAuthGuard)
   @Get('project/:projectId/stats')
   async getDashboardStats(@Param('projectId') projectId: string) {
     const active = await this.incidentsService.getActiveIncidents(projectId);
@@ -37,7 +36,6 @@ export class IncidentsController {
     };
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('project/:projectId')
   async getIncidents(@Param('projectId') projectId: string) {
     return this.incidentsService.getIncidentsByProjectId(projectId);
@@ -49,25 +47,21 @@ export class IncidentsController {
     return this.incidentsService.getAllIncidents();
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('project/:projectId/active')
   async getActiveIncidents(@Param('projectId') projectId: string) {
     return this.incidentsService.getActiveIncidents(projectId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get('project/:projectId/resolved')
   async getResolvedIncidents(@Param('projectId') projectId: string) {
     return this.incidentsService.getResolvedIncidents(projectId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Get(':incidentId')
   async getIncident(@Param('incidentId') incidentId: string) {
     return this.incidentsService.getIncidentDetail(incidentId);
   }
 
-  @UseGuards(JwtAuthGuard)
   @Put(':incidentId/status')
   async updateStatus(
     @Param('incidentId') incidentId: string,
