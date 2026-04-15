@@ -48,8 +48,9 @@ export default function Dashboard() {
 
   // Fetch incidents and metrics from backend
   const fetchDashboardData = async () => {
-    if (!user || !token) {
-      console.log('Skipping fetch: No user or token');
+    // If not authenticated, we stop immediately to avoid 401s in console
+    if (!token) {
+      console.log('Dashboard fetch suppressed: Token not yet available');
       return;
     }
 
@@ -57,10 +58,14 @@ export default function Dashboard() {
     setError('');
 
     try {
-      // Try to get projectId, fallback to fetching all
-      const projectId = user.projectIds?.[0];
+      // Use user from auth or extract from token directly if needed
+      if (!user) {
+        console.log('Dashboard fetch suppressed: User data not yet loaded');
+        return;
+      }
 
-      const endpoints = [];
+      const projectId = user.projectIds?.[0];
+      const endpoints: Promise<any>[] = [];
       
       // Try stats endpoint first
       if (projectId) {
