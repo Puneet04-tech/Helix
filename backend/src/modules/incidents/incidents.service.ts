@@ -168,4 +168,38 @@ export class IncidentsService {
     const result = await this.incidentModel.deleteMany({ type });
     return { message: `Deleted ${result.deletedCount} incidents of type ${type}`, deleted: result.deletedCount };
   }
+
+  async runAnalysisForIncident(incidentId: string) {
+    const incident = await this.incidentModel.findOne({ incidentId });
+    if (!incident) {
+      throw new Error('Incident not found');
+    }
+
+    this.logger.debug(`Manually triggering agent chain for incident ${incidentId}`);
+    
+    // Trigger the agent chain manually
+    this.agentsService.runAgentChain(incident.projectId, incident).catch(err => {
+      this.logger.error(`Manual agent chain failed: ${err.message}`);
+    });
+
+    return { message: 'Analysis triggered for incident', incidentId };
+  }
+
+  async generatePostmortemForIncident(incidentId: string) {
+    const incident = await this.incidentModel.findOne({ incidentId });
+    if (!incident) {
+      throw new Error('Incident not found');
+    }
+
+    this.logger.debug(`Manually generating postmortem for incident ${incidentId}`);
+    
+    const postmortem = await this.agentsService.generatePostmortem(incident);
+    
+    // Store postmortem content in incident
+    incident.postmortemContent = postmortem.content;
+    incident.postmortemGeneratedAt = new Date();
+    await incident.save();
+
+    return postmortem;
+  }
 }

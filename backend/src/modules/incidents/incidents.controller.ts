@@ -78,6 +78,28 @@ export class IncidentsController {
     });
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Post(':incidentId/analyze')
+  async triggerAnalysis(@Param('incidentId') incidentId: string) {
+    try {
+      return await this.incidentsService.runAnalysisForIncident(incidentId);
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(err.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':incidentId/postmortem/generate')
+  async generatePostmortem(@Param('incidentId') incidentId: string) {
+    try {
+      return await this.incidentsService.generatePostmortemForIncident(incidentId);
+    } catch (error) {
+      const err = error as Error;
+      throw new HttpException(err.message, HttpStatus.BAD_REQUEST);
+    }
+  }
+
   @Post('create')
   async createIncidentDirect(
     @Body() body: {

@@ -101,6 +101,18 @@ export class Incident {
   @Prop({ type: Date })
   postmortemGeneratedAt?: Date;
 
+  @Prop()
+  postmortemContent?: string;
+
+  @Prop({ type: Object })
+  metadata?: {
+    sourceIp?: string;
+    originIp?: string;
+    location?: string;
+    room?: string;
+    [key: string]: any;
+  };
+
   @Prop({ default: false })
   isCorrelated?: boolean;
 

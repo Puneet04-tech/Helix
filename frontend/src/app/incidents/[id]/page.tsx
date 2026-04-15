@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import DashboardLayout from '../../../components/DashboardLayout';
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Shield, Users, Zap, TrendingUp } from 'lucide-react';
+import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Shield, Users, Zap, TrendingUp, Loader, FileText } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function IncidentDetailPage() {
@@ -14,6 +14,8 @@ export default function IncidentDetailPage() {
 
   const [incident, setIncident] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [generatingPostmortem, setGeneratingPostmortem] = useState(false);
 
   useEffect(() => {
     const loadIncident = async () => {
@@ -54,6 +56,82 @@ export default function IncidentDetailPage() {
 
     loadIncident();
   }, [incidentId, token]);
+
+  const handleAnalyzeIncident = async () => {
+    if (!incidentId || !token) return;
+    
+    setAnalyzing(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/analyze`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Re-fetch the incident data
+        const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          setIncident(data);
+          // Update session storage too
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(`incident_${incidentId}`, JSON.stringify(data));
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to analyze incident:', err);
+    } finally {
+      setAnalyzing(false);
+    }
+  };
+
+  const handleGeneratePostmortem = async () => {
+    if (!incidentId || !token) return;
+    
+    setGeneratingPostmortem(true);
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/postmortem/generate`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        // Re-fetch the incident data
+        const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          setIncident(data);
+          // Update session storage too
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem(`incident_${incidentId}`, JSON.stringify(data));
+          }
+        }
+      }
+    } catch (err) {
+      console.error('Failed to generate postmortem:', err);
+    } finally {
+      setGeneratingPostmortem(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -373,6 +451,71 @@ export default function IncidentDetailPage() {
             <p className="text-slate-300 mt-2">
               <span className="font-semibold">Category:</span> {incident.service || 'Unknown'}
             </p>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            onClick={handleAnalyzeIncident}
+            disabled={analyzing}
+            className={`rounded-lg p-4 border flex items-center justify-center gap-2 font-semibold transition-all ${
+              analyzing 
+                ? 'bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed'
+                : 'bg-blue-500/20 border-blue-500/50 text-blue-300 hover:bg-blue-500/30'
+            }`}
+          >
+            {analyzing ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Zap className="w-5 h-5" />
+                Analyze Incident with Grok
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={handleGeneratePostmortem}
+            disabled={generatingPostmortem}
+            className={`rounded-lg p-4 border flex items-center justify-center gap-2 font-semibold transition-all ${
+              generatingPostmortem 
+                ? 'bg-slate-700 border-slate-600 text-slate-400 cursor-not-allowed'
+                : 'bg-green-500/20 border-green-500/50 text-green-300 hover:bg-green-500/30'
+            }`}
+          >
+            {generatingPostmortem ? (
+              <>
+                <Loader className="w-5 h-5 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              <>
+                <FileText className="w-5 h-5" />
+                Generate Postmortem Report
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Postmortem Report Display */}
+        {incident.postmortemContent && (
+          <div className="bg-slate-900/40 border border-slate-800 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+              <FileText className="w-5 h-5 text-blue-400" />
+              Postmortem Report
+            </h2>
+            <div className="bg-slate-950/50 border border-slate-800 rounded p-4 text-slate-300 text-sm whitespace-pre-wrap font-mono overflow-auto max-h-96">
+              {incident.postmortemContent}
+            </div>
+            {incident.postmortemGeneratedAt && (
+              <p className="text-xs text-slate-400 mt-3">
+                Generated: {new Date(incident.postmortemGeneratedAt).toLocaleString()}
+              </p>
+            )}
           </div>
         )}
       </div>
