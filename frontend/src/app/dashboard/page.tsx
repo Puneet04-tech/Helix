@@ -203,6 +203,10 @@ export default function Dashboard() {
   const handleOpenIncident = (incident: Incident) => {
     const id = incident.id || incident._id || incident.incidentId;
     if (id) {
+      // Store incident data in sessionStorage to avoid re-fetching
+      if (typeof window !== 'undefined') {
+        sessionStorage.setItem(`incident_${id}`, JSON.stringify(incident));
+      }
       router.push(`/incidents/${id}`);
     }
   };
