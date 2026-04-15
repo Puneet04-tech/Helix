@@ -2,7 +2,7 @@
 
 [build]
 publish = "frontend/.next"
-command = "cd frontend && npm run build"
+command = "cd frontend && npm install && npm run build"
 base = "."
 
 [build.environment]
