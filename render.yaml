@@ -1,0 +1,60 @@
+services:
+  - type: web
+    name: helix-api
+    env: node
+    
+    # Build and start commands
+    buildCommand: npm install && npm run build
+    startCommand: npm run start:prod
+    
+    # Working directory must be backend
+    workingDirectory: backend
+    
+    # Root directory
+    rootDir: .
+    
+    # Region
+    region: oregon
+    
+    # Instance type - Starter (512MB) with memory optimization
+    plan: starter
+    
+    # Auto-deploy
+    autoDeploy: true
+    branch: main
+    
+    # Port
+    port: 3000
+    
+    # Environment variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: NODE_OPTIONS
+        value: "--max-old-space-size=400 --optimize-for-size --gc-interval=100"
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: LOG_LEVEL
+        value: info
+      
+      # Database - Use MongoDB Atlas (set via dashboard)
+      - key: MONGODB_URI
+        sync: false
+      
+      # Authentication (set via dashboard)
+      - key: JWT_SECRET
+        sync: false
+      - key: JWT_EXPIRATION
+        value: "24h"
+      
+      # Groq AI (set via dashboard)
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      
+      # HuggingFace (optional, set via dashboard)
+      - key: HUGGINGFACE_API_KEY
+        sync: false
