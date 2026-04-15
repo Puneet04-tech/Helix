@@ -7,13 +7,12 @@ services:
     plan: starter
     region: oregon
     
-    # Using rootDir: backend is the most reliable way to ensure 
-    # Render packages the dist folder correctly.
-    # We must ensure npm start points to the right place.
+    # Using direct TypeScript execution to bypass 'dist' missing issues
+    # This is a robust fallback for the Render Hobby/Starter tiers
     rootDir: backend
     
-    buildCommand: npm install && npm run build
-    startCommand: node dist/main.js
+    buildCommand: npm install
+    startCommand: npm run start:prod
     
     # Auto-deploy
     autoDeploy: true
