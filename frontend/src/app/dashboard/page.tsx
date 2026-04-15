@@ -330,8 +330,8 @@ export default function Dashboard() {
                   <IncidentCard 
                     {...incident} 
                     id={incident.id || incident._id || incident.incidentId || ""} 
-                    severity={incident.severity === 'active' ? 'critical' : (incident.severity as any)}
-                    status={incident.status === 'active' ? 'detecting' : (incident.status as any)}
+                    severity={(incident.severity as any) === 'active' ? 'critical' : (incident.severity as any)}
+                    status={(incident.status as any) === 'active' ? 'detecting' : (incident.status as any)}
                     timestamp={incident.timestamp || ""}
                   />
                 </div>
