@@ -7,10 +7,13 @@ services:
     plan: starter
     region: oregon
     
-    # Consolidating build to ensure dist is generated in the correct context
-    # and preventing potential cache/layer issues with nested 'cd'
-    buildCommand: npm install --prefix backend && npm run build --prefix backend
-    startCommand: node backend/dist/main.js
+    # Using rootDir: backend is the most reliable way to ensure 
+    # Render packages the dist folder correctly.
+    # We must ensure npm start points to the right place.
+    rootDir: backend
+    
+    buildCommand: npm install && npm run build
+    startCommand: node dist/main.js
     
     # Auto-deploy
     autoDeploy: true
