@@ -1,8 +1,8 @@
 # Netlify Configuration for Helix Frontend
 
 [build]
-publish = "frontend/.next"
-command = "cd frontend && npm install && npm run build"
+publish = ".next"
+command = "npm install && npm run build"
 base = "frontend"
 
 [build.environment]
