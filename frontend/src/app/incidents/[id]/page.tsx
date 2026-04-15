@@ -70,7 +70,7 @@ export default function IncidentDetailPage() {
     fetchIncident();
   }, [incidentId, token]);
 
-  const severityColors: { [key: string]: string } = {
+  const severityColors: any = {
     critical: 'bg-red-900/40 text-red-400 border-red-800',
     error: 'bg-red-900/40 text-red-400 border-red-800',
     warning: 'bg-amber-900/40 text-amber-400 border-amber-800',
@@ -80,16 +80,26 @@ export default function IncidentDetailPage() {
     low: 'bg-sky-900/40 text-sky-400 border-sky-800',
   };
 
-  const statusColors: { [key: string]: string } = {
+  const statusColors: any = {
     detecting: 'bg-orange-900/40 text-orange-400',
     analyzing: 'bg-blue-900/40 text-blue-400',
     responding: 'bg-yellow-900/40 text-yellow-400',
     resolved: 'bg-green-900/40 text-green-400',
+    active: 'bg-orange-900/40 text-orange-400',
     detecting_anomaly: 'bg-orange-900/40 text-orange-400',
     gathering_data: 'bg-blue-900/40 text-blue-400',
     pending: 'bg-yellow-900/40 text-yellow-400',
     closed: 'bg-green-900/40 text-green-400',
   };
+
+  const getSeverityStyle = (severity: string) => {
+    return severityColors[severity?.toLowerCase()] || severityColors.info;
+  };
+
+  const getStatusStyle = (status: string) => {
+    return statusColors[status?.toLowerCase()] || statusColors.detecting;
+  };
+
 
   if (loading) {
     return (
@@ -173,13 +183,13 @@ export default function IncidentDetailPage() {
         {/* Status Cards */}
         <div className="grid grid-cols-4 gap-4">
           {/* Severity */}
-          <div className={`rounded-lg p-4 border ${severityColors[severity]}`}>
+          <div className={`rounded-lg p-4 border ${getSeverityStyle(incident.severity)}`}>
             <div className="text-xs font-semibold uppercase opacity-75">Severity</div>
             <div className="text-xl font-bold mt-2 capitalize">{severityDisplay}</div>
           </div>
 
           {/* Status */}
-          <div className={`rounded-lg p-4 border ${statusColors[status]}`}>
+          <div className={`rounded-lg p-4 border ${getStatusStyle(incident.status)}`}>
             <div className="text-xs font-semibold uppercase opacity-75">Status</div>
             <div className="text-xl font-bold mt-2 capitalize flex items-center gap-2">
               {status === 'resolved' ? <CheckCircle className="w-5 h-5" /> : <Clock className="w-5 h-5" />}
