@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
-import '@/styles/globals.css';
-import { AuthProvider } from '@/context/AuthContext';
+import '../styles/globals.css';
+import { AuthProvider } from '../context/AuthContext';
 
 export const metadata: Metadata = {
   title: 'Helix - Autonomous Threat Detection & Response',

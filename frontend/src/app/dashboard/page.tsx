@@ -1,13 +1,13 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import DashboardLayout from '@/components/DashboardLayout';
-import MetricCard from '@/components/MetricCard';
-import IncidentCard from '@/components/IncidentCard';
-import IncidentDetailModal from '@/components/IncidentDetailModal';
+import DashboardLayout from '../components/DashboardLayout';
+import MetricCard from '../components/MetricCard';
+import IncidentCard from '../components/IncidentCard';
+import IncidentDetailModal from '../components/IncidentDetailModal';
 import { RefreshCw, AlertTriangle, Play, Square, Zap } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-import { useWebSocket } from '@/hooks/useWebSocket';
+import { useAuth } from '../context/AuthContext';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 export default function Dashboard() {
   type Incident = {

@@ -1,6 +1,6 @@
 'use client';
 
-import DashboardLayout from '@/components/DashboardLayout';
+import DashboardLayout from '../components/DashboardLayout';
 import { Save } from 'lucide-react';
 import { useState } from 'react';
 
