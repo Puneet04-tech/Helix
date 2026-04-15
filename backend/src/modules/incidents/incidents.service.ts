@@ -125,7 +125,12 @@ export class IncidentsService {
   }
 
   async getIncidentDetail(incidentId: string) {
-    return this.incidentModel.findOne({ incidentId }).lean();
+    // Try to find by _id first (MongoDB ObjectId), then by incidentId field
+    let incident = await this.incidentModel.findById(incidentId).lean();
+    if (!incident) {
+      incident = await this.incidentModel.findOne({ incidentId }).lean();
+    }
+    return incident;
   }
 
   async getAllIncidents(limit: number = 100) {
@@ -170,28 +175,40 @@ export class IncidentsService {
   }
 
   async runAnalysisForIncident(incidentId: string) {
-    const incident = await this.incidentModel.findOne({ incidentId });
+    // Try to find by _id first (MongoDB ObjectId), then by incidentId field
+    let incident = await this.incidentModel.findById(incidentId);
     if (!incident) {
-      throw new Error('Incident not found');
+      incident = await this.incidentModel.findOne({ incidentId });
+    }
+    if (!incident) {
+      throw new Error(`Incident not found: ${incidentId}`);
     }
 
-    this.logger.debug(`Manually triggering agent chain for incident ${incidentId}`);
+    this.logger.debug(`Manually triggering agent chain for incident ${incident.incidentId || incident._id}`);
     
     // Trigger the agent chain manually
     this.agentsService.runAgentChain(incident.projectId, incident).catch(err => {
       this.logger.error(`Manual agent chain failed: ${err.message}`);
     });
 
-    return { message: 'Analysis triggered for incident', incidentId };
+    return { 
+      message: 'Analysis triggered for incident', 
+      incidentId: incident.incidentId || incident._id,
+      status: 'analysis_started'
+    };
   }
 
   async generatePostmortemForIncident(incidentId: string) {
-    const incident = await this.incidentModel.findOne({ incidentId });
+    // Try to find by _id first (MongoDB ObjectId), then by incidentId field
+    let incident = await this.incidentModel.findById(incidentId);
     if (!incident) {
-      throw new Error('Incident not found');
+      incident = await this.incidentModel.findOne({ incidentId });
+    }
+    if (!incident) {
+      throw new Error(`Incident not found: ${incidentId}`);
     }
 
-    this.logger.debug(`Manually generating postmortem for incident ${incidentId}`);
+    this.logger.debug(`Manually generating postmortem for incident ${incident.incidentId || incident._id}`);
     
     const postmortem = await this.agentsService.generatePostmortem(incident);
     
@@ -200,6 +217,9 @@ export class IncidentsService {
     incident.postmortemGeneratedAt = new Date();
     await incident.save();
 
-    return postmortem;
+    return {
+      ...postmortem,
+      incidentId: incident.incidentId || incident._id
+    };
   }
 }
