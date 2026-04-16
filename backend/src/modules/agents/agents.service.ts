@@ -178,13 +178,23 @@ export class AgentsService {
       success: boolean;
     }> = [];
 
-    // Extract room number from title or description
+    // Extract room number from title, description, or metadata
     const extractRoomNumber = (text: string) => {
-      const match = text.match(/Room\s+(\d+)/i);
-      return match ? match[1] : 'Unknown';
+      // Look for "Room XXX" or "room XXX" pattern
+      const match = text.match(/room\s+(\d+)/i);
+      return match ? match[1] : null;
     };
 
-    const roomNumber = incident.metadata?.room || extractRoomNumber(incident.title + ' ' + (incident.description || ''));
+    let roomNumber = incident.metadata?.roomNumber;
+    if (!roomNumber) {
+      roomNumber = extractRoomNumber(incident.title || '');
+    }
+    if (!roomNumber) {
+      roomNumber = extractRoomNumber(incident.description || '');
+    }
+    if (!roomNumber) {
+      roomNumber = 'Unknown';
+    }
     const location = incident.metadata?.location || roomNumber;
 
     // Take appropriate response based on incident type and service

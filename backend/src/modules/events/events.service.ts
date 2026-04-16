@@ -68,6 +68,13 @@ export class EventsService {
             service: 'hotel-management',
             title: eventData.message || 'Guest Complaint',
             description: `Complaint ID: ${eventData.metadata?.complaintId || 'unknown'} - ${eventData.message}`,
+            metadata: {
+              ...eventData.metadata,
+              complaintId: eventData.metadata?.complaintId,
+              guestId: eventData.metadata?.guestId,
+              roomNumber: eventData.metadata?.roomNumber,
+              severity: eventData.metadata?.severity,
+            },
             analysis: {
               category: 'operational_issue',
               confidence: 1.0,

@@ -246,6 +246,10 @@ app.post('/api/complaints', (req: Request, res: Response) => {
   
   complaints.push(newComplaint);
   
+  // Look up guest to get room number
+  const guest = guests.find(g => g.id === newComplaint.guestId);
+  const roomNumber = guest?.roomNumber || 'Unknown';
+  
   // Send complaint to Helix as an event that triggers incident creation
   helix.track(
     'error',
@@ -257,6 +261,7 @@ app.post('/api/complaints', (req: Request, res: Response) => {
       guestId: newComplaint.guestId,
       severity: newComplaint.severity,
       description: newComplaint.description,
+      roomNumber: roomNumber,
       timestamp: newComplaint.timestamp,
       source: 'hotel-system'
     }
