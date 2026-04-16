@@ -1,6 +1,7 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AgentsService } from './agents.service';
+import { AgentsController } from './agents.controller';
 import { CorrelationService } from './correlation.service';
 import { Incident, IncidentSchema } from '../../common/schemas/incident.schema';
 import { Client, ClientSchema } from '../../common/schemas/client.schema';
@@ -15,6 +16,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
     ]),
     forwardRef(() => NotificationsModule),
   ],
+  controllers: [AgentsController],
   providers: [AgentsService, CorrelationService, PlaywrightService],
   exports: [AgentsService, CorrelationService],
 })

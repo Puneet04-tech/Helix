@@ -527,4 +527,89 @@ ${
       timestamp: new Date(),
     };
   }
+
+  /**
+   * Test Playwright browser automation capability
+   * Demonstrates autonomous browser actions for incident response
+   */
+  async testPlaywrightAction(action: string, parameters?: any) {
+    this.logger.log(`[PLAYWRIGHT TEST] Starting ${action} action`);
+
+    try {
+      // For demo, execute a safe action
+      const targetUrl = 'http://localhost:3000'; // Dashboard URL
+
+      const result = await this.playwrightService.executeAction(
+        action,
+        targetUrl,
+        parameters,
+      );
+
+      this.logger.log(`[PLAYWRIGHT TEST] Completed: ${JSON.stringify(result)}`);
+      return {
+        status: 'success',
+        action,
+        result,
+        message: `Playwright action '${action}' executed successfully`,
+      };
+    } catch (error) {
+      const err = error as Error;
+      this.logger.error(`[PLAYWRIGHT TEST] Failed: ${err.message}`);
+      return {
+        status: 'failed',
+        action,
+        error: err.message,
+        message: `Playwright action '${action}' failed`,
+      };
+    } finally {
+      // Clean up browser
+      await this.playwrightService.closeBrowser();
+    }
+  }
+
+  /**
+   * Get Playwright status and capabilities
+   */
+  async getPlaywrightStatus() {
+    return {
+      status: 'available',
+      service: 'PlaywrightService',
+      capabilities: [
+        {
+          action: 'restart_service',
+          description: 'Restart a service via web UI',
+          parameters: { none: 'service restarts automatically' },
+        },
+        {
+          action: 'scale_up',
+          description: 'Scale service instances in dashboard',
+          parameters: { instances: 'number of instances to scale to' },
+        },
+        {
+          action: 'clear_cache',
+          description: 'Clear application cache',
+          parameters: { none: 'cache clears automatically' },
+        },
+        {
+          action: 'failover',
+          description: 'Trigger failover to backup system',
+          parameters: { none: 'failover triggers automatically' },
+        },
+        {
+          action: 'kill_process',
+          description: 'Terminate a specific process',
+          parameters: { processId: 'process ID to terminate' },
+        },
+      ],
+      features: {
+        'Browser Control': true,
+        'Headless Execution': true,
+        'Page Navigation': true,
+        'Element Interaction': true,
+        'Screenshot Capture': true,
+      },
+      usage: 'POST /api/agents/playwright/test/{action}',
+      integrationStatus: 'ready',
+    };
+  }
 }
