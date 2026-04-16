@@ -418,11 +418,22 @@ export class AgentsService {
 
   async generatePostmortem(incident: any) {
     this.logger.log(`[POSTMORTEM] Generating comprehensive postmortem for incident ${incident.incidentId}`);
-
+    
+    // Log what data we have
     const detection = incident.agentReasoning?.detectionAgent || {};
     const analysis = incident.agentReasoning?.analysisAgent || {};
     const response = incident.agentReasoning?.responseAgent || {};
     const comms = incident.agentReasoning?.commsAgent || {};
+    
+    this.logger.log(`[POSTMORTEM] Data available: detection=${!!detection.analysis}, analysis=${!!analysis.rootCause}, response=${response.actions?.length || 0} actions, comms=${comms.notifications?.length || 0} notifications`);
+    
+    // Ensure we have meaningful data
+    if (!analysis.rootCause) {
+      this.logger.warn(`[POSTMORTEM] Missing analysis data for incident ${incident.incidentId}`);
+    }
+    if (!response.actions || response.actions.length === 0) {
+      this.logger.warn(`[POSTMORTEM] Missing response actions for incident ${incident.incidentId}`);
+    }
 
     const postmortemContent = `# Incident Postmortem Report
 
@@ -433,47 +444,55 @@ export class AgentsService {
 **Service**: ${incident.service}
 **Severity**: ${incident.severity}
 **Status**: ${incident.status}
-**Created**: ${incident.detectedAt}
+**Created**: ${new Date(incident.detectedAt).toISOString()}
 
 ## Executive Summary
 
 An incident was detected and automatically analyzed by the Helix threat detection system.
-${incident.agentReasoning?.analysisAgent?.rootCause || 'An incident occurred and was automatically mitigated.'}
+${analysis.rootCause || 'An incident occurred and was automatically mitigated.'}
 
 ## Detection Analysis
 
-**Detection Confidence**: ${(detection.confidence * 100).toFixed(1)}%
+**Detection Confidence**: ${detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A'}%
 **Detection Analysis**: ${detection.analysis || 'N/A'}
-**Detected At**: ${detection.timestamp || incident.detectedAt}
+**Detected At**: ${detection.timestamp ? new Date(detection.timestamp).toISOString() : incident.detectedAt}
 
 ## Root Cause Analysis
 
 **Root Cause**: ${analysis.rootCause || 'Root cause analysis in progress'}
-**Affected Systems**: ${analysis.affectedSystems?.join(', ') || 'N/A'}
+**Affected Systems**: ${analysis.affectedSystems && analysis.affectedSystems.length > 0 ? analysis.affectedSystems.join(', ') : 'N/A'}
 **Estimated Impact**: ${analysis.estimatedImpact || 'Unknown'}
 
 ## Response Actions
 
 **Actions Executed**: ${response.actions?.length || 0}
-${response.actions?.map((a: any) => `
+${
+  response.actions && response.actions.length > 0
+    ? response.actions.map((a: any) => `
 - **${a.action.toUpperCase()}** on ${a.target}
   - Status: ${a.success ? '✅ Success' : '❌ Failed'}
-  - Details: ${a.result}`).join('\n') || '- No automated actions taken'}
+  - Details: ${a.result}`).join('\n')
+    : '- No automated actions taken'
+}
 
 ## Communications & Notifications
 
 **Notifications Sent**: ${comms.notifications?.length || 0}
-${comms.notifications?.map((n: any) => `- ${n.recipient} (${n.channel}): ${n.status}`).join('\n') || '- No notifications sent'}
+${
+  comms.notifications && comms.notifications.length > 0
+    ? comms.notifications.map((n: any) => `- ${n.recipient} (${n.channel}): ${n.status}`).join('\n')
+    : '- No notifications sent'
+}
 
 ## Timeline
 
 | Phase | Time | Status |
 |-------|------|--------|
-| Detection | ${incident.detectedAt} | ✅ Complete |
-| Analysis | ${analysis.timestamp || 'N/A'} | ✅ Complete |
-| Response | ${response.timestamp || 'N/A'} | ✅ Complete |
-| Communications | ${comms.timestamp || 'N/A'} | ✅ Complete |
-| Resolved | ${incident.resolvedAt || 'In Progress'} | ${incident.resolvedAt ? '✅ Complete' : '⏳ Pending'} |
+| Detection | ${new Date(incident.detectedAt).toISOString()} | ✅ Complete |
+| Analysis | ${analysis.timestamp ? new Date(analysis.timestamp).toISOString() : 'N/A'} | ${analysis.timestamp ? '✅ Complete' : '⏳ In Progress'} |
+| Response | ${response.timestamp ? new Date(response.timestamp).toISOString() : 'N/A'} | ${response.timestamp ? '✅ Complete' : '⏳ In Progress'} |
+| Communications | ${comms.timestamp ? new Date(comms.timestamp).toISOString() : 'N/A'} | ${comms.timestamp ? '✅ Complete' : '⏳ In Progress'} |
+| Resolved | ${incident.resolvedAt ? new Date(incident.resolvedAt).toISOString() : 'In Progress'} | ${incident.resolvedAt ? '✅ Complete' : '⏳ Pending'} |
 
 ## Business Impact
 
@@ -490,10 +509,10 @@ ${comms.notifications?.map((n: any) => `- ${n.recipient} (${n.channel}): ${n.sta
 
 ## System Performance
 
-- **Detection Confidence**: ${(detection.confidence * 100).toFixed(1)}%
-- **Analysis Accuracy**: High - All affected systems correctly identified
-- **Response Effectiveness**: Automated response completed successfully
-- **Time to Resolution**: Fast - Automated systems responded immediately
+- **Detection Confidence**: ${detection.confidence ? (detection.confidence * 100).toFixed(1) : 'N/A'}%
+- **Analysis Accuracy**: ${analysis.rootCause ? 'High - Root cause identified' : 'In Progress'}
+- **Response Effectiveness**: ${response.actions?.length > 0 ? 'Automated response completed successfully' : 'Awaiting response execution'}
+- **Time to Analysis**: Fast - Automated systems responded immediately
 
 ---
 
@@ -501,7 +520,7 @@ ${comms.notifications?.map((n: any) => `- ${n.recipient} (${n.channel}): ${n.sta
 **Generated By**: Helix Autonomous Threat Detection System
 `;
 
-    this.logger.log(`[POSTMORTEM] Postmortem content generated, length: ${postmortemContent.length} chars`);
+    this.logger.log(`[POSTMORTEM] Postmortem content generated successfully`);
     
     return {
       content: postmortemContent,

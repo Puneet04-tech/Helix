@@ -242,13 +242,42 @@ export class IncidentsService {
 
     this.logger.log(`[GENERATE POSTMORTEM] Found incident: ${incident.incidentId || incident._id}`);
     
-    // Ensure agent reasoning exists
-    if (!incident.agentReasoning) {
-      incident.agentReasoning = {};
-      this.logger.log(`[GENERATE POSTMORTEM] Initialized empty agentReasoning`);
+    // Check if we have agent data - if not, run agents first
+    const hasAnalysisData = incident.agentReasoning?.analysisAgent?.rootCause;
+    const hasResponseData = (incident.agentReasoning?.responseAgent?.actions?.length || 0) > 0;
+    
+    if (!hasAnalysisData || !hasResponseData) {
+      this.logger.log(`[GENERATE POSTMORTEM] Missing agent data. Running agent chain first...`);
+      
+      // Initialize agentReasoning if not present
+      if (!incident.agentReasoning) {
+        incident.agentReasoning = {};
+      }
+
+      // Run the full agent chain to populate all data
+      try {
+        await this.agentsService.runAgentChain(incident.projectId, incident);
+        this.logger.log(`[GENERATE POSTMORTEM] Agent chain completed`);
+      } catch (err) {
+        const errMsg = (err as Error).message;
+        this.logger.error(`[GENERATE POSTMORTEM] Agent chain failed: ${errMsg}`);
+        throw err;
+      }
+
+      // Add a delay to ensure database writes propagate
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Reload incident with fresh data
+      incident = await this.incidentModel.findById(incident._id);
+      if (!incident) {
+        throw new Error('Incident was deleted during postmortem generation');
+      }
+      this.logger.log(`[GENERATE POSTMORTEM] Incident reloaded with agent data`);
+    } else {
+      this.logger.log(`[GENERATE POSTMORTEM] Agent data already available`);
     }
 
-    // Generate postmortem
+    // Generate postmortem with fully populated incident data
     this.logger.log(`[GENERATE POSTMORTEM] Generating postmortem content...`);
     const postmortem = await this.agentsService.generatePostmortem(incident);
     this.logger.log(`[GENERATE POSTMORTEM] Content generated, length: ${postmortem.content.length} chars`);
