@@ -10,7 +10,7 @@ const PORT = process.env.PORT || 4000;
 // ===== HELIX SDK INITIALIZATION =====
 const helix = new Helix({
   apiKey: process.env.HELIX_API_KEY || 'ag_18e67af6-3598-4199-9440-993a843ee8c9',
-  backendUrl: process.env.HELIX_URL || 'http://localhost:5000',
+  backendUrl: process.env.HELIX_URL || 'https://helix-ujly.onrender.com',
   enabled: true,
   sampleRate: 1.0
 });
