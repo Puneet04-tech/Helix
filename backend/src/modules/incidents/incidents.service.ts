@@ -242,42 +242,53 @@ export class IncidentsService {
 
     this.logger.log(`[GENERATE POSTMORTEM] Found incident: ${incident.incidentId || incident._id}`);
     
-    // Check if we have agent data - if not, run agents first
-    const hasAnalysisData = incident.agentReasoning?.analysisAgent?.rootCause;
-    const hasResponseData = (incident.agentReasoning?.responseAgent?.actions?.length || 0) > 0;
+    // ALWAYS ensure we have complete agent data before generating postmortem
+    // Check all required agent data
+    const hasDetection = !!incident.agentReasoning?.detectionAgent?.analysis;
+    const hasAnalysis = !!incident.agentReasoning?.analysisAgent?.rootCause;
+    const hasResponse = incident.agentReasoning?.responseAgent?.actions && incident.agentReasoning.responseAgent.actions.length > 0;
+    const hasComms = incident.agentReasoning?.commsAgent?.notifications && incident.agentReasoning.commsAgent.notifications.length > 0;
     
-    if (!hasAnalysisData || !hasResponseData) {
-      this.logger.log(`[GENERATE POSTMORTEM] Missing agent data. Running agent chain first...`);
+    this.logger.log(`[GENERATE POSTMORTEM] Agent data status: detection=${hasDetection}, analysis=${hasAnalysis}, response=${hasResponse}, comms=${hasComms}`);
+    
+    // If ANY required agent data is missing, run the full agent chain
+    if (!hasDetection || !hasAnalysis || !hasResponse) {
+      this.logger.log(`[GENERATE POSTMORTEM] Missing required agent data. Running full agent chain...`);
       
       // Initialize agentReasoning if not present
       if (!incident.agentReasoning) {
         incident.agentReasoning = {};
       }
 
-      // Run the full agent chain to populate all data
       try {
+        // Run the full agent chain
         await this.agentsService.runAgentChain(incident.projectId, incident);
-        this.logger.log(`[GENERATE POSTMORTEM] Agent chain completed`);
+        this.logger.log(`[GENERATE POSTMORTEM] Agent chain completed successfully`);
       } catch (err) {
         const errMsg = (err as Error).message;
         this.logger.error(`[GENERATE POSTMORTEM] Agent chain failed: ${errMsg}`);
-        throw err;
+        // Don't throw - continue with whatever data we have
       }
 
-      // Add a delay to ensure database writes propagate
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Wait to ensure all database writes complete
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Reload incident with fresh data
+      // Reload incident with fresh data from database
+      this.logger.log(`[GENERATE POSTMORTEM] Reloading incident from database with fresh agent data...`);
       incident = await this.incidentModel.findById(incident._id);
       if (!incident) {
         throw new Error('Incident was deleted during postmortem generation');
       }
-      this.logger.log(`[GENERATE POSTMORTEM] Incident reloaded with agent data`);
+      
+      // Verify we now have the data
+      const finalAnalysis = !!incident.agentReasoning?.analysisAgent?.rootCause;
+      const finalResponse = incident.agentReasoning?.responseAgent?.actions && incident.agentReasoning.responseAgent.actions.length > 0;
+      this.logger.log(`[GENERATE POSTMORTEM] After reload: analysis=${finalAnalysis}, response=${finalResponse}`);
     } else {
-      this.logger.log(`[GENERATE POSTMORTEM] Agent data already available`);
+      this.logger.log(`[GENERATE POSTMORTEM] All agent data already available, generating postmortem directly`);
     }
 
-    // Generate postmortem with fully populated incident data
+    // Generate postmortem with complete incident data
     this.logger.log(`[GENERATE POSTMORTEM] Generating postmortem content...`);
     const postmortem = await this.agentsService.generatePostmortem(incident);
     this.logger.log(`[GENERATE POSTMORTEM] Content generated, length: ${postmortem.content.length} chars`);
@@ -289,7 +300,7 @@ export class IncidentsService {
     await incident.save();
     this.logger.log(`[GENERATE POSTMORTEM] Postmortem saved to database`);
 
-    // Add a delay to ensure database writes have propagated
+    // Final delay to ensure DB persistence
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Refresh to get latest data
@@ -299,7 +310,7 @@ export class IncidentsService {
       throw new Error('Incident was deleted during postmortem generation');
     }
 
-    this.logger.log(`[GENERATE POSTMORTEM] Refresh complete. Has postmortemContent: ${!!refreshedIncident.postmortemContent}`);
+    this.logger.log(`[GENERATE POSTMORTEM] Complete. Has postmortemContent: ${!!refreshedIncident.postmortemContent}, Content length: ${refreshedIncident.postmortemContent?.length || 0}`);
 
     return {
       content: postmortem.content,
