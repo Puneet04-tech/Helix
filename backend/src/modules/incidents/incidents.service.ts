@@ -175,6 +175,8 @@ export class IncidentsService {
   }
 
   async runAnalysisForIncident(incidentId: string) {
+    this.logger.log(`[RUN ANALYSIS] Starting for incident: ${incidentId}`);
+    
     // Try to find by _id first (MongoDB ObjectId), then by incidentId field
     let incident = await this.incidentModel.findById(incidentId);
     if (!incident) {
@@ -184,27 +186,37 @@ export class IncidentsService {
       throw new Error(`Incident not found: ${incidentId}`);
     }
 
-    this.logger.debug(`Manually triggering agent chain for incident ${incident.incidentId || incident._id}`);
+    this.logger.log(`[RUN ANALYSIS] Found incident: ${incident.incidentId || incident._id}`);
     
     // Initialize agentReasoning if not present
     if (!incident.agentReasoning) {
       incident.agentReasoning = {};
+      this.logger.log(`[RUN ANALYSIS] Initialized empty agentReasoning`);
     }
     
     // WAIT for the agent chain to complete (don't fire and forget)
     try {
+      this.logger.log(`[RUN ANALYSIS] Invoking agent chain...`);
       await this.agentsService.runAgentChain(incident.projectId, incident);
+      this.logger.log(`[RUN ANALYSIS] Agent chain completed successfully`);
     } catch (err) {
-      this.logger.error(`Agent chain execution error: ${(err as Error).message}`);
+      const errMsg = (err as Error).message;
+      this.logger.error(`[RUN ANALYSIS] Agent chain execution error: ${errMsg}`);
       throw err;
     }
 
+    // Add a delay to ensure database writes have propagated
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     // Refresh incident from database to get all populated data
+    this.logger.log(`[RUN ANALYSIS] Refreshing incident from database...`);
     const refreshedIncident = await this.incidentModel.findById(incident._id);
     
     if (!refreshedIncident) {
       throw new Error('Incident was deleted during analysis');
     }
+
+    this.logger.log(`[RUN ANALYSIS] Incident refreshed. Status: ${refreshedIncident.status}, AgentReasoning keys: ${Object.keys(refreshedIncident.agentReasoning || {}).join(', ')}`);
 
     return { 
       message: 'Analysis completed for incident', 
@@ -216,6 +228,8 @@ export class IncidentsService {
   }
 
   async generatePostmortemForIncident(incidentId: string) {
+    this.logger.log(`[GENERATE POSTMORTEM] Starting for incident: ${incidentId}`);
+    
     // Try to find by _id first (MongoDB ObjectId), then by incidentId field
     let incident = await this.incidentModel.findById(incidentId);
     if (!incident) {
@@ -225,20 +239,28 @@ export class IncidentsService {
       throw new Error(`Incident not found: ${incidentId}`);
     }
 
-    this.logger.debug(`Manually generating postmortem for incident ${incident.incidentId || incident._id}`);
+    this.logger.log(`[GENERATE POSTMORTEM] Found incident: ${incident.incidentId || incident._id}`);
     
     // Ensure agent reasoning exists
     if (!incident.agentReasoning) {
       incident.agentReasoning = {};
+      this.logger.log(`[GENERATE POSTMORTEM] Initialized empty agentReasoning`);
     }
 
     // Generate postmortem
+    this.logger.log(`[GENERATE POSTMORTEM] Generating postmortem content...`);
     const postmortem = await this.agentsService.generatePostmortem(incident);
+    this.logger.log(`[GENERATE POSTMORTEM] Content generated, length: ${postmortem.content.length} chars`);
     
     // Store postmortem content in incident
     incident.postmortemContent = postmortem.content;
     incident.postmortemGeneratedAt = new Date();
+    incident.markModified('postmortemContent');
     await incident.save();
+    this.logger.log(`[GENERATE POSTMORTEM] Postmortem saved to database`);
+
+    // Add a delay to ensure database writes have propagated
+    await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Refresh to get latest data
     const refreshedIncident = await this.incidentModel.findById(incident._id);
@@ -246,6 +268,8 @@ export class IncidentsService {
     if (!refreshedIncident) {
       throw new Error('Incident was deleted during postmortem generation');
     }
+
+    this.logger.log(`[GENERATE POSTMORTEM] Refresh complete. Has postmortemContent: ${!!refreshedIncident.postmortemContent}`);
 
     return {
       content: postmortem.content,
