@@ -70,7 +70,7 @@ export default function Dashboard() {
       // Try stats endpoint first
       if (projectId) {
         endpoints.push(
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/incidents/project/${projectId}/stats`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}/stats`, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',

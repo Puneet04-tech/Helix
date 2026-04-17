@@ -52,7 +52,7 @@ export default function PlaywrightPanel() {
         throw new Error('API URL not configured');
       }
 
-      const response = await fetch(`${apiUrl}/api/incidents?limit=100`, {
+      const response = await fetch(`${apiUrl}/incidents?limit=100`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
