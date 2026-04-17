@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import DashboardLayout from '../../components/DashboardLayout';
 import MetricCard from '../../components/MetricCard';
 import IncidentCard from '../../components/IncidentCard';
+import PlaywrightPanel from '../../components/PlaywrightPanel';
 import { RefreshCw, AlertTriangle, Play, Square, Zap } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../hooks/useWebSocket';
@@ -296,6 +297,9 @@ export default function Dashboard() {
             trend={{ value: 0, isPositive: true }}
           />
         </div>
+
+        {/* Playwright Automation Panel */}
+        <PlaywrightPanel />
 
         {/* Incident Feed */}
         <div className="bg-[#112D5E] rounded-xl border border-[#1E3A5F] overflow-hidden">
