@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Play, Loader, CheckCircle, AlertCircle, Zap, Zapper } from 'lucide-react';
+import { Play, Loader, CheckCircle, AlertCircle, Zap, Sparkles } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface PlaywrightAction {
@@ -167,7 +167,7 @@ export default function PlaywrightPanel() {
       {/* Auto Execution Notice */}
       <div className="mb-6 p-4 bg-green-900/20 border border-green-700 rounded-lg">
         <div className="flex items-start gap-3">
-          <Zapper className="text-green-400 mt-0.5 flex-shrink-0" size={20} />
+          <Sparkles className="text-green-400 mt-0.5 flex-shrink-0" size={20} />
           <div>
             <h3 className="font-semibold text-green-300 mb-1">✨ Automatic Execution</h3>
             <p className="text-sm text-green-300">
