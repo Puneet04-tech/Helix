@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader, CheckCircle, AlertCircle, Zap, Sparkles, RefreshCw } from 'lucide-react';
+import { CheckCircle, Zap, Sparkles, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface ActionResult {
@@ -30,111 +30,106 @@ export default function PlaywrightPanel() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [results, setResults] = useState<ActionResult[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
   // Fetch incidents with Playwright actions
-  const fetchIncidents = async () => {
-    if (!token) return;
+  const fetchIncidents = async (isManualRefresh: boolean = false) => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+
+    if (!isManualRefresh) {
+      setLoading(true);
+    }
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/incidents?limit=50`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (response.ok) {
-        const data = await response.json();
-        const incidents = Array.isArray(data) ? data : data.incidents || [];
-        
-        // Extract all Playwright actions from incidents
-        const playwrightResults: ActionResult[] = [];
-        
-        incidents.forEach((incident: Incident) => {
-          if (incident.automaticActions) {
-            incident.automaticActions.forEach((action) => {
-              if (action.action.includes('playwright')) {
-                playwrightResults.push({
-                  action: action.action,
-                  target: action.target,
-                  result: action.result,
-                  success: action.success,
-                  timestamp: incident.createdAt,
-                });
-              }
-            });
-          }
-        });
-
-        // Sort by timestamp descending (newest first)
-        playwrightResults.sort((a, b) => {
-          const timeA = new Date(a.timestamp || 0).getTime();
-          const timeB = new Date(b.timestamp || 0).getTime();
-          return timeB - timeA;
-        });
-
-        setResults(playwrightResults.slice(0, 20)); // Keep last 20
-        setLastChecked(new Date());
+      console.log('[PlaywrightPanel] Fetching incidents...');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      
+      if (!apiUrl) {
+        throw new Error('API URL not configured');
       }
+
+      const response = await fetch(`${apiUrl}/api/incidents?limit=100`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('[PlaywrightPanel] API Response:', data);
+
+      // Handle different response formats
+      const incidents: Incident[] = Array.isArray(data) 
+        ? data 
+        : Array.isArray(data.data) 
+          ? data.data 
+          : Array.isArray(data.incidents) 
+            ? data.incidents 
+            : [];
+
+      console.log(`[PlaywrightPanel] Found ${incidents.length} incidents`);
+
+      // Extract all Playwright actions from incidents
+      const playwrightResults: ActionResult[] = [];
+
+      incidents.forEach((incident) => {
+        if (incident.automaticActions && Array.isArray(incident.automaticActions)) {
+          incident.automaticActions.forEach((action) => {
+            if (action.action.includes('playwright')) {
+              console.log(`[PlaywrightPanel] Found action: ${action.action}`);
+              playwrightResults.push({
+                action: action.action,
+                target: action.target,
+                result: action.result,
+                success: action.success,
+                timestamp: incident.createdAt,
+              });
+            }
+          });
+        }
+      });
+
+      console.log(`[PlaywrightPanel] Total Playwright actions: ${playwrightResults.length}`);
+
+      // Sort by timestamp descending (newest first)
+      playwrightResults.sort((a, b) => {
+        const timeA = new Date(a.timestamp || 0).getTime();
+        const timeB = new Date(b.timestamp || 0).getTime();
+        return timeB - timeA;
+      });
+
+      setResults(playwrightResults.slice(0, 20));
+      setLastChecked(new Date());
+      setError(null);
+      console.log('[PlaywrightPanel] Fetch completed successfully');
     } catch (err) {
-      console.error('Error fetching incidents:', err);
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      console.error('[PlaywrightPanel] Error fetching incidents:', errorMsg);
+      setError(errorMsg);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  // Initial fetch
+  // Initial fetch on mount
   useEffect(() => {
-    fetchIncidents();
+    fetchIncidents(false);
   }, [token]);
 
-  // Listen for real-time incident updates via WebSocket
-  useEffect(() => {
-    if (!token) return;
-
-    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
-    const ws = new WebSocket(wsUrl);
-
-    ws.onopen = () => {
-      console.log('[PlaywrightPanel] WebSocket connected');
-      // Send auth token
-      ws.send(JSON.stringify({ type: 'auth', token }));
-    };
-
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        // Only fetch when new incident is created (not continuously)
-        if (message.type === 'incident:created' || message.type === 'incident:updated') {
-          console.log('[PlaywrightPanel] New incident detected, fetching results');
-          fetchIncidents();
-        }
-      } catch (err) {
-        console.error('WebSocket message parse error:', err);
-      }
-    };
-
-    ws.onerror = (err) => {
-      console.error('[PlaywrightPanel] WebSocket error:', err);
-    };
-
-    ws.onclose = () => {
-      console.log('[PlaywrightPanel] WebSocket disconnected');
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [token]);
-
+  // Manual refresh handler
   const handleRefresh = () => {
     setRefreshing(true);
-    fetchIncidents();
+    fetchIncidents(true);
   };
 
   if (loading && !results.length) {
@@ -144,7 +139,10 @@ export default function PlaywrightPanel() {
           <Zap className="text-blue-400" size={24} />
           <h2 className="text-xl font-bold text-white">🎬 Playwright Automation</h2>
         </div>
-        <div className="text-slate-400">Loading incidents...</div>
+        <div className="flex items-center gap-2 text-slate-400">
+          <div className="animate-spin">⏳</div>
+          Loading incidents...
+        </div>
       </div>
     );
   }
@@ -164,7 +162,7 @@ export default function PlaywrightPanel() {
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="p-2 hover:bg-slate-700 rounded transition-colors"
+            className="p-2 hover:bg-slate-700 rounded transition-colors disabled:opacity-50"
             title="Refresh"
           >
             <RefreshCw
@@ -179,6 +177,19 @@ export default function PlaywrightPanel() {
         </div>
       </div>
 
+      {/* Error Message */}
+      {error && (
+        <div className="mb-4 p-3 bg-red-900/20 border border-red-700 rounded text-red-400 text-sm">
+          Error: {error}
+          <button
+            onClick={handleRefresh}
+            className="block mt-2 px-3 py-1 bg-red-700 hover:bg-red-600 rounded text-xs"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* Auto Execution Notice */}
       <div className="mb-6 p-4 bg-green-900/20 border border-green-700 rounded-lg">
         <div className="flex items-start gap-3">
@@ -187,7 +198,7 @@ export default function PlaywrightPanel() {
             <h3 className="font-semibold text-green-300 mb-1">✨ Real-Time Automatic Execution</h3>
             <p className="text-sm text-green-300">
               When a new incident is detected, Playwright actions execute automatically in real-time. 
-              Results appear here instantly - no polling, only on-demand.
+              Click refresh to see latest results.
             </p>
           </div>
         </div>
@@ -219,7 +230,7 @@ export default function PlaywrightPanel() {
       {results.length > 0 ? (
         <div className="mb-6 border-t border-slate-700 pt-4">
           <h3 className="text-sm font-semibold text-green-300 mb-3">
-            ⚡ Real-Time Automatic Executions ({results.length})
+            ⚡ Automatic Executions ({results.length})
           </h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
             {results.map((result, idx) => (
@@ -249,13 +260,19 @@ export default function PlaywrightPanel() {
           <p className="text-slate-400 text-sm">
             No automatic executions yet. Create a new incident to trigger Playwright automation.
           </p>
+          <button
+            onClick={handleRefresh}
+            className="mt-3 px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded text-xs text-slate-300 transition-colors"
+          >
+            Refresh
+          </button>
         </div>
       )}
 
       {/* Last Updated */}
       {lastChecked && (
         <div className="text-xs text-slate-500 text-center mt-4">
-          Last fetched: {lastChecked.toLocaleTimeString()} (on-demand via WebSocket)
+          Last fetched: {lastChecked.toLocaleTimeString()}
         </div>
       )}
 
@@ -285,7 +302,7 @@ export default function PlaywrightPanel() {
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-green-400" />
-            <span>Live Updates</span>
+            <span>On-Demand Refresh</span>
           </div>
         </div>
       </div>
