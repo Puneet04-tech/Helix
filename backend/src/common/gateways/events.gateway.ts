@@ -78,7 +78,7 @@ export class EventsGateway
 
     this.liveSimulationInterval = setInterval(() => {
       this.simulateNewIncident(data.projectId);
-    }, 6000);
+    }, 3600000);
 
     client.emit('demo_started', {
       message: 'Live incident simulation started',
