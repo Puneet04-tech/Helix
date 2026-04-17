@@ -93,15 +93,43 @@ export default function PlaywrightPanel() {
     fetchIncidents();
   }, [token]);
 
-  // Poll for new results every 3 seconds
+  // Listen for real-time incident updates via WebSocket
   useEffect(() => {
-    const interval = setInterval(() => {
-      if (token) {
-        fetchIncidents();
-      }
-    }, 3000);
+    if (!token) return;
 
-    return () => clearInterval(interval);
+    const wsUrl = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:5000';
+    const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('[PlaywrightPanel] WebSocket connected');
+      // Send auth token
+      ws.send(JSON.stringify({ type: 'auth', token }));
+    };
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+        // Only fetch when new incident is created (not continuously)
+        if (message.type === 'incident:created' || message.type === 'incident:updated') {
+          console.log('[PlaywrightPanel] New incident detected, fetching results');
+          fetchIncidents();
+        }
+      } catch (err) {
+        console.error('WebSocket message parse error:', err);
+      }
+    };
+
+    ws.onerror = (err) => {
+      console.error('[PlaywrightPanel] WebSocket error:', err);
+    };
+
+    ws.onclose = () => {
+      console.log('[PlaywrightPanel] WebSocket disconnected');
+    };
+
+    return () => {
+      ws.close();
+    };
   }, [token]);
 
   const handleRefresh = () => {
@@ -158,8 +186,8 @@ export default function PlaywrightPanel() {
           <div>
             <h3 className="font-semibold text-green-300 mb-1">✨ Real-Time Automatic Execution</h3>
             <p className="text-sm text-green-300">
-              Playwright actions execute automatically when incidents are detected. 
-              Results appear here in real-time as they happen.
+              When a new incident is detected, Playwright actions execute automatically in real-time. 
+              Results appear here instantly - no polling, only on-demand.
             </p>
           </div>
         </div>
@@ -219,7 +247,7 @@ export default function PlaywrightPanel() {
         <div className="mb-6 p-4 bg-slate-700/30 border border-slate-600 rounded-lg text-center">
           <Zap className="text-slate-500 mx-auto mb-2" size={24} />
           <p className="text-slate-400 text-sm">
-            No automatic executions yet. Trigger incidents to see Playwright actions execute here.
+            No automatic executions yet. Create a new incident to trigger Playwright automation.
           </p>
         </div>
       )}
@@ -227,7 +255,7 @@ export default function PlaywrightPanel() {
       {/* Last Updated */}
       {lastChecked && (
         <div className="text-xs text-slate-500 text-center mt-4">
-          Last updated: {lastChecked.toLocaleTimeString()}
+          Last fetched: {lastChecked.toLocaleTimeString()} (on-demand via WebSocket)
         </div>
       )}
 
