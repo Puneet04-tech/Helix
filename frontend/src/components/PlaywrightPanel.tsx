@@ -1,42 +1,125 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Loader, CheckCircle, AlertCircle, Zap, Sparkles } from 'lucide-react';
+import { Loader, CheckCircle, AlertCircle, Zap, Sparkles, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 interface ActionResult {
-  status: 'success' | 'failed' | 'pending' | 'auto';
   action: string;
-  message: string;
+  target: string;
+  result: string;
+  success: boolean;
   timestamp?: string;
-  source?: 'automatic';
+}
+
+interface Incident {
+  _id: string;
+  type: string;
+  title: string;
+  automaticActions?: Array<{
+    action: string;
+    target: string;
+    result: string;
+    success: boolean;
+  }>;
+  createdAt: string;
 }
 
 export default function PlaywrightPanel() {
   const { token } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [results, setResults] = useState<ActionResult[]>([]);
+  const [lastChecked, setLastChecked] = useState<Date | null>(null);
 
-  // Listen for automatic Playwright executions via WebSocket or polling
+  // Fetch incidents with Playwright actions
+  const fetchIncidents = async () => {
+    if (!token) return;
+
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/api/incidents?limit=50`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const incidents = Array.isArray(data) ? data : data.incidents || [];
+        
+        // Extract all Playwright actions from incidents
+        const playwrightResults: ActionResult[] = [];
+        
+        incidents.forEach((incident: Incident) => {
+          if (incident.automaticActions) {
+            incident.automaticActions.forEach((action) => {
+              if (action.action.includes('playwright')) {
+                playwrightResults.push({
+                  action: action.action,
+                  target: action.target,
+                  result: action.result,
+                  success: action.success,
+                  timestamp: incident.createdAt,
+                });
+              }
+            });
+          }
+        });
+
+        // Sort by timestamp descending (newest first)
+        playwrightResults.sort((a, b) => {
+          const timeA = new Date(a.timestamp || 0).getTime();
+          const timeB = new Date(b.timestamp || 0).getTime();
+          return timeB - timeA;
+        });
+
+        setResults(playwrightResults.slice(0, 20)); // Keep last 20
+        setLastChecked(new Date());
+      }
+    } catch (err) {
+      console.error('Error fetching incidents:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Initial fetch
   useEffect(() => {
-    // This component shows automatic executions from incident detection
-    // Results are populated when incidents trigger Playwright actions
-    setLoading(false);
+    fetchIncidents();
   }, [token]);
 
-  if (loading) {
+  // Poll for new results every 3 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (token) {
+        fetchIncidents();
+      }
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [token]);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchIncidents();
+  };
+
+  if (loading && !results.length) {
     return (
       <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
         <div className="flex items-center gap-3 mb-6">
           <Zap className="text-blue-400" size={24} />
           <h2 className="text-xl font-bold text-white">🎬 Playwright Automation</h2>
         </div>
-        <div className="text-slate-400">Loading...</div>
+        <div className="text-slate-400">Loading incidents...</div>
       </div>
     );
   }
-
-  const automaticActions = results.filter(r => r.source === 'automatic');
 
   return (
     <div className="bg-slate-800 rounded-lg p-6 border border-slate-700">
@@ -46,12 +129,25 @@ export default function PlaywrightPanel() {
           <Zap className="text-blue-400" size={24} />
           <div>
             <h2 className="text-xl font-bold text-white">🎬 Playwright Automation</h2>
-            <p className="text-sm text-slate-400">Autonomous browser automation triggered by incidents</p>
+            <p className="text-sm text-slate-400">Real-time automatic execution from incident response</p>
           </div>
         </div>
-        <div className="text-right">
-          <div className="text-xs text-slate-500">Status</div>
-          <div className="text-sm font-semibold text-green-400">● Active & Real-Time</div>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="p-2 hover:bg-slate-700 rounded transition-colors"
+            title="Refresh"
+          >
+            <RefreshCw
+              className={`text-slate-400 ${refreshing ? 'animate-spin' : ''}`}
+              size={18}
+            />
+          </button>
+          <div className="text-right">
+            <div className="text-xs text-slate-500">Status</div>
+            <div className="text-sm font-semibold text-green-400">● Live</div>
+          </div>
         </div>
       </div>
 
@@ -60,10 +156,10 @@ export default function PlaywrightPanel() {
         <div className="flex items-start gap-3">
           <Sparkles className="text-green-400 mt-0.5 flex-shrink-0" size={20} />
           <div>
-            <h3 className="font-semibold text-green-300 mb-1">✨ Automatic Real-Time Execution</h3>
+            <h3 className="font-semibold text-green-300 mb-1">✨ Real-Time Automatic Execution</h3>
             <p className="text-sm text-green-300">
-              When an incident is detected, Playwright actions execute automatically in real-time. 
-              No button clicks needed - the system responds autonomously and instantly!
+              Playwright actions execute automatically when incidents are detected. 
+              Results appear here in real-time as they happen.
             </p>
           </div>
         </div>
@@ -92,11 +188,13 @@ export default function PlaywrightPanel() {
       </div>
 
       {/* Real-Time Executions */}
-      {automaticActions.length > 0 && (
+      {results.length > 0 ? (
         <div className="mb-6 border-t border-slate-700 pt-4">
-          <h3 className="text-sm font-semibold text-green-300 mb-3">⚡ Real-Time Automatic Executions</h3>
+          <h3 className="text-sm font-semibold text-green-300 mb-3">
+            ⚡ Real-Time Automatic Executions ({results.length})
+          </h3>
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {automaticActions.map((result, idx) => (
+            {results.map((result, idx) => (
               <div
                 key={idx}
                 className="p-4 rounded-lg text-sm flex items-start gap-3 bg-green-900/20 border border-green-700"
@@ -104,26 +202,32 @@ export default function PlaywrightPanel() {
                 <CheckCircle className="text-green-400 flex-shrink-0 mt-0.5" size={20} />
                 <div className="flex-1">
                   <div className="font-semibold text-green-300 capitalize">
-                    {result.action.replace(/_/g, ' ')}
+                    {result.action.replace(/playwright_/g, '').replace(/_/g, ' ')}
                   </div>
-                  <div className="text-xs text-green-300 mt-1">{result.message}</div>
+                  <div className="text-xs text-green-300 mt-1">{result.result}</div>
                   {result.timestamp && (
-                    <div className="text-xs text-slate-400 mt-2">{result.timestamp}</div>
+                    <div className="text-xs text-slate-400 mt-2">
+                      {new Date(result.timestamp).toLocaleTimeString()}
+                    </div>
                   )}
                 </div>
               </div>
             ))}
           </div>
         </div>
-      )}
-
-      {/* Empty State */}
-      {automaticActions.length === 0 && (
+      ) : (
         <div className="mb-6 p-4 bg-slate-700/30 border border-slate-600 rounded-lg text-center">
           <Zap className="text-slate-500 mx-auto mb-2" size={24} />
           <p className="text-slate-400 text-sm">
-            No automatic executions yet. When incidents are detected, Playwright actions will execute here in real-time.
+            No automatic executions yet. Trigger incidents to see Playwright actions execute here.
           </p>
+        </div>
+      )}
+
+      {/* Last Updated */}
+      {lastChecked && (
+        <div className="text-xs text-slate-500 text-center mt-4">
+          Last updated: {lastChecked.toLocaleTimeString()}
         </div>
       )}
 
@@ -153,7 +257,7 @@ export default function PlaywrightPanel() {
           </div>
           <div className="flex items-center gap-2">
             <CheckCircle size={14} className="text-green-400" />
-            <span>Instant Response</span>
+            <span>Live Updates</span>
           </div>
         </div>
       </div>
