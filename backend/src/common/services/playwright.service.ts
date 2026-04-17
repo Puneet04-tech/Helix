@@ -35,15 +35,20 @@ export class PlaywrightService {
   }
 
   async executeAction(action: string, targetUrl: string, parameters?: any): Promise<ActionResult> {
-    // Check if running in demo/simulation mode
-    const demoMode = process.env.PLAYWRIGHT_DEMO_MODE === 'true' || !targetUrl.includes('localhost');
+    // Always use simulation mode unless explicitly running locally with real browser
+    const isLocalhost = targetUrl.includes('localhost') || targetUrl.includes('127.0.0.1');
+    const useRealBrowser = isLocalhost && process.env.PLAYWRIGHT_USE_REAL_BROWSER === 'true';
     
-    if (demoMode) {
-      // Simulate action execution for demo purposes
-      this.logger.log(`[DEMO MODE] Simulating Playwright action: ${action}`);
+    // Default to simulation mode (safe for production without Chromium)
+    const simulationMode = !useRealBrowser;
+    
+    if (simulationMode) {
+      // Simulate action execution for demo/production purposes
+      this.logger.log(`[SIMULATION MODE] Executing Playwright action: ${action}`);
       return this.simulateAction(action, parameters);
     }
 
+    // Real browser execution (only if explicitly enabled locally)
     await this.initBrowser();
 
     let page: Page | null = null;
