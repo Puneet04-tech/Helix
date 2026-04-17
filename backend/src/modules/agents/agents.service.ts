@@ -310,9 +310,10 @@ export class AgentsService {
     if (playwrightAction) {
       try {
         this.logger.log(`[RESPONSE] Executing Playwright action: ${playwrightAction}`);
+        const targetUrl = process.env.PLAYWRIGHT_TARGET_URL || 'http://localhost:3000/dashboard';
         const playwrightResult = await this.playwrightService.executeAction(
           playwrightAction,
-          'http://localhost:3000/dashboard', // Target URL
+          targetUrl,
           {}
         );
         
@@ -320,12 +321,12 @@ export class AgentsService {
           action: `playwright_${playwrightAction}`,
           target: 'browser-automation',
           result: playwrightResult.success 
-            ? `🎬 Playwright browser automation executed: ${playwrightAction} completed successfully`
+            ? `✅ ${playwrightResult.result}`
             : `🎬 Playwright action ${playwrightAction} executed (result: ${playwrightResult.result})`,
           success: playwrightResult.success || true,
         });
         
-        this.logger.log(`[RESPONSE] Playwright action completed: ${playwrightAction}`);
+        this.logger.log(`[RESPONSE] Playwright action completed: ${playwrightAction} - ${playwrightResult.result}`);
       } catch (error) {
         const err = error as Error;
         this.logger.error(`[RESPONSE] Playwright action failed: ${playwrightAction} - ${err.message}`);
