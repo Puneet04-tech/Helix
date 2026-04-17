@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import { useAuth } from '@/context/AuthContext';
 
 interface AuditLog {
@@ -20,31 +19,42 @@ export const AuditTrail: React.FC<{ incidentId?: string }> = ({ incidentId }) =>
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [expanded, setExpanded] = useState(false);
   const [filter, setFilter] = useState<'all' | 'debug' | 'info' | 'warn' | 'error'>('all');
-  const ws = useWebSocket();
+  const [ws, setWs] = useState<any>(null);
 
+  // Initialize WebSocket connection
   useEffect(() => {
-    if (!ws) return;
+    if (!token) return;
 
-    // Listen for new audit logs via WebSocket
-    const handleAuditLog = (event: any) => {
-      const { log } = event.detail || event;
+    const io = require('socket.io-client').default || require('socket.io-client');
+    const socket = io(
+      process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
+      {
+        path: '/socket.io',
+        auth: { token },
+        reconnection: true,
+        reconnectionDelay: 1000,
+      }
+    );
+
+    socket.on('connect', () => {
+      console.log('[AuditTrail] WebSocket connected');
+      socket.emit('subscribe_project', { token });
+    });
+
+    socket.on('audit_log', (event: any) => {
+      const log = event.log || event;
       if (incidentId && log.incidentId !== incidentId) return;
 
-      setLogs(prev => [log, ...prev].slice(0, 100)); // Keep last 100 logs
-    };
+      setLogs(prev => [log, ...prev].slice(0, 100));
+      console.log('[AuditTrail] Received audit log:', log);
+    });
 
-    ws.on('audit_log', handleAuditLog);
-
-    // Also try with addEventListener if using io.Socket
-    if (ws.addEventListener) {
-      ws.addEventListener('audit_log', handleAuditLog);
-    }
+    setWs(socket);
 
     return () => {
-      if (ws.off) ws.off('audit_log', handleAuditLog);
-      if (ws.removeEventListener) ws.removeEventListener('audit_log', handleAuditLog);
+      socket.disconnect();
     };
-  }, [ws, incidentId]);
+  }, [token, incidentId]);
 
   // Fetch initial audit trail
   useEffect(() => {
@@ -63,7 +73,7 @@ export const AuditTrail: React.FC<{ incidentId?: string }> = ({ incidentId }) =>
           setLogs(data.logs || data);
         }
       } catch (error) {
-        console.error('Failed to fetch audit trail:', error);
+        console.error('[AuditTrail] Failed to fetch audit trail:', error);
       }
     };
 
