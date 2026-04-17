@@ -67,7 +67,31 @@ export class StatusController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async getAllStatus() {
-    // Return empty array if no specific project
-    return [];
+    // Get all incidents to extract services
+    const incidents = await this.incidentsService.getAllIncidents();
+    
+    // Extract unique services and their statuses
+    const serviceMap: Record<string, { count: number; status: string }> = {};
+    
+    incidents.forEach((incident: any) => {
+      if (!serviceMap[incident.service]) {
+        serviceMap[incident.service] = { count: 0, status: 'operational' };
+      }
+      serviceMap[incident.service].count++;
+      
+      // If service has critical incidents, mark as degraded
+      if (incident.severity === 'critical' && incident.status !== 'resolved') {
+        serviceMap[incident.service].status = 'degraded';
+      }
+    });
+
+    // Convert to array format
+    const services = Object.entries(serviceMap).map(([name, data]) => ({
+      name,
+      status: data.status,
+      uptime: data.status === 'operational' ? 99.97 : 95.5,
+    }));
+
+    return services.length > 0 ? services : [];
   }
 }
