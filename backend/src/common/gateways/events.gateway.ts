@@ -107,6 +107,16 @@ export class EventsGateway
       });
   }
 
+  // Broadcast audit log to all connected clients in project room
+  broadcastAuditLog(projectId: string, auditLog: any) {
+    this.server
+      .to(`project_${projectId}`)
+      .emit('audit_log', {
+        log: auditLog,
+        timestamp: new Date().toISOString(),
+      });
+  }
+
   // Broadcast incident update
   broadcastIncidentUpdate(projectId: string, incidentId: string, update: any) {
     this.server

@@ -5,6 +5,7 @@ import { Event, EventDocument } from '../../common/schemas/event.schema';
 import { Client, ClientDocument } from '../../common/schemas/client.schema';
 import { MemoryService } from '../../common/services/memory.service';
 import { HuggingFaceService } from '../../common/services/huggingface.service';
+import { AuditService } from '../../common/services/audit.service';
 import { IncidentsService } from '../incidents/incidents.service';
 
 @Injectable()
@@ -16,8 +17,12 @@ export class EventsService {
     @InjectModel(Client.name) private clientModel: Model<ClientDocument>,
     private memoryService: MemoryService,
     private huggingFaceService: HuggingFaceService,
+    private auditService: AuditService,
     private incidentsService: IncidentsService,
-  ) {}
+  ) {
+    // Initialize MemoryService with AuditService to avoid circular dependency
+    this.memoryService.setAuditService(this.auditService);
+  }
 
   async ingestEvent(apiKey: string, eventData: any) {
     // Step 1: Validate API key and get project/client
@@ -119,9 +124,19 @@ export class EventsService {
     );
 
     if (!hasSuspiciousPattern) {
-      this.logger.debug(
-        `Event recorded but no suspicious pattern detected for ${projectId}`,
-      );
+      const message = `Event recorded but no suspicious pattern detected for ${projectId}`;
+      this.logger.debug(message);
+
+      // Log to audit trail
+      this.auditService.logAudit(
+        projectId,
+        'EventsService',
+        'pattern_check_clean',
+        { eventType: eventData.type, service: eventData.service },
+        message,
+        'debug',
+      ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+
       return {
         received: true,
         analyzed: false,

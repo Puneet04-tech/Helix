@@ -12,6 +12,11 @@ export class MemoryService {
   private clientEvents: Map<string, ClientEvent[]> = new Map();
   private readonly RETENTION_TIME = 5 * 60 * 1000; // 5 minutes window
   private readonly PATTERN_THRESHOLD = 3; // 3+ events trigger pattern
+  private auditService: any; // Inject later to avoid circular dependency
+
+  setAuditService(auditService: any) {
+    this.auditService = auditService;
+  }
 
   addEvent(projectId: string, event: ClientEvent): void {
     if (!this.clientEvents.has(projectId)) {
@@ -27,9 +32,20 @@ export class MemoryService {
       const filtered = events.filter(e => e.timestamp > cutoffTime);
       this.clientEvents.set(projectId, filtered);
 
-      this.logger.debug(
-        `Event added for ${projectId}. Total events: ${filtered.length}`,
-      );
+      const message = `Event added for ${projectId}. Total events: ${filtered.length}`;
+      this.logger.debug(message);
+
+      // Log to audit trail
+      if (this.auditService) {
+        this.auditService.logAudit(
+          projectId,
+          'MemoryService',
+          'event_added',
+          { eventType: event.type, totalEvents: filtered.length, eventData: event.data },
+          message,
+          'debug',
+        ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+      }
     }
   }
 
@@ -44,9 +60,20 @@ export class MemoryService {
 
     const hasPattern = suspiciousEvents.length >= this.PATTERN_THRESHOLD;
     if (hasPattern) {
-      this.logger.debug(
-        `Suspicious pattern detected for ${projectId}: ${suspiciousEvents.length} events of type ${eventType}`,
-      );
+      const message = `Suspicious pattern detected for ${projectId}: ${suspiciousEvents.length} events of type ${eventType}`;
+      this.logger.debug(message);
+
+      // Log to audit trail
+      if (this.auditService) {
+        this.auditService.logAudit(
+          projectId,
+          'MemoryService',
+          'suspicious_pattern_detected',
+          { eventType, count: suspiciousEvents.length, threshold: this.PATTERN_THRESHOLD },
+          message,
+          'warn',
+        ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+      }
     }
 
     return hasPattern;
@@ -73,7 +100,20 @@ export class MemoryService {
 
   clearProjectEvents(projectId: string): void {
     this.clientEvents.delete(projectId);
-    this.logger.debug(`Cleared events for ${projectId}`);
+    const message = `Cleared events for ${projectId}`;
+    this.logger.debug(message);
+
+    // Log to audit trail
+    if (this.auditService) {
+      this.auditService.logAudit(
+        projectId,
+        'MemoryService',
+        'events_cleared',
+        {},
+        message,
+        'debug',
+      ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+    }
   }
 
   getStats(): { projectsTracked: number; totalEvents: number } {

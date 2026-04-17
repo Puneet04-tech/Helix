@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import DashboardLayout from '../../../components/DashboardLayout';
+import { AuditTrail } from '../../../components/AuditTrail';
 import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Shield, Users, Zap, TrendingUp, Loader, FileText } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
@@ -527,6 +528,9 @@ export default function IncidentDetailPage() {
             )}
           </div>
         )}
+
+        {/* Audit Trail */}
+        <AuditTrail incidentId={incident._id || incident.id} />
       </div>
     </DashboardLayout>
   );
