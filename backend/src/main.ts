@@ -25,6 +25,9 @@ async function bootstrap() {
     allowedHeaders: 'Content-Type,Authorization',
   });
 
+  // Set global API prefix
+  app.setGlobalPrefix('api');
+
   const port = process.env.PORT || 5000;
   console.log(`Setting up listener on port ${port}...`);
   await app.listen(port, '0.0.0.0');

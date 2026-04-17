@@ -36,7 +36,7 @@ export default function IncidentDetailPage() {
       }
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/incidents/${incidentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -62,7 +62,7 @@ export default function IncidentDetailPage() {
     
     setAnalyzing(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/analyze`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/incidents/${incidentId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ export default function IncidentDetailPage() {
     
     setGeneratingPostmortem(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/postmortem/generate`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/incidents/${incidentId}/postmortem/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
