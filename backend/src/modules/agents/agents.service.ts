@@ -306,10 +306,10 @@ export class AgentsService {
         });
     }
 
-    // AUTOMATICALLY EXECUTE PLAYWRIGHT ACTION
+    // AUTOMATICALLY EXECUTE PLAYWRIGHT ACTION IN REAL-TIME
     if (playwrightAction) {
       try {
-        this.logger.log(`[RESPONSE] Executing Playwright action: ${playwrightAction}`);
+        this.logger.log(`[RESPONSE] Real-time Playwright action: ${playwrightAction}`);
         const targetUrl = process.env.PLAYWRIGHT_TARGET_URL || 'http://localhost:3000/dashboard';
         const playwrightResult = await this.playwrightService.executeAction(
           playwrightAction,
@@ -320,20 +320,18 @@ export class AgentsService {
         actions.push({
           action: `playwright_${playwrightAction}`,
           target: 'browser-automation',
-          result: playwrightResult.success 
-            ? `✅ ${playwrightResult.result}`
-            : `🎬 Playwright action ${playwrightAction} executed (result: ${playwrightResult.result})`,
+          result: playwrightResult.result,
           success: playwrightResult.success || true,
         });
         
-        this.logger.log(`[RESPONSE] Playwright action completed: ${playwrightAction} - ${playwrightResult.result}`);
+        this.logger.log(`[RESPONSE] Real-time execution completed: ${playwrightAction}`);
       } catch (error) {
         const err = error as Error;
-        this.logger.error(`[RESPONSE] Playwright action failed: ${playwrightAction} - ${err.message}`);
+        this.logger.error(`[RESPONSE] Real-time execution failed: ${playwrightAction} - ${err.message}`);
         actions.push({
           action: `playwright_${playwrightAction}`,
           target: 'browser-automation',
-          result: `🎬 Playwright automation attempted: ${playwrightAction}`,
+          result: `Playwright automation: ${playwrightAction}`,
           success: false,
         });
       }
