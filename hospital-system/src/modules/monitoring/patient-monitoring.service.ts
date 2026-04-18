@@ -26,22 +26,26 @@ export class PatientMonitoringService {
     const anomalies = this.detectAnomalies(vitals);
 
     if (anomalies.length > 0) {
-      const severity = anomalies.length >= 3 ? 'critical' : 'high';
+      const severity = anomalies.length >= 3 ? 'high' : 'medium';
+      const anomalyList = anomalies.join(' | ');
 
-      console.log(`⚠️ Anomalies detected for patient ${vitals.patientId}:`, anomalies);
+      this.logger.warn(`⚠️ Anomalies detected for patient ${vitals.patientId}: ${anomalyList}`);
 
-      // Send to Helix
-      await this.helixService.sendEvent({
-        type: 'PATIENT_VITAL_ANOMALY',
-        severity: severity as any,
-        service: 'Patient Vital Monitoring',
-        message: `Patient ${vitals.patientId}: ${anomalies.join(', ')}`,
-        context: {
-          patientId: vitals.patientId,
-          vitals,
-          anomalies,
-        },
-      });
+      // Use Helix SDK tracking for patient vital anomalies
+      this.helixService.trackPatientVitalAnomaly(
+        vitals.patientId,
+        this.getAnomalousVital(anomalies),
+        anomalyList,
+        severity as 'low' | 'medium' | 'high'
+      );
+
+      // If critical anomalies, track as crisis prediction
+      if (anomalies.length >= 3) {
+        this.helixService.trackCrisisPrediction(
+          `Multi-vital anomalies for patient ${vitals.patientId}`,
+          'high'
+        );
+      }
     }
 
     return { vitals, anomalies };
@@ -75,6 +79,18 @@ export class PatientMonitoringService {
     if (vitals.respiratoryRate < 10) anomalies.push('Bradypnea (RR < 10)');
 
     return anomalies;
+  }
+
+  /**
+   * Get the most critical anomalous vital from the list
+   */
+  private getAnomalousVital(anomalies: string[]): string {
+    if (anomalies.some(a => a.includes('HR'))) return 'heartRate';
+    if (anomalies.some(a => a.includes('Blood Pressure'))) return 'bloodPressure';
+    if (anomalies.some(a => a.includes('O2'))) return 'oxygenLevel';
+    if (anomalies.some(a => a.includes('Fever'))) return 'temperature';
+    if (anomalies.some(a => a.includes('Respiratory'))) return 'respiratoryRate';
+    return 'unknown';
   }
 
   /**

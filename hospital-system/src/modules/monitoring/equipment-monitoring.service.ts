@@ -27,25 +27,34 @@ export class EquipmentMonitoringService {
     const issues = this.detectIssues(equipment);
 
     if (issues.length > 0) {
-      const severity = equipment.status === 'error' ? 'critical' : 'high';
+      const severity = equipment.status === 'error' ? 'high' : 'medium';
+      const issuesList = issues.join(' | ');
 
-      console.log(`⚠️ Equipment issues for ${equipment.name}:`, issues);
+      this.logger.warn(`⚠️ Equipment issues for ${equipment.name}: ${issuesList}`);
 
-      // Send to Helix
-      await this.helixService.sendEvent({
-        type: 'EQUIPMENT_MALFUNCTION',
-        severity: severity as any,
-        service: `Medical Equipment: ${equipment.type}`,
-        message: `${equipment.name} (${equipment.location}): ${issues.join(', ')}`,
-        context: {
-          equipmentId: equipment.equipmentId,
+      // Use Helix SDK tracking for equipment malfunctions
+      this.helixService.trackEquipmentMalfunction(
+        equipment.equipmentId,
+        equipment.type,
+        issuesList,
+        severity as 'low' | 'medium' | 'high'
+      );
+
+      // If critical, track as crisis prediction
+      if (equipment.status === 'error') {
+        this.helixService.trackCrisisPrediction(
+          `Critical equipment malfunction: ${equipment.name} at ${equipment.location}`,
+          'high'
+        );
+      }
+
+      // Track status update
+      this.helixService.trackStatusUpdate([
+        {
           name: equipment.name,
-          type: equipment.type,
-          location: equipment.location,
-          issues,
           status: equipment.status,
         },
-      });
+      ]);
     }
   }
 
@@ -78,11 +87,22 @@ export class EquipmentMonitoringService {
    * Monitor all equipment
    */
   async monitorAllEquipment(equipmentList: EquipmentStatus[]): Promise<void> {
-    console.log(`🔍 Monitoring ${equipmentList.length} devices...`);
+    this.logger.log(`🔍 Monitoring ${equipmentList.length} devices...`);
 
     for (const equipment of equipmentList) {
       await this.checkEquipmentHealth(equipment);
     }
+
+    // Track overall status
+    const operationalCount = equipmentList.filter(e => e.status === 'operational').length;
+    const warningCount = equipmentList.filter(e => e.status === 'warning').length;
+    const errorCount = equipmentList.filter(e => e.status === 'error').length;
+
+    this.helixService.trackStatusUpdate([
+      { name: 'Equipment Operational', status: operationalCount > 0 ? 'operational' : 'down' },
+      { name: 'Equipment Warnings', status: warningCount > 0 ? 'degraded' : 'operational' },
+      { name: 'Equipment Errors', status: errorCount > 0 ? 'down' : 'operational' },
+    ]);
   }
 
   /**
