@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 
 // Connect to MongoDB
-const mongoUri = 'mongodb+srv://chaturvedipuneet200_db_user:4BN60fzjPQIbeWn4@gdc.tbnbiig.mongodb.net/ai-guardian?appName=gdc';
+const mongoUri = 'mongodb+srv://chaturvedipuneet200_db_user:4BN60fzjPQIbeWn4@gdc.tbnbiig.mongodb.net/helix?appName=gdc';
 
 mongoose.connect(mongoUri, {
   useNewUrlParser: true,
@@ -15,7 +15,7 @@ mongoose.connect(mongoUri, {
   const testClient = {
     name: 'Demo Project',
     apiKey: 'demo-api-key-testing-12345',
-    organizationId: 'ai-guardian-org',
+    organizationId: 'helix-org',
     createdAt: new Date(),
     status: 'active'
   };

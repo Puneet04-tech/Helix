@@ -194,7 +194,7 @@
 - **Status**: ✅ COMPLETE
 
 ### ✅ SDK Integration
-- **Package**: `@github/ai-guardian-sdk` (or similar)
+- **Package**: `@github/helix-sdk` (or similar)
 - **Size**: ~100 lines of JavaScript
 - **Function**: Auto-forwards events from client apps
 - **Integration**: 3-line setup in client app

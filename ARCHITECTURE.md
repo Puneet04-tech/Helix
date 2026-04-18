@@ -11,7 +11,7 @@ Helix follows a **multi-tenant, event-driven, serverless architecture** optimize
 │ Hotel App / Hospital System / Public Service Platform            │
 │ (Any Express.js / NestJS application)                           │
 └────────────────────┬────────────────────────────────────────────┘
-                     │ npm install ai-guardian-sdk
+                     │ npm install helix-sdk
                      ▼
         ┌──────────────────────────────┐
         │   Helix SDK            │ ← 100 lines of code

@@ -138,7 +138,7 @@ If space is limited (< 4GB pen drive):
 
 ```bash
 # Use compressed builds
-tar -czf ai-guardian-backup.tar.gz backend/ frontend/ sdk/
+tar -czf helix-backup.tar.gz backend/ frontend/ sdk/
 # Result: ~50-100MB compressed
 
 # Delete node_modules when not developing
@@ -240,11 +240,11 @@ Before important demos:
 
 ```bash
 # Backup just source code (small)
-tar -czf ai-guardian-source-backup.tar.gz \
+tar -czf helix-source-backup.tar.gz \
   backend/src frontend/src sdk/src *.md
 
 # Backup entire project (large)
-tar -czf ai-guardian-full-backup.tar.gz \
+tar -czf helix-full-backup.tar.gz \
   --exclude=.cache \
   --exclude=.temp \
   --exclude=node_modules \
@@ -253,7 +253,7 @@ tar -czf ai-guardian-full-backup.tar.gz \
   .
 
 # Restore when needed
-tar -xzf ai-guardian-full-backup.tar.gz
+tar -xzf helix-full-backup.tar.gz
 npm install  # Reinstall dependencies
 ```
 

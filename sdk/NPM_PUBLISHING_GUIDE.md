@@ -33,7 +33,7 @@ New SDK: Full feature integration (~140 lines)
 - Maintained all functionality
 
 ### 3. **Package Configuration** ✅
-- Package name: `ai-guardian-sdk` → `helix-sdk`
+- Package name: `helix-sdk` → `helix-sdk`
 - Added comprehensive keywords (11 relevant tags)
 - Added NPM publish config
 - Added homepage and bug tracker

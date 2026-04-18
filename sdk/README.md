@@ -199,4 +199,4 @@ MIT
 📧 support@helix.dev  
 🐛 [Report Issues](https://github.com/yourusername/helix-sdk/issues)
 
-[https://ai-guardian.dev/docs](https://ai-guardian.dev/docs)
+[https://helix.dev/docs](https://helix.dev/docs)

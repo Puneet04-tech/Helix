@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const crypto = require('crypto');
 
-const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://chaturvedipuneet200_db_user:AI%40Guardian%402025@gdc.zn896.mongodb.net/ai-guardian?retryWrites=true&w=majority';
+const mongoUri = process.env.MONGODB_URI || 'mongodb+srv://chaturvedipuneet200_db_user:AI%40Guardian%402025@gdc.zn896.mongodb.net/helix?retryWrites=true&w=majority';
 
 const clientSchema = new mongoose.Schema({
   name: String,

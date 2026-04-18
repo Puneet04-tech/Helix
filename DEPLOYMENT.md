@@ -18,7 +18,7 @@
 3. Create new cluster (M0 Shared)
 4. Get connection string:
    ```
-   mongodb+srv://username:password@cluster.mongodb.net/ai-guardian
+   mongodb+srv://username:password@cluster.mongodb.net/helix
    ```
 5. Set IP whitelist to `0.0.0.0/0` (okay for demo)
 6. Save connection string
@@ -35,7 +35,7 @@ PORT=5000
 FRONTEND_URL=https://your-frontend.netlify.app
 
 # Database
-MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/ai-guardian
+MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/helix
 
 # JWT
 JWT_SECRET=generate-a-random-secret-key-here
@@ -74,7 +74,7 @@ PLAYWRIGHT_BROWSERS_PATH=./.cache/playwright
 5. Configure:
 
 ```
-Name: ai-guardian-backend
+Name: helix-backend
 Environment: Node
 Build Command: npm install && npm run build
 Start Command: npm run start:prod
@@ -88,7 +88,7 @@ Start Command: npm run start:prod
 - **Memory**: 1 GB (sufficient)
 - **Concurrent Builds**: 1
 
-Get backend URL: `https://ai-guardian-backend-xxxx.onrender.com`
+Get backend URL: `https://helix-backend-xxxx.onrender.com`
 
 ---
 
@@ -113,8 +113,8 @@ Publish Directory: .next
 5. Set environment variables:
 
 ```
-NEXT_PUBLIC_API_URL=https://ai-guardian-backend-xxxx.onrender.com
-NEXT_PUBLIC_WS_URL=wss://ai-guardian-backend-xxxx.onrender.com
+NEXT_PUBLIC_API_URL=https://helix-backend-xxxx.onrender.com
+NEXT_PUBLIC_WS_URL=wss://helix-backend-xxxx.onrender.com
 ```
 
 6. Deploy
@@ -134,7 +134,7 @@ npm publish
 
 This publishes to npm public registry. Clients install with:
 ```bash
-npm install ai-guardian-sdk
+npm install helix-sdk
 ```
 
 ---
@@ -143,7 +143,7 @@ npm install ai-guardian-sdk
 
 ### Test Backend Health:
 ```bash
-curl https://ai-guardian-backend-xxxx.onrender.com/health
+curl https://helix-backend-xxxx.onrender.com/health
 # Should return: { status: "ok", service: "Helix Backend" }
 ```
 
@@ -152,8 +152,8 @@ Visit `https://your-app.netlify.app` → You should see login page
 
 ### Test SDK:
 ```bash
-npm install ai-guardian-sdk
-const AIGuardian = require('ai-guardian-sdk').default;
+npm install helix-sdk
+const AIGuardian = require('helix-sdk').default;
 const guardian = new AIGuardian({ apiKey: 'ag_...' });
 console.log(guardian.getStatus());
 ```

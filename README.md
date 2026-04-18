@@ -29,7 +29,7 @@ Helix is a full-stack, multi-tenant SaaS platform that acts as an autonomous thr
 │             (Hotels, Hospitals, Public Services)               │
 └──────────────────────┬──────────────────────────────────────────┘
                        │
-                       │ npm install ai-guardian-sdk
+                       │ npm install helix-sdk
                        │
         ┌──────────────▼──────────────┐
         │   SDK (100 lines JS)        │  <- Silent event collection
@@ -76,7 +76,7 @@ Helix is a full-stack, multi-tenant SaaS platform that acts as an autonomous thr
 ## Project Structure
 
 ```
-ai-guardian/
+helix/
 ├── backend/                 # NestJS backend (Render)
 │   ├── src/
 │   │   ├── modules/
@@ -261,7 +261,7 @@ npm install
 cp .env.example .env
 
 # Configure .env:
-# MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/ai-guardian
+# MONGODB_URI=mongodb+srv://user:pass@cluster.mongodb.net/helix
 # HUGGINGFACE_API_KEY=YOUR_API_KEY...
 # NODEMAILER_EMAIL=your@gmail.com
 # NODEMAILER_PASS=<16-char app password>

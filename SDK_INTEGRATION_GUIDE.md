@@ -48,7 +48,7 @@ Your SDK has these features:
 
 ```bash
 # In your Node.js/NestJS/Express application
-npm install ai-guardian-sdk
+npm install helix-sdk
 # or from your local folder
 npm install /path/to/helix/sdk
 ```
@@ -70,7 +70,7 @@ npm install /path/to/helix/sdk
 
 ```typescript
 // your-app.ts or main.ts
-import AIGuardian from 'ai-guardian-sdk';
+import AIGuardian from 'helix-sdk';
 
 const guardian = new AIGuardian({
   apiKey: 'your-api-key-from-dashboard', // Required
@@ -90,7 +90,7 @@ guardian.interceptErrors();
 
 ```typescript
 // In your main app file
-import AIGuardian from 'ai-guardian-sdk';
+import AIGuardian from 'helix-sdk';
 
 const guardian = new AIGuardian({
   apiKey: 'your-api-key-from-dashboard',
@@ -231,7 +231,7 @@ Body:
 
 ```typescript
 // your-cluster-monitor.ts
-import AIGuardian from 'ai-guardian-sdk';
+import AIGuardian from 'helix-sdk';
 
 const guardian = new AIGuardian({
   apiKey: 'prod-api-key',
@@ -288,7 +288,7 @@ setInterval(monitorSecurity, 5000);
 
 ```typescript
 // your-db-monitor.ts
-import AIGuardian from 'ai-guardian-sdk';
+import AIGuardian from 'helix-sdk';
 
 const guardian = new AIGuardian({
   apiKey: 'prod-api-key',
@@ -333,7 +333,7 @@ database.on('replication-lag', (lagMs) => {
 ```typescript
 // Complete setup in your host system
 import express from 'express';
-import AIGuardian from 'ai-guardian-sdk';
+import AIGuardian from 'helix-sdk';
 
 const app = express();
 const guardian = new AIGuardian({
@@ -454,7 +454,7 @@ const guardian = new AIGuardian({
   apiKey: string;
   
   // OPTIONAL
-  backendUrl: string;     // Default: https://ai-guardian-backend.render.com
+  backendUrl: string;     // Default: https://helix-backend.render.com
   enabled: boolean;       // Default: true
   sampleRate: number;     // Default: 1.0 (0-1 = 0-100%)
 });

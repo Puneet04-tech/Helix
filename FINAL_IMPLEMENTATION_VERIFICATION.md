@@ -36,7 +36,7 @@
 
 **Expected Structure**:
 ```
-ai-guardian/
+helix/
 ├── backend/          ← NestJS
 ├── frontend/         ← Next.js
 └── sdk/              ← npm package
@@ -314,7 +314,7 @@ NEXT_PUBLIC_API_URL ✅
 
 #### ✅ 9.2 Distribution Method
 - ✅ Published to GitHub as separate repo
-- ✅ Install: `npm install github:yourusername/ai-guardian-sdk`
+- ✅ Install: `npm install github:yourusername/helix-sdk`
 - ✅ Free forever
 
 **Status**: ✅ IMPLEMENTED

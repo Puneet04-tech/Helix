@@ -28,7 +28,7 @@ cp .env.example .env
 ```
 
 Edit `.env` with:
-- `MONGODB_URI`: localhost:27017/ai-guardian (or Atlas connection)
+- `MONGODB_URI`: localhost:27017/helix (or Atlas connection)
 - `JWT_SECRET`: any random string
 - `HUGGINGFACE_API_KEY`: Get from huggingface.co/settings/tokens
 - `NODEMAILER_EMAIL` & `NODEMAILER_PASS`: Gmail app password
