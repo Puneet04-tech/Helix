@@ -275,8 +275,8 @@ export default function LandingPage() {
     },
     {
       icon: <MessageSquare className="w-8 h-8" />,
-      title: 'AI Assistant',
-      description: 'Chat with our intelligent assistant to get instant answers about incidents, services, and system status.',
+      title: 'Helix Intelligence',
+      description: 'Chat with our intelligent security assistant to get instant answers about threats, incidents, services, and system health.',
     },
     {
       icon: <ShieldAlert className="w-8 h-8" />,

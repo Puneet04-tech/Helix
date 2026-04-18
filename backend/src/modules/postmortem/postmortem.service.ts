@@ -29,7 +29,7 @@ export class PostmortemService {
       doc
         .fontSize(24)
         .font('Helvetica-Bold')
-        .text('🛡️ AI Guardian Incident Postmortem', { align: 'center' });
+        .text('🛡️ Helix Incident Postmortem', { align: 'center' });
 
       doc.moveDown();
 

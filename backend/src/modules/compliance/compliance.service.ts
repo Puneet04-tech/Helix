@@ -45,7 +45,7 @@ export class ComplianceService {
       doc.moveDown(2);
 
       doc.fontSize(10).text(
-        'All incidents in this report were logged automatically by AI Guardian without human modification.',
+        'All incidents in this report were logged automatically by Helix without human modification.',
       );
       doc.text('This report is suitable for regulatory compliance review.');
 
@@ -142,7 +142,7 @@ export class ComplianceService {
         bySeverity,
         averageResolutionTime: Math.round(avgResolutionTime),
         generatedAt: new Date(),
-        certification: 'All data automatically logged by AI Guardian',
+        certification: 'All data automatically logged by Helix',
       };
     } catch (error) {
       const err = error as Error;

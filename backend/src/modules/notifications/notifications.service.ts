@@ -164,7 +164,7 @@ export class NotificationsService {
         }
       </ul>
       
-      <p><strong>No immediate action needed</strong> - AI Guardian has taken appropriate measures.</p>
+      <p><strong>No immediate action needed</strong> - Helix has taken appropriate measures.</p>
       <p><a href="${process.env.FRONTEND_URL}/incidents/${incident.incidentId}">View Details</a></p>
     `;
 
@@ -185,8 +185,8 @@ export class NotificationsService {
     if (!recipients) return;
 
     const htmlContent = `
-      <h2>🛡️ AI Guardian Alert</h2>
-      <p>An incident was detected and automatically handled by AI Guardian.</p>
+      <h2>🛡️ Helix Alert</h2>
+      <p>An incident was detected and automatically handled by Helix.</p>
       
       <p><strong>Service</strong>: ${incident.service}</p>
       <p><strong>Status</strong>: ${incident.status === 'resolved' ? '✓ Resolved' : 'In Progress'}</p>
@@ -222,14 +222,14 @@ export class NotificationsService {
         <h2>⚠️ Predictive Alert</h2>
         <p>${prediction.message}</p>
         <p><strong>Expected Time</strong>: ${prediction.predictedTime}</p>
-        <p>AI Guardian has detected a pattern that suggests a potential issue at the predicted time.</p>
+        <p>Helix has detected a pattern that suggests a potential issue at the predicted time.</p>
         <p><a href="${process.env.FRONTEND_URL}/dashboard">Review Dashboard</a></p>
       `;
 
       return this.transporter.sendMail({
         from: process.env.NODEMAILER_EMAIL,
         to: recipients,
-        subject: 'Predictive Alert from AI Guardian',
+        subject: 'Predictive Alert from Helix',
         html: htmlContent,
       });
     } catch (error) {
@@ -248,7 +248,7 @@ export class NotificationsService {
           <h2>${subject}</h2>
           <pre style="white-space: pre-wrap; word-wrap: break-word;">${message}</pre>
           <hr>
-          <p><small>This is an automated message from AI Guardian</small></p>
+          <p><small>This is an automated message from Helix</small></p>
         </div>
       `;
 

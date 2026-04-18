@@ -10,7 +10,7 @@ export default function ChatbotPage() {
   const [messages, setMessages] = useState<any[]>([
     {
       id: 1,
-      text: "Hello! I'm Helix's intelligent assistant. Ask me anything about your incidents, services, or system status.",
+      text: "Hello! I'm Helix's intelligent security assistant. Ask me anything about your incidents, services, threats, or system status. I can analyze patterns, provide insights, and help you understand what's happening in your infrastructure.",
       sender: 'ai',
       timestamp: new Date(),
     },
@@ -96,10 +96,10 @@ export default function ChatbotPage() {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-slate-100">
-            Helix AI Assistant
+            Helix Intelligence Assistant
           </h1>
           <p className="text-slate-400 mt-1">
-            Ask natural language questions about your incidents and system status
+            Ask natural language questions about your threats, incidents, and system status. Helix will analyze your data and provide actionable insights.
           </p>
         </div>
 
