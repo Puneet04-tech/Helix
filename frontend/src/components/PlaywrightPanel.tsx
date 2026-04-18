@@ -26,7 +26,7 @@ interface Incident {
 }
 
 export default function PlaywrightPanel() {
-  const { token } = useAuth();
+  const { token, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [results, setResults] = useState<ActionResult[]>([]);
@@ -35,7 +35,7 @@ export default function PlaywrightPanel() {
 
   // Fetch incidents with Playwright actions
   const fetchIncidents = async (isManualRefresh: boolean = false) => {
-    if (!token) {
+    if (!token || !user) {
       setLoading(false);
       return;
     }
@@ -45,14 +45,17 @@ export default function PlaywrightPanel() {
     }
 
     try {
-      console.log('[PlaywrightPanel] Fetching incidents...');
+      console.log('[PlaywrightPanel] Fetching incidents for project:', user.projectIds?.[0]);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
       
       if (!apiUrl) {
         throw new Error('API URL not configured');
       }
 
-      const response = await fetch(`${apiUrl}/incidents?limit=100`, {
+      // Get projectId from user context
+      const projectId = user.projectIds?.[0] || 'default';
+
+      const response = await fetch(`${apiUrl}/incidents/project/${projectId}?limit=100`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -124,7 +127,7 @@ export default function PlaywrightPanel() {
   // Initial fetch on mount
   useEffect(() => {
     fetchIncidents(false);
-  }, [token]);
+  }, [token, user]);
 
   // Manual refresh handler
   const handleRefresh = () => {
