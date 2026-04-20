@@ -13,8 +13,8 @@ export class HelixService {
   private axiosClient = axios.create({
     timeout: 30000,
     headers: {
-      'Authorization': `Bearer ${this.apiKey}`,
       'Content-Type': 'application/json',
+      'x-api-key': this.apiKey || 'pk_hospital_001_default',
     },
   });
 
@@ -88,20 +88,17 @@ export class HelixService {
   async sendIncidentToCentralHelix(incidentData: any): Promise<void> {
     try {
       const payload = {
-        apiKey: this.apiKey || 'pk_hospital_001_default',
-        eventData: {
-          type: 'incident_detected',
-          service: 'hospital-management',
-          message: incidentData.title,
-          metadata: {
-            incidentId: incidentData.incidentId,
-            projectId: incidentData.projectId,
-            severity: incidentData.severity,
-            incidentType: incidentData.type,
-            description: incidentData.description,
-            unit: incidentData.unit,
-            timestamp: incidentData.timestamp,
-          },
+        type: 'incident_detected',
+        service: 'hospital-management',
+        message: incidentData.title,
+        metadata: {
+          incidentId: incidentData.incidentId,
+          projectId: incidentData.projectId,
+          severity: incidentData.severity,
+          incidentType: incidentData.type,
+          description: incidentData.description,
+          unit: incidentData.unit,
+          timestamp: incidentData.timestamp,
         },
       };
 
