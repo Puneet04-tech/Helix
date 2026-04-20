@@ -21,6 +21,7 @@ import { ComplianceModule } from './modules/compliance/compliance.module';
 
 // Controllers
 import { AppController } from './app.controller';
+import { AuditController } from './common/controllers/audit.controller';
 
 // Services
 import { AppService } from './app.service';
@@ -29,6 +30,10 @@ import { HuggingFaceService } from './common/services/huggingface.service';
 import { OllamaService } from './common/services/ollama.service';
 import { GroqService } from './common/services/groq.service';
 import { PlaywrightService } from './common/services/playwright.service';
+import { AuditService } from './common/services/audit.service';
+
+// Schemas
+import { Audit, AuditSchema } from './common/schemas/audit.schema';
 
 // Gateways
 import { EventsGateway } from './common/gateways/events.gateway';
@@ -42,6 +47,7 @@ import { EventsGateway } from './common/gateways/events.gateway';
         retryDelay: 5000,
       },
     ),
+    MongooseModule.forFeature([{ name: Audit.name, schema: AuditSchema }]),
     ScheduleModule.forRoot(),
     JwtModule.register({
       secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
@@ -61,7 +67,7 @@ import { EventsGateway } from './common/gateways/events.gateway';
     PostmortemModule,
     ComplianceModule,
   ],
-  controllers: [AppController],
-  providers: [AppService, MemoryService, OllamaService, GroqService, HuggingFaceService, PlaywrightService, EventsGateway],
+  controllers: [AppController, AuditController],
+  providers: [AppService, MemoryService, OllamaService, GroqService, HuggingFaceService, PlaywrightService, AuditService, EventsGateway],
 })
 export class AppModule {}
