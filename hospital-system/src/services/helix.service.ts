@@ -83,18 +83,51 @@ export class HelixService {
   }
 
   /**
-   * Track hospital crisis prediction
+   * Send incident to central Helix backend (ingest as event)
    */
-  trackCrisisPrediction(pattern: string, severity: 'low' | 'medium' | 'high'): void {
-    this.helix.trackCrisisPrediction('hospital-monitoring', pattern, severity);
-    this.helix.track('crisis_prediction', `Crisis pattern detected: ${pattern}`, {
-      service: 'crisis-detection',
-      pattern,
-      severity,
-      projectId: this.projectId,
-    });
+  async sendIncidentToCentralHelix(incidentData: any): Promise<void> {
+    try {
+      const payload = {
+        apiKey: this.apiKey || 'pk_hospital_001_default',
+        eventData: {
+          type: 'incident_detected',
+          service: 'hospital-management',
+          message: incidentData.title,
+          metadata: {
+            incidentId: incidentData.incidentId,
+            projectId: incidentData.projectId,
+            severity: incidentData.severity,
+            incidentType: incidentData.type,
+            description: incidentData.description,
+            unit: incidentData.unit,
+            timestamp: incidentData.timestamp,
+          },
+        },
+      };
 
-    this.logger.warn(`🔴 Crisis prediction: ${pattern} (${severity})`);
+      const response = await this.axiosClient.post(
+        `${this.helixUrl}/events/ingest`,
+        payload
+      );
+
+      this.logger.log(`✅ Incident sent to central Helix: ${incidentData.incidentId}`);
+      this.logger.debug(`Response: ${JSON.stringify(response.data)}`);
+    } catch (error: any) {
+      this.logger.error(`❌ Failed to send incident to Helix: ${error.message}`);
+      if (error.response) {
+        this.logger.error(`Status: ${error.response.status}, Data: ${JSON.stringify(error.response.data)}`);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Track hospital crisis prediction (backward compatibility)
+   */
+  async trackCrisisPrediction(pattern: string, severity: 'low' | 'medium' | 'high'): Promise<void> {
+    this.logger.warn(`🔴 Crisis prediction detected: ${pattern} (${severity})`);
+    // This method is kept for backward compatibility
+    // Actual sending happens in sendIncidentToCentralHelix
   }
 
   /**

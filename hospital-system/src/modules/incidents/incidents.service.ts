@@ -16,12 +16,23 @@ export class IncidentsService {
 
     this.incidents.push(incident);
 
-    // Track incident in Helix SDK
-    const severity = incident.severity as 'low' | 'medium' | 'high';
-    this.helixService.trackCrisisPrediction(
-      `${incident.type}: ${incident.title} (${incident.unit})`,
-      severity
-    );
+    // Send directly to central Helix backend
+    try {
+      const severity = incident.severity as 'low' | 'medium' | 'high' | 'critical';
+      await this.helixService.sendIncidentToCentralHelix({
+        incidentId: incident.id,
+        projectId: 'hospital_001',
+        type: incident.type,
+        title: incident.title,
+        severity,
+        description: incident.description,
+        unit: incident.unit,
+        timestamp: incident.timestamp,
+        service: 'hospital-system',
+      });
+    } catch (error) {
+      console.error('Failed to send incident to Helix:', error);
+    }
 
     return incident;
   }

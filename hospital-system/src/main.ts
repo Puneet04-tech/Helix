@@ -1,7 +1,11 @@
 // hospital-system/src/main.ts
+import * as dotenv from 'dotenv';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import Helix from 'hotel-management-api-helix';
+
+// Load environment variables from .env file
+dotenv.config();
 
 async function bootstrap() {
   // Initialize Helix SDK on startup
