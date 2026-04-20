@@ -48,12 +48,12 @@ export class EventsService {
       this.logger.error(`Failed to save event: ${err.message}`);
     });
 
-    // ===== HOTEL MANAGEMENT INTEGRATION =====
-    // Direct incident creation for hotel complaints (bypass pattern detection)
-    if (eventData.service === 'hotel-management' || eventData.service === 'complaint-management') {
-      this.logger.log(`Hotel complaint detected: ${eventData.message}`);
+    // ===== HOTEL MANAGEMENT & HOSPITAL MANAGEMENT INTEGRATION =====
+    // Direct incident creation for hotel complaints and hospital incidents (bypass pattern detection)
+    if (eventData.service === 'hotel-management' || eventData.service === 'complaint-management' || eventData.service === 'hospital-management') {
+      this.logger.log(`Incident detected from ${eventData.service}: ${eventData.message}`);
       
-      // Map hotel system severities to incident schema severities
+      // Map system severities to incident schema severities
       const severityMap: Record<string, string> = {
         'critical': 'critical',
         'high': 'critical',      // Map high -> critical
@@ -65,19 +65,30 @@ export class EventsService {
       const mappedSeverity = severityMap[eventData.metadata?.severity] || 'warning';
       
       try {
+        // Determine incident type based on service
+        const incidentType = eventData.service === 'hospital-management' 
+          ? eventData.metadata?.incidentType || 'medical_incident'
+          : 'guest_complaint';
+        
+        const source = eventData.service === 'hospital-management' 
+          ? 'hospital-integration'
+          : 'hotel-integration';
+
         const incident = await this.incidentsService.createIncident(
           projectId,
           {
-            type: 'guest_complaint',
+            type: incidentType,
             severity: mappedSeverity,
-            service: 'hotel-management',
-            title: eventData.message || 'Guest Complaint',
-            description: `Complaint ID: ${eventData.metadata?.complaintId || 'unknown'} - ${eventData.message}`,
+            service: eventData.service,
+            title: eventData.message || 'Incident Report',
+            description: eventData.metadata?.description || eventData.message,
             metadata: {
               ...eventData.metadata,
+              incidentId: eventData.metadata?.incidentId,
               complaintId: eventData.metadata?.complaintId,
               guestId: eventData.metadata?.guestId,
               roomNumber: eventData.metadata?.roomNumber,
+              unit: eventData.metadata?.unit,
               severity: eventData.metadata?.severity,
             },
             analysis: {
@@ -95,7 +106,7 @@ export class EventsService {
           anomalyDetected: true,
           incidentId: incident.incidentId,
           category: 'operational_issue',
-          source: 'hotel-integration',
+          source: source,
         };
       } catch (error) {
         const err = error as Error;

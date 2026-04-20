@@ -22,6 +22,11 @@ export class Event {
       'memory_leak',
       'database_timeout',
       'api_failure',
+      'incident_detected',
+      'equipment_failure',
+      'patient_incident',
+      'system_incident',
+      'guest_complaint',
     ],
   })
   type: string;
