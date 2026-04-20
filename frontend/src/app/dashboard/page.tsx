@@ -167,7 +167,7 @@ export default function Dashboard() {
       }
     } catch (err) {
       console.error('Dashboard fetch error:', err);
-      setError('Failed to connect to backend. Make sure the server is running on port 5000.');
+      setError('Failed to connect to backend. Please check your network connection or contact support.');
       // Show empty state, not mock data
       setIncidents([]);
       setMetrics({
@@ -272,7 +272,7 @@ export default function Dashboard() {
           <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg text-sm">
             {error}
             <p className="text-xs mt-2 text-red-300">
-              Troubleshooting: Check that the backend is running on port 5000. Click "Start Live Demo" to simulate incidents.
+              Troubleshooting: Check your network connection and try refreshing the page. Click "Start Live Demo" to simulate incidents.
             </p>
           </div>
         )}
