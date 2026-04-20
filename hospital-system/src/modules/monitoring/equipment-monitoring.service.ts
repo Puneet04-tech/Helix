@@ -49,10 +49,11 @@ export class EquipmentMonitoringService {
       }
 
       // Track status update
+      const mappedStatus = equipment.status === 'error' ? 'down' : equipment.status === 'warning' ? 'degraded' : 'operational';
       this.helixService.trackStatusUpdate([
         {
           name: equipment.name,
-          status: equipment.status,
+          status: mappedStatus,
         },
       ]);
     }

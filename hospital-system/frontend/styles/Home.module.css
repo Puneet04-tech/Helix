@@ -1,0 +1,202 @@
+.container {
+  padding: 0;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.title {
+  margin: 0;
+  line-height: 1.15;
+  font-size: 3rem;
+  color: white;
+  text-align: center;
+  margin-bottom: 2rem;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.card {
+  background: white;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+}
+
+.card h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.5rem;
+}
+
+.card p {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.small {
+  font-size: 0.85rem;
+  color: #999;
+  font-family: 'Courier New', monospace;
+}
+
+.features {
+  background: white;
+  border-radius: 8px;
+  padding: 2rem;
+  margin: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 300px;
+}
+
+.features h2 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features li {
+  padding: 0.5rem 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.footer {
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  padding: 2rem;
+  text-align: center;
+  font-size: 1rem;
+}
+
+.button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin: 0.5rem 0;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.form {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.input,
+.textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  font-family: inherit;
+}
+
+.input:focus,
+.textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.textarea {
+  resize: vertical;
+}
+
+.incidentsList {
+  margin-top: 1.5rem;
+  border-top: 2px solid #f0f0f0;
+  padding-top: 1rem;
+}
+
+.incidentsList h3 {
+  margin: 0 0 1rem 0;
+  color: #333;
+  font-size: 1.2rem;
+}
+
+.incidentItem {
+  background: #f9f9f9;
+  padding: 1rem;
+  border-left: 4px solid #667eea;
+  margin-bottom: 1rem;
+  border-radius: 2px;
+}
+
+.incidentItem strong {
+  display: block;
+  color: #333;
+  margin-bottom: 0.5rem;
+}
+
+.incidentItem p {
+  margin: 0.5rem 0;
+  color: #666;
+  font-size: 0.95rem;
+}
+
+.incidentItem small {
+  display: block;
+  color: #999;
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+}
+
+.featureList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.featureList li {
+  padding: 0.5rem 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+@media (max-width: 600px) {
+  .title {
+    font-size: 2rem;
+  }
+
+  .card,
+  .features {
+    min-width: auto;
+    width: 100%;
+  }
+
+  .main {
+    padding: 1rem;
+  }
+}

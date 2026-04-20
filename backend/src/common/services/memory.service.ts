@@ -44,7 +44,7 @@ export class MemoryService {
           { eventType: event.type, totalEvents: filtered.length, eventData: event.data },
           message,
           'debug',
-        ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+        ).catch(err => this.logger.error(`Audit log failed: ${err instanceof Error ? err.message : String(err)}`));
       }
     }
   }
@@ -72,7 +72,7 @@ export class MemoryService {
           { eventType, count: suspiciousEvents.length, threshold: this.PATTERN_THRESHOLD },
           message,
           'warn',
-        ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+        ).catch(err => this.logger.error(`Audit log failed: ${err instanceof Error ? err.message : String(err)}`));
       }
     }
 
@@ -112,7 +112,7 @@ export class MemoryService {
         {},
         message,
         'debug',
-      ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+      ).catch(err => this.logger.error(`Audit log failed: ${err instanceof Error ? err.message : String(err)}`));
     }
   }
 

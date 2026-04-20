@@ -52,12 +52,12 @@ export class AuditService {
           });
         }
       } catch (error) {
-        this.logger.warn(`Failed to broadcast audit log: ${error.message}`);
+        this.logger.warn(`Failed to broadcast audit log: ${error instanceof Error ? error.message : String(error)}`);
       }
 
       return saved;
     } catch (error) {
-      this.logger.error(`Failed to log audit: ${error.message}`);
+      this.logger.error(`Failed to log audit: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -80,7 +80,7 @@ export class AuditService {
 
       return { logs, total };
     } catch (error) {
-      this.logger.error(`Failed to fetch audit trail: ${error.message}`);
+      this.logger.error(`Failed to fetch audit trail: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -94,7 +94,7 @@ export class AuditService {
 
       return logs;
     } catch (error) {
-      this.logger.error(`Failed to fetch incident audit trail: ${error.message}`);
+      this.logger.error(`Failed to fetch incident audit trail: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
@@ -110,7 +110,7 @@ export class AuditService {
 
       return result.deletedCount || 0;
     } catch (error) {
-      this.logger.error(`Failed to clear old audit logs: ${error.message}`);
+      this.logger.error(`Failed to clear old audit logs: ${error instanceof Error ? error.message : String(error)}`);
       throw error;
     }
   }
