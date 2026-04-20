@@ -61,8 +61,8 @@ export const AuditTrail: React.FC<{ incidentId?: string }> = ({ incidentId }) =>
     const fetchAuditTrail = async () => {
       try {
         const endpoint = incidentId 
-          ? `/api/audit/incident/${incidentId}`
-          : `/api/audit`;
+          ? `/audit/incident/${incidentId}`
+          : `/audit`;
         
         const response = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}` },
