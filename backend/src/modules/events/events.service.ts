@@ -91,6 +91,45 @@ export class EventsService {
           ? 'hospital-integration'
           : 'hotel-integration';
 
+        // For hospital incidents, also go through Groq analysis pipeline
+        // Add to memory for pattern detection
+        this.memoryService.addEvent(projectId, {
+          type: eventData.type || 'info',
+          timestamp: Date.now(),
+          data: eventData,
+        });
+
+        // Check for suspicious pattern (hospital incidents may have different thresholds)
+        const hasSuspiciousPattern = this.memoryService.hasSuspiciousPattern(
+          projectId,
+          eventData.type || 'info',
+        );
+
+        let analysisResult;
+        if (hasSuspiciousPattern) {
+          // Use Groq analysis through HuggingFace service
+          const eventsForAnalysis = this.memoryService.getAllEventsForAnalysis(
+            projectId,
+            15,
+          );
+          analysisResult = await this.huggingFaceService.analyzeEvents(
+            projectId,
+            eventsForAnalysis,
+          );
+          this.logger.debug(
+            `Groq analysis for hospital incident: ${analysisResult.category} (${(analysisResult.confidence * 100).toFixed(1)}%)`,
+          );
+        } else {
+          // Fallback analysis for single incident
+          analysisResult = {
+            category: 'operational_issue',
+            confidence: 0.8,
+            isAnomaly: true,
+            reasoning: 'Hospital incident detected - requires investigation',
+            source: 'fallback' as const,
+          };
+        }
+
         const incident = await this.incidentsService.createIncident(
           projectId,
           {
@@ -108,11 +147,7 @@ export class EventsService {
               unit: eventData.metadata?.unit,
               severity: eventData.metadata?.severity,
             },
-            analysis: {
-              category: 'operational_issue',
-              confidence: 1.0,
-              isAnomaly: true,
-            },
+            analysis: analysisResult,
             events: [eventData],
           },
         );
