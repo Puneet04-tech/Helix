@@ -65,10 +65,21 @@ export class EventsService {
       const mappedSeverity = severityMap[eventData.metadata?.severity] || 'warning';
       
       try {
+        // Map incident types to valid enum values
+        const typeMap: Record<string, string> = {
+          'equipment': 'equipment_failure',
+          'medical': 'medical_incident',
+          'patient': 'patient_incident',
+          'system': 'system_incident',
+        };
+        
         // Determine incident type based on service
-        const incidentType = eventData.service === 'hospital-management' 
+        let incidentType = eventData.service === 'hospital-management' 
           ? eventData.metadata?.incidentType || 'medical_incident'
           : 'guest_complaint';
+        
+        // Apply type mapping if needed
+        incidentType = typeMap[incidentType] || incidentType;
         
         const source = eventData.service === 'hospital-management' 
           ? 'hospital-integration'
