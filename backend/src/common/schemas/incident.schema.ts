@@ -29,6 +29,13 @@ export class Incident {
       'reliability',
       'guest_complaint',
       'operational_issue',
+      'equipment',
+      'equipment_failure',
+      'patient',
+      'patient_incident',
+      'medical_incident',
+      'system',
+      'system_incident',
     ],
   })
   type: string;
