@@ -70,10 +70,12 @@ export default function Dashboard() {
       // Try stats endpoint first
       if (projectId) {
         endpoints.push(
-          fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}/stats`, {
+          fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}/stats?t=${Date.now()}`, {
             headers: {
               Authorization: `Bearer ${token}`,
               'Content-Type': 'application/json',
+              'Cache-Control': 'no-cache',
+              'Pragma': 'no-cache',
             },
           })
         );
@@ -85,10 +87,12 @@ export default function Dashboard() {
         : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
       
       endpoints.push(
-        fetch(incidentUrl, {
+        fetch(`${incidentUrl}?t=${Date.now()}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
           },
         })
       );
@@ -181,8 +185,8 @@ export default function Dashboard() {
   useEffect(() => {
     fetchDashboardData();
 
-    // Poll for updates every 30 seconds
-    const interval = setInterval(fetchDashboardData, 30000);
+    // Poll for updates every 10 seconds
+    const interval = setInterval(fetchDashboardData, 10000);
 
     return () => clearInterval(interval);
   }, [user, token]);
