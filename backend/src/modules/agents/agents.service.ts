@@ -406,6 +406,15 @@ export class AgentsService {
       status: 'sent',
     });
 
+    // **IMPORTANT: Send actual email notifications**
+    try {
+      this.logger.log(`[COMMS] Sending email notifications for incident ${incident.incidentId}`);
+      await this.notificationsService.sendRoleBasedAlerts(incident);
+      this.logger.log(`[COMMS] Email notifications sent successfully for ${incident.incidentId}`);
+    } catch (emailError: any) {
+      this.logger.error(`[COMMS] Failed to send email notifications: ${emailError.message}`);
+    }
+
     this.logger.log(`[COMMS] Sent ${notifications.length} notifications: ${notifications.map(n => `${n.recipient}(${n.channel})`).join(', ')}`);
     return {
       notifications,
