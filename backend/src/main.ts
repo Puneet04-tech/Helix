@@ -22,7 +22,7 @@ async function bootstrap() {
     origin: true, // This will reflect the request origin, allowing any domain to access
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type,Authorization',
+    allowedHeaders: 'Content-Type,Authorization,Cache-Control,Pragma',
   });
 
   const port = process.env.PORT || 5000;
