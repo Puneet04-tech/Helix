@@ -31,7 +31,13 @@ export class EventsService {
       throw new BadRequestException('Invalid API key');
     }
 
-    const projectId = client._id.toString();
+    // Use appropriate project ID based on service
+    let projectId = client._id.toString();
+    
+    // For hospital-management, use the hospital_001 project ID to match user's project
+    if (eventData.service === 'hospital-management') {
+      projectId = 'hospital_001';
+    }
 
     // Step 2: Store event in MongoDB (async, non-blocking)
     const event = new this.eventModel({
