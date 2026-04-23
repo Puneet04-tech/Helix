@@ -43,6 +43,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [liveMode, setLiveMode] = useState(false);
+  const [chaosData, setChaosData] = useState<any>(null);
+  const [benchmarkData, setBenchmarkData] = useState<any>(null);
+  const [kbQuery, setKbQuery] = useState('');
+  const [kbResults, setKbResults] = useState<any[]>([]);
+  const [canaryResult, setCanaryResult] = useState<any>(null);
+  const [isRunningCanary, setIsRunningCanary] = useState(false);
 
   const projectId = user?.projectIds?.[0];
   const { connected, incidents: wsIncidents, startLiveDemo, stopLiveDemo } = useWebSocket(projectId || '');
@@ -178,18 +184,80 @@ export default function Dashboard() {
     }
   };
 
+  const fetchAdvancedInsights = async () => {
+    if (!token || !projectId) return;
+
+    try {
+      // Fetch Benchmark Data
+      const bRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agents/benchmarking/${projectId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (bRes.ok) setBenchmarkData(await bRes.json());
+
+      // Fetch sample Chaos data for 'booking-service'
+      const cRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/agents/chaos/simulate`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ service: 'booking-service' })
+      });
+      if (cRes.ok) setChaosData(await cRes.json());
+    } catch (err) {
+      console.error('Error fetching advanced insights:', err);
+    }
+  };
+
+  const runCanary = async () => {
+    if (!token) return;
+    setIsRunningCanary(true);
+    setCanaryResult(null);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL!}/agents/canary/run`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ url: 'https://demo-booking.helix.io', flow: 'hotel' })
+      });
+      const data = await res.json();
+      setCanaryResult(data);
+    } catch (err) {
+      console.error('Canary failed:', err);
+    } finally {
+      setIsRunningCanary(false);
+    }
+  };
+
+  const searchKB = async (q: string) => {
+    setKbQuery(q);
+    if (q.length < 3) return;
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL!}/agents/knowledge/search?query=${encodeURIComponent(q)}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) setKbResults(await res.json());
+    } catch (err) {
+      console.error('KB search failed:', err);
+    }
+  };
+
   // Fetch data on mount and set up polling
   useEffect(() => {
     fetchDashboardData();
+    fetchAdvancedInsights();
 
     // Poll for updates every 10 seconds
     const interval = setInterval(fetchDashboardData, 10000);
 
     return () => clearInterval(interval);
-  }, [user, token]);
+  }, [user, token, projectId]);
 
   const handleRefresh = async () => {
     await fetchDashboardData();
+    await fetchAdvancedInsights();
   };
 
   const toggleLiveDemo = () => {
@@ -301,8 +369,8 @@ export default function Dashboard() {
 
         {/* AI Guardian Advanced Insights */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <AdvancedInsights mode="chaos" data={null} />
-            <AdvancedInsights mode="benchmark" data={null} />
+            <AdvancedInsights mode="chaos" data={chaosData} />
+            <AdvancedInsights mode="benchmark" data={benchmarkData} />
         </div>
 
         {/* Feature 4 & 5: KB and Canaries Quick Panel */}
@@ -315,9 +383,25 @@ export default function Dashboard() {
                     <h3 className="font-bold text-slate-100">Knowledge Search</h3>
                 </div>
                 <div className="relative">
-                    <input type="text" placeholder="What usually breaks on Fridays?" className="w-full bg-slate-900 border border-slate-800 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-indigo-500" />
+                    <input 
+                      type="text" 
+                      placeholder="What usually breaks on Fridays?" 
+                      className="w-full bg-slate-900 border border-slate-800 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-indigo-500"
+                      value={kbQuery}
+                      onChange={(e) => searchKB(e.target.value)}
+                    />
                     <Brain className="absolute right-3 top-2.5 w-4 h-4 text-gray-600" />
                 </div>
+                {kbResults.length > 0 && (
+                  <div className="mt-3 space-y-2 max-h-32 overflow-y-auto">
+                    {kbResults.map((res, i) => (
+                      <div key={i} className="text-[10px] p-2 bg-indigo-500/10 rounded border border-indigo-500/20 text-indigo-200">
+                        <div className="font-bold">{res.type}</div>
+                        <div className="opacity-70">{res.summary}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
 
             <div className="bg-[#112D5E] border border-[#1E3A5F] p-5 rounded-xl hover:border-emerald-500/50 transition-colors group">
@@ -327,14 +411,23 @@ export default function Dashboard() {
                     </div>
                     <h3 className="font-bold text-slate-100 italic">Silent Canary (F5)</h3>
                 </div>
-                <div className="flex gap-2">
-                    <button className="flex-1 bg-emerald-500 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-600 transition-colors">
-                        TEST GUEST FLOW
+                <div className="flex gap-2 mb-3">
+                    <button 
+                      onClick={runCanary}
+                      disabled={isRunningCanary}
+                      className="flex-1 bg-emerald-500 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                    >
+                        {isRunningCanary ? 'RUNNING...' : 'TEST GUEST FLOW'}
                     </button>
                     <button className="flex-1 bg-gray-800 text-gray-400 text-[10px] font-bold py-2 rounded-lg border border-gray-700">
                         DRY RUN
                     </button>
                 </div>
+                {canaryResult && (
+                  <div className={`text-[10px] p-2 rounded border font-mono ${canaryResult.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
+                    {canaryResult.success ? `SUCCESS: Latency ${Math.round(canaryResult.avgLatency)}ms` : `FAILED: ${canaryResult.criticalStep}`}
+                  </div>
+                )}
             </div>
 
             <div className="bg-[#112D5E] border border-[#1E3A5F] p-5 rounded-xl flex items-center justify-center italic text-gray-500 text-xs text-center px-8">
