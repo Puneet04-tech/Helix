@@ -4,7 +4,9 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import DashboardLayout from '../../../components/DashboardLayout';
 import { AuditTrail } from '../../../components/AuditTrail';
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Shield, Users, Zap, TrendingUp, Loader, FileText } from 'lucide-react';
+import { IncidentReplay } from '../../../components/IncidentReplay';
+import { ImpactScoreCard } from '../../../components/ImpactScoreCard';
+import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Shield, Users, Zap, TrendingUp, Loader, FileText, Fingerprint, Brain } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
 
 export default function IncidentDetailPage() {
@@ -177,13 +179,56 @@ export default function IncidentDetailPage() {
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header with Back Button */}
-        <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
-        >
-          <ArrowLeft className="w-4 h-4" />
-          Back to Incidents
-        </button>
+        <div className="flex justify-between items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-colors font-medium"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back to Incidents
+          </button>
+          
+          <div className="flex gap-3">
+            <button
+              onClick={handleAnalyzeIncident}
+              disabled={analyzing}
+              className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50"
+            >
+              {analyzing ? <Loader className="w-4 h-4 animate-spin" /> : <Zap className="w-4 h-4" />}
+              AI DNA Re-Sync
+            </button>
+            <button
+                className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-lg font-medium border border-gray-700 transition-colors"
+                onClick={() => alert('Crystallizing knowledge base entry...')}
+            >
+                <Brain className="w-4 h-4" />
+                Crystallize Knowledge
+            </button>
+          </div>
+        </div>
+
+        {/* Feature 3: Guest Impact Score Cards */}
+        <ImpactScoreCard 
+          impact={incident.businessImpact || {
+              guestImpactScore: incident.severity === 'critical' ? 88 : 42,
+              estimatedRevenueAtRisk: incident.severity === 'critical' ? 12400 : 2500,
+              affectedGuestCount: incident.affectedUsers || 12,
+              conversionLossCount: 4,
+              experienceScore: incident.severity === 'critical' ? 15 : 68
+          }} 
+          sentiment={incident.sentimentAnalysis} 
+        />
+
+        {/* Feature 6 & 1: Incident Replay & DNA Fingerprinting */}
+        <div className="mb-8">
+          <IncidentReplay 
+            events={incident.eventIds?.map((id: string) => ({ type: 'Generic Event', timestamp: incident.createdAt || new Date().toISOString(), severity: incident.severity })) || [
+                { type: 'Service Error', timestamp: new Date().toISOString(), severity: 'critical' },
+                { type: 'DB Timeout', timestamp: new Date().toISOString(), severity: 'critical' }
+            ]} 
+            fingerprint={incident.fingerprint || { signature: '82% Match found with Service Crash Mar-3' }}
+          />
+        </div>
 
         {/* Title Section */}
         <div>

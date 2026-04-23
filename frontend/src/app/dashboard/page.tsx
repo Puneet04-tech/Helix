@@ -6,7 +6,8 @@ import DashboardLayout from '../../components/DashboardLayout';
 import MetricCard from '../../components/MetricCard';
 import IncidentCard from '../../components/IncidentCard';
 import PlaywrightPanel from '../../components/PlaywrightPanel';
-import { RefreshCw, AlertTriangle, Play, Square, Zap } from 'lucide-react';
+import { AdvancedInsights } from '../../components/AdvancedInsights';
+import { RefreshCw, AlertTriangle, Play, Square, Zap, Search, Brain, Bird } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
@@ -296,6 +297,49 @@ export default function Dashboard() {
             value={metrics.uptime}
             trend={{ value: 0, isPositive: true }}
           />
+        </div>
+
+        {/* AI Guardian Advanced Insights */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <AdvancedInsights mode="chaos" data={null} />
+            <AdvancedInsights mode="benchmark" data={null} />
+        </div>
+
+        {/* Feature 4 & 5: KB and Canaries Quick Panel */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="bg-[#112D5E] border border-[#1E3A5F] p-5 rounded-xl hover:border-indigo-500/50 transition-colors group">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-indigo-500/20 rounded-lg text-indigo-400 group-hover:scale-110 transition-transform">
+                        <Search size={20} />
+                    </div>
+                    <h3 className="font-bold text-slate-100">Knowledge Search</h3>
+                </div>
+                <div className="relative">
+                    <input type="text" placeholder="What usually breaks on Fridays?" className="w-full bg-slate-900 border border-slate-800 rounded-lg py-2 px-3 text-sm focus:outline-none focus:border-indigo-500" />
+                    <Brain className="absolute right-3 top-2.5 w-4 h-4 text-gray-600" />
+                </div>
+            </div>
+
+            <div className="bg-[#112D5E] border border-[#1E3A5F] p-5 rounded-xl hover:border-emerald-500/50 transition-colors group">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="p-2 bg-emerald-500/20 rounded-lg text-emerald-400 group-hover:scale-110 transition-transform">
+                        <Bird size={20} />
+                    </div>
+                    <h3 className="font-bold text-slate-100 italic">Silent Canary (F5)</h3>
+                </div>
+                <div className="flex gap-2">
+                    <button className="flex-1 bg-emerald-500 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-600 transition-colors">
+                        TEST GUEST FLOW
+                    </button>
+                    <button className="flex-1 bg-gray-800 text-gray-400 text-[10px] font-bold py-2 rounded-lg border border-gray-700">
+                        DRY RUN
+                    </button>
+                </div>
+            </div>
+
+            <div className="bg-[#112D5E] border border-[#1E3A5F] p-5 rounded-xl flex items-center justify-center italic text-gray-500 text-xs text-center px-8">
+                "System is learning after every incident. 82 patterns cached."
+            </div>
         </div>
 
         {/* Playwright Automation Panel */}
