@@ -24,7 +24,7 @@ export class ChatbotService {
       const incidentContext = incidents
         .map(
           (i, idx) =>
-            `${idx + 1}. ${i.type} on ${i.service} - ${i.status} - ${i.createdAt}`,
+            `${idx + 1}. ${i.type} on ${i.service} - ${i.status} - ${(i as any).createdAt || (i as any).detectedAt}`,
         )
         .join('\n');
 

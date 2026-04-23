@@ -91,7 +91,7 @@ export class ComplianceService {
         doc.text(
           `${idx + 1}. ID: ${incident.incidentId} | Type: ${incident.type} | Severity: ${incident.severity}`,
         );
-        doc.text(`   Service: ${incident.service} | Created: ${incident.createdAt}`);
+        doc.text(`   Service: ${incident.service} | Created: ${(incident as any).createdAt || (incident as any).detectedAt}`);
         doc.text(
           `   Status: ${incident.status} | Resolution Time: ${incident.resolutionTime || 'N/A'}ms`,
         );

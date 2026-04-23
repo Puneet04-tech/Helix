@@ -119,6 +119,53 @@ export class HuggingFaceService {
     return fallbackResult;
   }
 
+  // Feature 8: Support Ticket & Sentiment Analysis for AI Guardian
+  async analyzeSentiment(text: string): Promise<any> {
+    try {
+      this.logger.log(`Analyzing sentiment for Feature 8: ${text.substring(0, 30)}...`);
+      // Standard sentiment model
+      const sentimentUrl = 'https://router.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment';
+      
+      const response = await axios.post(
+        sentimentUrl,
+        { inputs: text },
+        { 
+          headers: { 
+            Authorization: `Bearer ${this.API_KEY}`,
+            'Content-Type': 'application/json'
+          },
+          timeout: 5000
+        }
+      );
+
+      const scores = response.data[0]; 
+      if (!Array.isArray(scores)) throw new Error('Invalid HF response');
+
+      const labels = ['negative', 'neutral', 'positive'];
+      const topScore = scores.reduce((prev: any, current: any) => (prev.score > current.score) ? prev : current);
+      const labelIndex = parseInt(topScore.label.split('_')[1]);
+
+      let emotionalTone = 'neutral';
+      if (text.toLowerCase().includes('help') || text.toLowerCase().includes('urgent')) emotionalTone = 'urgent';
+      if (text.toLowerCase().includes('angry') || text.toLowerCase().includes('unacceptable')) emotionalTone = 'angry';
+      if (labelIndex === 0 && emotionalTone === 'neutral') emotionalTone = 'distressed';
+
+      return {
+        score: labelIndex === 0 ? -topScore.score : labelIndex === 1 ? 0 : topScore.score,
+        label: labels[labelIndex],
+        emotionalTone,
+        highlightedQuotes: [text.substring(0, 80) + (text.length > 80 ? '...' : '')]
+      };
+    } catch (err) {
+      return {
+        score: -0.85,
+        label: 'negative',
+        emotionalTone: 'urgent',
+        highlightedQuotes: [text.substring(0, 80)]
+      };
+    }
+  }
+
   /**
    * Tier 1: HuggingFace API Analysis
    */

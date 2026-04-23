@@ -1,27 +1,51 @@
-import { Controller, Get, Post, Param, Body, UseGuards } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { AgentsService } from './agents.service';
+import { ChaosService } from './chaos.service';
+import { CanaryService } from './canary.service';
+import { KnowledgeService } from './knowledge.service';
+import { ImpactService } from './impact.service';
 
 @Controller('api/agents')
 @UseGuards(JwtAuthGuard)
 export class AgentsController {
-  constructor(private readonly agentsService: AgentsService) {}
+  constructor(
+    private readonly agentsService: AgentsService,
+    private readonly chaosService: ChaosService,
+    private readonly canaryService: CanaryService,
+    private readonly knowledgeService: KnowledgeService,
+    private readonly impactService: ImpactService,
+  ) {}
 
-  /**
-   * Get Playwright browser automation status and capabilities
-   * GET /api/agents/playwright/status
-   */
   @Get('playwright/status')
   async getPlaywrightStatus() {
     return await this.agentsService.getPlaywrightStatus();
   }
 
-  /**
-   * Test Playwright action
-   * POST /api/agents/playwright/test/:action
-   * 
-   * Example actions: restart_service, scale_up, clear_cache, failover, kill_process
-   */
+  // Feature 2: Chaos Mode Simulation
+  @Post('chaos/simulate')
+  async simulateChaos(@Body('service') service: string) {
+    return await this.chaosService.simulateFailure(service);
+  }
+
+  // Feature 5: Silent Canary
+  @Post('canary/run')
+  async runCanary(@Body('url') url: string, @Body('flow') flow: 'hotel'|'hospital') {
+    return await this.canaryService.runCanary(url, flow);
+  }
+
+  // Feature 4: Knowledge Base Search
+  @Get('knowledge/search')
+  async searchKnowledge(@Query('query') query: string) {
+    return await this.knowledgeService.queryKnowledge(query);
+  }
+
+  // Feature 7: Benchmarking
+  @Get('benchmarking/:projectId')
+  async getBenchmarking(@Param('projectId') projectId: string) {
+    return await this.impactService.getAnonymousBenchmarking(projectId);
+  }
+
   @Post('playwright/test/:action')
   async testPlaywrightAction(
     @Param('action') action: string,

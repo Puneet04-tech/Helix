@@ -98,6 +98,47 @@ export class Incident {
     action: string;
     target: string;
     result: string;
+    timestamp: Date;
+  }>;
+
+  // Feature 1: DNA Fingerprinting
+  @Prop({ type: Object })
+  fingerprint: {
+    signature: string; // Hashed/Stringified pattern of event types & timing
+    eventSequence: string[]; // Sequential list of event types
+    timingGaps: number[]; // MS between events
+    matchScore?: number;
+    matchedIncidentId?: string;
+    rootCauseReference?: string;
+  };
+
+  // Feature 3: Guest Impact Score
+  @Prop({ type: Object })
+  businessImpact: {
+    guestImpactScore: number;
+    estimatedRevenueAtRisk: number;
+    affectedGuestCount: number;
+    conversionLossCount: number;
+    experienceScore: number; // 0-100 degradation
+  };
+
+  // Feature 8: Support Ticket Sentiment
+  @Prop({ type: Object })
+  sentimentAnalysis: {
+    score: number; // -1 to 1
+    label: string; // 'negative', 'neutral', 'positive'
+    emotionalTone: string; // 'angry', 'distressed', 'urgent', 'happy'
+    highlightedQuotes: string[];
+  };
+
+  @Prop()
+  resolutionTime: number; // in milliseconds
+
+  @Prop({ type: Array })
+  actions: Array<{
+    action: string;
+    target: string;
+    result: string;
     executedAt: Date;
     success: boolean;
   }>;
@@ -144,17 +185,8 @@ export class Incident {
   @Prop({ type: Date })
   resolvedAt?: Date;
 
-  @Prop()
-  resolutionTime?: number; // in milliseconds
-
-  @Prop({ type: Array, default: [] })
+  @Prop({ type: [String], default: [] })
   notifiedUsers: string[];
-
-  @Prop({ type: Date })
-  createdAt: Date;
-
-  @Prop({ type: Date })
-  updatedAt: Date;
 }
 
 export const IncidentSchema = SchemaFactory.createForClass(Incident);
