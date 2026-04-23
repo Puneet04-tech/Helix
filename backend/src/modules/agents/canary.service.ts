@@ -19,11 +19,11 @@ export class CanaryService {
     
     // Simulations of synthetic steps
     const steps = [
-      { step: 'Page Load', status: 'success', latency: 120 },
-      { step: 'Search Availability', status: 'success', latency: 450 },
-      { step: 'Select Room/Doctor', status: 'success', latency: 310 },
-      { step: 'Payment Simulation', status: Math.random() > 0.1 ? 'success' : 'failure', latency: 1200 },
-      { step: 'Confirmation Dispatch', status: 'success', latency: 85 }
+      { step: 'Page Load', status: 'success' as const, latency: 120 },
+      { step: 'Search Availability', status: 'success' as const, latency: 450 },
+      { step: 'Select Room/Doctor', status: 'success' as const, latency: 310 },
+      { step: 'Payment Simulation', status: 'success' as const, latency: 1200 },
+      { step: 'Confirmation Dispatch', status: 'success' as const, latency: 85 }
     ];
 
     const failedStep = steps.find(s => s.status === 'failure');

@@ -58,21 +58,20 @@ export class ImpactService {
     
     // Calculate client metrics
     const totalIncidents = clientIncidents.length;
-    const resolvedInTime = clientIncidents.filter(i => i.resolutionTime && i.resolutionTime < 300000).length;
     
     const clientPerformance = {
       avgResolutionTime: totalIncidents > 0 
         ? clientIncidents.reduce((acc, i) => acc + (i.resolutionTime || 0), 0) / totalIncidents 
-        : 0,
-      stabilityScore: 100 - (totalIncidents * 2)
+        : 340000, // Default for new clients
+      stabilityScore: Math.max(70, 100 - (totalIncidents * 2))
     };
 
     return {
       client: clientPerformance,
       benchmarks: this.INDUSTRY_BENCHMARKS,
       comparison: {
-        resolutionDelta: ((clientPerformance.avgResolutionTime / 1000) - (this.INDUSTRY_BENCHMARKS.avgResponseTime * 1.5)) / 100,
-        isAboveAverage: clientPerformance.stabilityScore > 90
+        resolutionDelta: ((clientPerformance.avgResolutionTime / 1000) - (this.INDUSTRY_BENCHMARKS.avgResponseTime)) / 100,
+        isAboveAverage: clientPerformance.stabilityScore > 85
       }
     };
   }
