@@ -56,21 +56,30 @@ export class ImpactService {
   async getAnonymousBenchmarking(projectId: string): Promise<any> {
     const clientIncidents = await this.incidentModel.find({ projectId }).exec();
     
-    // Calculate client metrics
+    if (clientIncidents.length === 0) {
+      return {
+        status: 'no_data',
+        message: 'Insufficient data for real-time benchmarking. Resolve at least 3 incidents to activate comparison.'
+      };
+    }
+    
     const totalIncidents = clientIncidents.length;
+    const resolvedIncidents = clientIncidents.filter(i => i.status === 'resolved');
     
     const clientPerformance = {
-      avgResolutionTime: totalIncidents > 0 
-        ? clientIncidents.reduce((acc, i) => acc + (i.resolutionTime || 0), 0) / totalIncidents 
-        : 340000, // Default for new clients
-      stabilityScore: Math.max(70, 100 - (totalIncidents * 2))
+      avgResolutionTime: resolvedIncidents.length > 0 
+        ? resolvedIncidents.reduce((acc, i) => acc + (i.resolutionTime || 0), 0) / resolvedIncidents.length 
+        : 0,
+      stabilityScore: Math.max(0, 100 - (totalIncidents * 10))
     };
 
     return {
       client: clientPerformance,
       benchmarks: this.INDUSTRY_BENCHMARKS,
       comparison: {
-        resolutionDelta: ((clientPerformance.avgResolutionTime / 1000) - (this.INDUSTRY_BENCHMARKS.avgResponseTime)) / 100,
+        resolutionDelta: clientPerformance.avgResolutionTime > 0 
+          ? ((clientPerformance.avgResolutionTime / 1000) - (this.INDUSTRY_BENCHMARKS.avgResponseTime)) / 100
+          : 0,
         isAboveAverage: clientPerformance.stabilityScore > 85
       }
     };

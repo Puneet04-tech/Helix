@@ -221,7 +221,7 @@ export default function Dashboard() {
           Authorization: `Bearer ${token}` 
         },
         body: JSON.stringify({ 
-          url: 'https://demo-booking.helix.io', 
+          targetUrl: 'https://helix-frontend-gamma.vercel.app', // Using the real production frontend to check health
           flow: 'hotel',
           dryRun: isDryRun 
         })
@@ -301,9 +301,9 @@ export default function Dashboard() {
         {/* Page Title */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-100">Dashboard</h1>
+            <h1 className="text-3xl font-bold text-slate-100">Ops Command Center</h1>
             <p className="text-slate-400 mt-1">
-              {liveMode ? '🔴 Live Incident Streaming' : 'Real-time monitoring and crisis detection'}
+              {liveMode ? '🔴 Active Threat Stream' : 'Live Infrastructure Intelligence'}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -311,19 +311,19 @@ export default function Dashboard() {
               onClick={toggleLiveDemo}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
                 liveMode
-                  ? 'bg-red-600 hover:bg-red-700 text-white'
-                  : 'bg-green-600 hover:bg-green-700 text-white'
+                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20'
+                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
               }`}
             >
               {liveMode ? (
                 <>
                   <Square className="w-4 h-4" />
-                  Stop Live Demo
+                  Stop Testing Stream
                 </>
               ) : (
                 <>
                   <Play className="w-4 h-4" />
-                  Start Live Demo
+                  Trigger Test Stream
                 </>
               )}
             </button>

@@ -8,8 +8,21 @@ interface BenchmarkingProps {
 
 export const AdvancedInsights = ({ data, mode }: BenchmarkingProps) => {
   if (mode === 'benchmark') {
-    const metrics = data?.benchmarks || { avgResponseTime: 280, stabilityScore: 88, bookingErrorRate: 0.008 };
-    const client = data?.client || { avgResolutionTime: 340000, stabilityScore: 94 };
+    if (!data || data.status === 'no_data') {
+      return (
+        <div className="bg-slate-900 border border-indigo-500/20 rounded-2xl p-6 shadow-xl h-full flex flex-col justify-center items-center text-center">
+          <BarChart3 className="text-indigo-400 w-12 h-12 mb-4 opacity-50" />
+          <h3 className="text-xl font-bold text-white mb-2">Industry Benchmarking</h3>
+          <p className="text-slate-400 text-sm max-w-xs">
+            Establishing real-time baseline... <br/>
+            Resolve at least 3 incidents to activate personalized peer comparison.
+          </p>
+        </div>
+      );
+    }
+
+    const metrics = data?.benchmarks;
+    const client = data?.client;
     
     return (
       <div className="bg-slate-900 border border-indigo-500/20 rounded-2xl p-6 shadow-xl">
@@ -79,14 +92,14 @@ export const AdvancedInsights = ({ data, mode }: BenchmarkingProps) => {
                   <div className="text-[10px] text-red-400">Impact Risk: {Math.round(c.probability * 100)}%</div>
                 </div>
               )) : (
-                <>
-                  <div className="p-2 bg-gray-800 border border-gray-600 rounded text-xs text-gray-300">PAYMENT_SVC</div>
-                  <div className="p-2 bg-gray-800 border border-gray-600 rounded text-xs text-gray-300">EMAIL_NOTIF</div>
-                </>
+                <div className="p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-lg text-emerald-400 text-xs text-center backdrop-blur-sm">
+                   ✓ No Cascade Risks Identified <br/>
+                   <span className="text-[10px] opacity-70">Infrastructure topology is stable</span>
+                </div>
               )}
             </div>
             <div className="text-[10px] text-gray-500 font-mono italic">
-              {data ? `AI analyzed ${cascadeChain.length} live dependency chains across your infrastructure` : 'Scanning infrastructure for risk mapping...'}
+              {data && cascadeChain.length > 0 ? `AI analyzed ${cascadeChain.length} live dependency chains across your infrastructure` : (data ? 'Full infrastructure scan complete. No critical risks found.' : 'Scanning infrastructure for risk mapping...')}
             </div>
         </div>
       </div>

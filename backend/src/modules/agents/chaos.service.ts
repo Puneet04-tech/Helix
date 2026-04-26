@@ -46,20 +46,16 @@ export class ChaosService {
         }))
         .sort((a, b) => b.probability - a.probability);
     } else {
-      // Provide predictive fallbacks if no history exists yet
-      cascade = [
-        { service: 'payment-gateway', probability: 0.85, impactLevel: 'Critical/Fatal' },
-        { service: 'email-service', probability: 0.45, impactLevel: 'Partial Degradation' },
-        { service: 'auth-provider', probability: 0.30, impactLevel: 'Minor/Latency' }
-      ];
+      // Return empty cascade if no real history exists
+      cascade = [];
     }
 
     return {
       seedService,
       timestamp: new Date(),
-      status: 'sandboxed_simulation_complete',
+      status: history.length > 0 ? 'analysis_complete' : 'no_history_available',
       cascadeChain: cascade,
-      riskLevel: cascade.length > 3 ? 'High' : 'Low',
+      riskLevel: cascade.length > 3 ? 'High' : (cascade.length > 0 ? 'Low' : 'None'),
       dependencyRiskMap: this.generateRiskMapMetadata(seedService, cascade)
     };
   }
