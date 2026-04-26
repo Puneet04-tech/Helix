@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ï»¿import React, { useState } from 'react';
 import Link from 'next/link';
 import { 
   ShieldAlert, 
@@ -140,7 +140,7 @@ export default function LandingPage() {
         { label: 'Guest Sentiment', value: 'Positive', color: 'text-blue-400' },
         { label: 'Health Score', value: '96', color: 'text-green-400' },
       ],
-      description: 'Hotels use the Helix SDK to monitor Booking Gateways, In-room entertainment, and CRM APIs. Helix detects when a VIP guest’s booking fails and triggers an manual override alert instantly.',
+      description: 'Hotels use the Helix SDK to monitor Booking Gateways, In-room entertainment, and CRM APIs. Helix detects when a VIP guestâ€™s booking fails and triggers an manual override alert instantly.',
       useCase: 'Luxury Hotels, Resorts, and Travel Agencies.'
     }
   };
@@ -297,7 +297,7 @@ export default function LandingPage() {
             <ShieldAlert className="w-6 h-6 text-[#5BA4F5]" />
             <span className="font-bold">HELIX PROTECT</span>
           </div>
-          <p className="text-sm text-slate-500">© 2026 Helix Autonomous Systems. All rights reserved.</p>
+          <p className="text-sm text-slate-500">Â© 2026 Helix Autonomous Systems. All rights reserved.</p>
         </div>
       </footer>
     </div>
