@@ -209,7 +209,7 @@ export default function Dashboard() {
     }
   };
 
-  const runCanary = async () => {
+  const runCanary = async (isDryRun = false) => {
     if (!token) return;
     setIsRunningCanary(true);
     setCanaryResult(null);
@@ -220,7 +220,11 @@ export default function Dashboard() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify({ url: 'https://demo-booking.helix.io', flow: 'hotel' })
+        body: JSON.stringify({ 
+          url: 'https://demo-booking.helix.io', 
+          flow: 'hotel',
+          dryRun: isDryRun 
+        })
       });
       
       if (!res.ok) {
@@ -229,7 +233,10 @@ export default function Dashboard() {
       }
 
       const data = await res.json();
-      setCanaryResult(data);
+      setCanaryResult({
+        ...data,
+        isDryRun
+      });
     } catch (err: any) {
       console.error('Canary failed:', err);
       setCanaryResult({ success: false, criticalStep: err.message || 'Connection Failed' });
@@ -420,19 +427,32 @@ export default function Dashboard() {
                 </div>
                 <div className="flex gap-2 mb-3">
                     <button 
-                      onClick={runCanary}
+                      onClick={() => runCanary(false)}
                       disabled={isRunningCanary}
                       className="flex-1 bg-emerald-500 text-white text-[10px] font-bold py-2 rounded-lg hover:bg-emerald-600 transition-colors disabled:opacity-50"
                     >
-                        {isRunningCanary ? 'RUNNING...' : 'TEST GUEST FLOW'}
+                        {isRunningCanary && !canaryResult?.isDryRun ? 'RUNNING...' : 'TEST GUEST FLOW'}
                     </button>
-                    <button className="flex-1 bg-gray-800 text-gray-400 text-[10px] font-bold py-2 rounded-lg border border-gray-700">
-                        DRY RUN
+                    <button 
+                      onClick={() => runCanary(true)}
+                      disabled={isRunningCanary}
+                      className="flex-1 bg-gray-800 text-gray-400 text-[10px] font-bold py-2 rounded-lg border border-gray-700 hover:bg-gray-700 transition-colors disabled:opacity-50"
+                    >
+                        {isRunningCanary && canaryResult?.isDryRun ? 'SIMULATING...' : 'DRY RUN'}
                     </button>
                 </div>
                 {canaryResult && (
                   <div className={`text-[10px] p-2 rounded border font-mono ${canaryResult.success ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`}>
-                    {canaryResult.success ? `SUCCESS: Latency ${Math.round(canaryResult.avgLatency)}ms` : `FAILED: ${canaryResult.criticalStep}`}
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-bold">{canaryResult.isDryRun ? 'DRY RUN MODE' : 'LIVE TEST'}</span>
+                      <span>{canaryResult.success ? 'PASSED' : 'FAILED'}</span>
+                    </div>
+                    {canaryResult.success ? `Latency: ${Math.round(canaryResult.avgLatency)}ms` : `Error: ${canaryResult.criticalStep}`}
+                    {canaryResult.isDryRun && canaryResult.success && (
+                      <div className="mt-1 text-[8px] opacity-70 border-t border-emerald-500/20 pt-1">
+                        * Sandbox simulation completed without touching production database.
+                      </div>
+                    )}
                   </div>
                 )}
             </div>
