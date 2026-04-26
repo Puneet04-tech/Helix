@@ -222,10 +222,17 @@ export default function Dashboard() {
         },
         body: JSON.stringify({ url: 'https://demo-booking.helix.io', flow: 'hotel' })
       });
+      
+      if (!res.ok) {
+        setCanaryResult({ success: false, criticalStep: `Server Error (${res.status})` });
+        return;
+      }
+
       const data = await res.json();
       setCanaryResult(data);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Canary failed:', err);
+      setCanaryResult({ success: false, criticalStep: err.message || 'Connection Failed' });
     } finally {
       setIsRunningCanary(false);
     }
