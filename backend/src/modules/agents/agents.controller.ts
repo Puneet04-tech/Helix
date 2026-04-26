@@ -6,7 +6,7 @@ import { CanaryService } from './canary.service';
 import { KnowledgeService } from './knowledge.service';
 import { ImpactService } from './impact.service';
 
-@Controller('api/agents')
+@Controller('agents')
 @UseGuards(JwtAuthGuard)
 export class AgentsController {
   constructor(
