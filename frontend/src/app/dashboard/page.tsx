@@ -221,8 +221,8 @@ export default function Dashboard() {
           Authorization: `Bearer ${token}` 
         },
         body: JSON.stringify({ 
-          targetUrl: 'https://helix-frontend-gamma.vercel.app', // Using the real production frontend to check health
-          flow: 'hotel',
+          targetUrl: 'http://localhost:5001', // Checking the Hospital System Backend
+          flow: 'hospital',
           dryRun: isDryRun 
         })
       });
