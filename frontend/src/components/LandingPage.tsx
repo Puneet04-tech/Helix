@@ -223,7 +223,7 @@ export default function LandingPage() {
             <div className="flex-1">
               <h2 className="text-3xl font-bold mb-6">Industry Versatility</h2>
               <p className="text-slate-400 mb-8 leading-relaxed">
-                Helix isn''t just for IT. It''s a general-purpose crisis management system. By integrating the **Helix SDK**, any physical or digital system can benefit from our autonomous agents.
+                Helix isn't just for IT. It's a general-purpose crisis management system. By integrating the **Helix SDK**, any physical or digital system can benefit from our autonomous agents.
               </p>
               
               <div className="flex flex-col gap-4">
@@ -233,22 +233,22 @@ export default function LandingPage() {
                     onClick={() => setActiveDomain(domain)}
                     className={`p-6 rounded-xl border transition-all text-left flex items-center justify-between group ${
                       activeDomain === domain 
-                        ? ''bg-[#2979CC] border-[#2979CC] text-white shadow-[0_0_30px_rgba(41,121,204,0.3)]'' 
-                        : ''bg-white/5 border-white/10 text-slate-300 hover:border-white/20''
+                        ? 'bg-[#2979CC] border-[#2979CC] text-white shadow-[0_0_30px_rgba(41,121,204,0.3)]' 
+                        : 'bg-white/5 border-white/10 text-slate-300 hover:border-white/20'
                     }`}
                   >
                     <div>
                       <h4 className="font-bold flex items-center gap-2">
-                        {domain === ''general'' && <Activity className="w-5 h-5" />}
-                        {domain === ''hospital'' && <Lock className="w-5 h-5" />}
-                        {domain === ''hotel'' && <Users className="w-5 h-5" />}
+                        {domain === 'general' && <Activity className="w-5 h-5" />}
+                        {domain === 'hospital' && <Lock className="w-5 h-5" />}
+                        {domain === 'hotel' && <Users className="w-5 h-5" />}
                         {domain.charAt(0).toUpperCase() + domain.slice(1)} Integration
                       </h4>
-                      <p className={`text-sm mt-1 ${activeDomain === domain ? ''text-blue-100'' : ''text-slate-500''}`}>
-                        {domain === ''general'' ? ''Core system monitoring'' : `Sector-specific ${domain} logic`}
+                      <p className={`text-sm mt-1 ${activeDomain === domain ? 'text-blue-100' : 'text-slate-500'}`}>
+                        {domain === 'general' ? 'Core system monitoring' : `Sector-specific ${domain} logic`}
                       </p>
                     </div>
-                    <ChevronRight className={`w-5 h-5 transition-transform ${activeDomain === domain ? ''rotate-90'' : ''group-hover:translate-x-1''}`} />
+                    <ChevronRight className={`w-5 h-5 transition-transform ${activeDomain === domain ? 'rotate-90' : 'group-hover:translate-x-1'}`} />
                   </button>
                 ))}
               </div>
