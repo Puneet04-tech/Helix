@@ -55,10 +55,10 @@ export const AdvancedInsights = ({ data, mode }: BenchmarkingProps) => {
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-xl font-bold text-white flex items-center gap-2">
           <ShieldAlert className="text-red-400" />
-          Feature 2: Chaos Mode Risk Map
+          Feature 2: Real-Time Chaos Risk Map
         </h3>
         <button className="text-[10px] bg-red-500/10 text-red-400 px-3 py-1.5 rounded-lg border border-red-500/20 uppercase font-bold hover:bg-red-500/20 transition-all">
-          {data ? 'Simulation Live' : 'Inject Sandbox Failure'}
+          {data ? 'System Analysis Active' : 'Analyze Current Risks'}
         </button>
       </div>
 
@@ -68,25 +68,25 @@ export const AdvancedInsights = ({ data, mode }: BenchmarkingProps) => {
         </div>
         
         <div className="flex flex-col items-center gap-4 z-10 w-full px-4">
-            <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg font-bold text-red-100 text-xs text-center shadow-[0_0_15px_rgba(239,68,68,0.3)]">
-                {data?.seedService || 'TARGET_SERVICE'}<br/><span className="text-[8px] font-normal opacity-70">Source of Failure</span>
+            <div className="p-3 bg-red-500/20 border border-red-500 rounded-lg font-bold text-red-100 text-sm text-center shadow-[0_0_15px_rgba(239,68,68,0.3)]">
+                {data?.seedService || 'BOOKING_SERVICE'}<br/><span className="text-[10px] font-normal opacity-70">Detected Service Node</span>
             </div>
             
             <div className="flex flex-wrap justify-center gap-4 w-full">
               {cascadeChain.length > 0 ? cascadeChain.slice(0, 3).map((c: any, i: number) => (
-                <div key={i} className="p-2 bg-gray-800 border border-red-500/50 rounded text-[10px] text-gray-300 animate-pulse">
+                <div key={i} className="p-2 bg-gray-800 border border-red-500/50 rounded text-xs text-gray-300 animate-pulse">
                   {c.service}
-                  <div className="text-[8px] text-red-400">Prob: {Math.round(c.probability * 100)}%</div>
+                  <div className="text-[10px] text-red-400">Impact Risk: {Math.round(c.probability * 100)}%</div>
                 </div>
               )) : (
                 <>
-                  <div className="p-2 bg-gray-800 border border-gray-600 rounded text-xs text-gray-300">BOOKING_SVC</div>
+                  <div className="p-2 bg-gray-800 border border-gray-600 rounded text-xs text-gray-300">PAYMENT_SVC</div>
                   <div className="p-2 bg-gray-800 border border-gray-600 rounded text-xs text-gray-300">EMAIL_NOTIF</div>
                 </>
               )}
             </div>
             <div className="text-[10px] text-gray-500 font-mono italic">
-              {data ? `AI analyzed ${cascadeChain.length} dependency chains` : 'Select a service to map risks'}
+              {data ? `AI analyzed ${cascadeChain.length} live dependency chains across your infrastructure` : 'Scanning infrastructure for risk mapping...'}
             </div>
         </div>
       </div>
