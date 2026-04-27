@@ -19,6 +19,7 @@ async function createHotelClient() {
       const hotelClient = new Client({
         name: 'Hotel Management System',
         apiKey: 'hotel_management_api_key_12345',
+        projectId: 'hotel_001',
         userIds: [], // Will be populated with hotel staff
         services: ['hotel-management', 'guest-services', 'facility-management'],
         settings: {

@@ -38,6 +38,11 @@ export class EventsService {
     if (eventData.service === 'hospital-management') {
       projectId = 'hospital_001';
     }
+    
+    // For hotel-management, use the hotel_001 project ID to match user's project
+    if (eventData.service === 'hotel-management') {
+      projectId = 'hotel_001';
+    }
 
     // Step 2: Store event in MongoDB (async, non-blocking)
     const event = new this.eventModel({
