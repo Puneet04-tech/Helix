@@ -25,7 +25,7 @@ export class PublicStatusService {
    */
   async getPublicStatusPage(clientId: string): Promise<any> {
     try {
-      const client = await this.clientModel.findById(clientId).lean();
+      const client = await this.clientModel.findOne({ projectId: clientId }).lean();
       if (!client) {
         return { error: 'Client not found' };
       }
@@ -90,7 +90,7 @@ export class PublicStatusService {
    */
   async updateServiceStatus(projectId: string, serviceName: string, status: 'operational' | 'degraded' | 'outage'): Promise<void> {
     try {
-      const client = await this.clientModel.findById(projectId);
+      const client = await this.clientModel.findOne({ projectId });
       if (!client) return;
 
       if (!client.statusSummary || typeof client.statusSummary !== 'object' || Array.isArray(client.statusSummary)) {
