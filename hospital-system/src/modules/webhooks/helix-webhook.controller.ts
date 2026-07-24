@@ -1,5 +1,6 @@
-// hospital-system/src/modules/webhooks/helix-webhook.controller.ts
-import { Controller, Post, Body, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Logger, Headers, UnauthorizedException } from '@nestjs/common';
+import { IncidentsService } from '../incidents/incidents.service';
+import { createHmac, timingSafeEqual } from 'crypto';
 
 interface HelixIncident {
   id: string;
@@ -8,51 +9,79 @@ interface HelixIncident {
   service: string;
   message: string;
   projectId: string;
-  context?: any;
+  context?: Record<string, unknown>;
   timestamp: string;
 }
 
 @Controller('webhooks')
 export class HelixWebhookController {
-  private logger = new Logger('HelixWebhookController');
+  private readonly logger = new Logger(HelixWebhookController.name);
 
-  /**
-   * Receive incident webhook from Helix
-   * This is called when Helix detects an incident from hospital events
-   */
+  constructor(private readonly incidentsService: IncidentsService) {}
+
   @Post('helix-incident')
-  async receiveIncident(@Body() incident: HelixIncident): Promise<any> {
-    console.log('🚨 Incident received from Helix:', incident);
+  async receiveIncident(
+    @Body() incident: HelixIncident,
+    @Headers('x-helix-signature') signature?: string,
+  ): Promise<any> {
+    this.verifySignature(JSON.stringify(incident), signature);
 
-    // Verify this is for our hospital
-    if (incident.projectId !== process.env.HELIX_PROJECT_ID) {
-      console.warn(`⚠️ Incident for different project: ${incident.projectId}`);
+    const expectedProjectId = process.env.HELIX_PROJECT_ID || 'hospital_001';
+    if (incident.projectId !== expectedProjectId) {
+      this.logger.warn(`Incident for different project: ${incident.projectId}`);
       return { received: true, processed: false };
     }
 
-    // Log incident
-    this.logger.log(`
+    this.logger.warn(`
       ╔══════════════════════════════════════╗
-      ║ 🏥 HOSPITAL INCIDENT DETECTED       ║
+      ║ 🏥 HOSPITAL INCIDENT FROM HELIX     ║
       ╠══════════════════════════════════════╣
       ║ Type: ${incident.type.padEnd(30)} ║
       ║ Severity: ${incident.severity.padEnd(26)} ║
       ║ Service: ${incident.service.padEnd(28)} ║
-      ║ Message: ${incident.message.substring(0, 28).padEnd(30)} ║
       ║ ID: ${incident.id.padEnd(32)} ║
       ╚══════════════════════════════════════╝
     `);
 
-    // TODO: Implement hospital-specific actions
-    // 1. Store incident in hospital DB
-    // 2. Send alerts to staff (doctors, nurses, engineers)
-    // 3. Update dashboard
-    // 4. Trigger automated responses if needed
+    const stored = await this.incidentsService.createFromHelixWebhook({
+      id: incident.id,
+      type: incident.type,
+      severity: incident.severity,
+      title: incident.message,
+      description: incident.message,
+      unit: String(incident.context?.unit || 'General'),
+      service: incident.service,
+      helixTimestamp: incident.timestamp,
+      context: incident.context,
+    });
 
     return {
       received: true,
       processed: true,
-      incidentId: incident.id,
+      incidentId: stored.id,
+      helixIncidentId: incident.id,
+      alertsDispatched: stored.alertsDispatched,
     };
+  }
+
+  private verifySignature(payload: string, signature?: string): void {
+    const secret = process.env.HELIX_WEBHOOK_SECRET;
+    if (!secret) return;
+
+    if (!signature) {
+      throw new UnauthorizedException('Missing webhook signature');
+    }
+
+    const expected = createHmac('sha256', secret).update(payload).digest('hex');
+    const provided = signature.replace(/^sha256=/, '');
+
+    const expectedBuf = Buffer.from(expected);
+    const providedBuf = Buffer.from(provided);
+    if (
+      expectedBuf.length !== providedBuf.length ||
+      !timingSafeEqual(expectedBuf, providedBuf)
+    ) {
+      throw new UnauthorizedException('Invalid webhook signature');
+    }
   }
 }

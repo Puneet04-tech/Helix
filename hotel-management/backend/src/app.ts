@@ -9,11 +9,15 @@ const PORT = process.env.PORT || 4000;
 
 // ===== HELIX SDK INITIALIZATION =====
 const helix = new Helix({
-  apiKey: process.env.HELIX_API_KEY || 'ag_18e67af6-3598-4199-9440-993a843ee8c9',
+  apiKey: process.env.HELIX_API_KEY || '',
   backendUrl: process.env.HELIX_URL || 'https://helix-ujly.onrender.com',
-  enabled: true,
+  enabled: !!process.env.HELIX_API_KEY,
   sampleRate: 1.0
 });
+
+if (!process.env.HELIX_API_KEY) {
+  console.warn('⚠️  HELIX_API_KEY not set — Helix SDK tracking disabled until configured');
+}
 
 console.log('✅ Helix SDK Initialized (hotel-management-api-helix v1.0.0)');
 console.log('📊 Hotel Tracking: ENABLED');
@@ -66,6 +70,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 // ===== MOCK DATA STORAGE =====
+// In-memory store for demo deployments; replace with a database for production persistence.
 interface Guest {
   id: string;
   name: string;

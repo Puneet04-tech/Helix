@@ -7,7 +7,7 @@ import MetricCard from '../../components/MetricCard';
 import IncidentCard from '../../components/IncidentCard';
 import PlaywrightPanel from '../../components/PlaywrightPanel';
 import { AdvancedInsights } from '../../components/AdvancedInsights';
-import { RefreshCw, AlertTriangle, Play, Square, Zap, Search, Brain, Bird } from 'lucide-react';
+import { RefreshCw, AlertTriangle, Zap, Search, Brain, Bird } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useWebSocket } from '../../hooks/useWebSocket';
 
@@ -42,7 +42,6 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [liveMode, setLiveMode] = useState(false);
   const [chaosData, setChaosData] = useState<any>(null);
   const [benchmarkData, setBenchmarkData] = useState<any>(null);
   const [kbQuery, setKbQuery] = useState('');
@@ -51,7 +50,20 @@ export default function Dashboard() {
   const [isRunningCanary, setIsRunningCanary] = useState(false);
 
   const projectId = user?.projectIds?.[0];
-  const { connected, incidents: wsIncidents, startLiveDemo, stopLiveDemo } = useWebSocket(projectId || '');
+  const { connected, incidents: wsIncidents } = useWebSocket(projectId || '');
+
+  useEffect(() => {
+    if (wsIncidents.length === 0) return;
+    setIncidents(prev => {
+      const map = new Map<string, Incident>();
+      prev.forEach(i => map.set(i.incidentId || i._id || i.id || '', i));
+      wsIncidents.forEach(i => {
+        const key = i.incidentId || i._id || i.id || '';
+        map.set(key, { ...map.get(key), ...i });
+      });
+      return Array.from(map.values()).filter(i => i.type);
+    });
+  }, [wsIncidents]);
 
   // Fetch incidents and metrics from backend
   const fetchDashboardData = async () => {
@@ -274,16 +286,6 @@ export default function Dashboard() {
     await fetchAdvancedInsights();
   };
 
-  const toggleLiveDemo = () => {
-    if (!liveMode) {
-      startLiveDemo();
-      setLiveMode(true);
-    } else {
-      stopLiveDemo();
-      setLiveMode(false);
-    }
-  };
-
   const handleOpenIncident = (incident: Incident) => {
     const id = incident.id || incident._id || incident.incidentId;
     if (id) {
@@ -303,30 +305,13 @@ export default function Dashboard() {
           <div>
             <h1 className="text-3xl font-bold text-slate-100">Ops Command Center</h1>
             <p className="text-slate-400 mt-1">
-              {liveMode ? '🔴 Active Threat Stream' : 'Live Infrastructure Intelligence'}
+              Live Infrastructure Intelligence
+              {connected && (
+                <span className="ml-2 text-green-400 text-sm">● Real-time stream active</span>
+              )}
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={toggleLiveDemo}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors font-medium ${
-                liveMode
-                  ? 'bg-red-600 hover:bg-red-700 text-white shadow-lg shadow-red-500/20'
-                  : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-              }`}
-            >
-              {liveMode ? (
-                <>
-                  <Square className="w-4 h-4" />
-                  Stop Testing Stream
-                </>
-              ) : (
-                <>
-                  <Play className="w-4 h-4" />
-                  Trigger Test Stream
-                </>
-              )}
-            </button>
             <button
               onClick={handleRefresh}
               disabled={loading}
@@ -338,20 +323,12 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* WebSocket Status */}
-        {liveMode && (
-          <div className="bg-green-500/10 border border-green-500 text-green-400 px-4 py-3 rounded-lg text-sm flex items-center gap-2">
-            <Zap className="w-4 h-4 animate-pulse" />
-            Live demo running - New incidents will appear in real-time below
-          </div>
-        )}
-
         {/* Error Message */}
         {error && (
           <div className="bg-red-500/10 border border-red-500 text-red-400 px-4 py-3 rounded-lg text-sm">
             {error}
             <p className="text-xs mt-2 text-red-300">
-              Troubleshooting: Check your network connection and try refreshing the page. Click "Start Live Demo" to simulate incidents.
+              Troubleshooting: Check your network connection and try refreshing the page.
             </p>
           </div>
         )}
@@ -501,7 +478,7 @@ export default function Dashboard() {
               ))
             ) : (
               <div className="px-6 py-8 text-center text-slate-400">
-                No incidents detected. {liveMode ? 'Simulated incidents will appear here shortly.' : 'Your systems are running smoothly.'}
+                No incidents detected. Your systems are running smoothly.
               </div>
             )}
           </div>

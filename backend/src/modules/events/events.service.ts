@@ -7,6 +7,7 @@ import { MemoryService } from '../../common/services/memory.service';
 import { HuggingFaceService } from '../../common/services/huggingface.service';
 import { AuditService } from '../../common/services/audit.service';
 import { IncidentsService } from '../incidents/incidents.service';
+import { IngestRateLimitService } from '../../common/services/ingest-rate-limit.service';
 
 @Injectable()
 export class EventsService {
@@ -19,12 +20,19 @@ export class EventsService {
     private huggingFaceService: HuggingFaceService,
     private auditService: AuditService,
     private incidentsService: IncidentsService,
+    private rateLimitService: IngestRateLimitService,
   ) {
     // Initialize MemoryService with AuditService to avoid circular dependency
     this.memoryService.setAuditService(this.auditService);
   }
 
   async ingestEvent(apiKey: string, eventData: any) {
+    if (!apiKey) {
+      throw new BadRequestException('API key required (x-api-key header)');
+    }
+
+    this.rateLimitService.check(apiKey);
+
     // Step 1: Validate API key and get project/client
     const client = await this.clientModel.findOne({ apiKey });
     if (!client) {

@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { v4 as uuid } from 'uuid';
@@ -6,6 +6,8 @@ import { Incident, IncidentDocument } from '../../common/schemas/incident.schema
 import { Event, EventDocument } from '../../common/schemas/event.schema';
 import { AgentsService } from '../agents/agents.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../../common/gateways/events.gateway';
+import { AuditService } from '../../common/services/audit.service';
 
 @Injectable()
 export class IncidentsService {
@@ -16,6 +18,9 @@ export class IncidentsService {
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     private agentsService: AgentsService,
     private notificationsService: NotificationsService,
+    @Inject(forwardRef(() => EventsGateway))
+    private eventsGateway: EventsGateway,
+    private auditService: AuditService,
   ) {}
 
   async createIncident(projectId: string, incidentData: any) {
@@ -52,9 +57,26 @@ export class IncidentsService {
     const savedIncident = await incident.save();
     this.logger.debug(`Incident created: ${incidentId}`);
 
+    this.eventsGateway.broadcastNewIncident(projectId, savedIncident.toObject());
+    this.auditService.logAudit(
+      projectId,
+      'IncidentsService',
+      'incident_created',
+      { incidentId, type: incidentData.type, severity: incidentData.severity },
+      `Incident ${incidentId} created`,
+      'warn',
+      incidentId,
+    ).catch(err => this.logger.error(`Audit log failed: ${err.message}`));
+
     // Trigger agent chain asynchronously
     this.agentsService
       .runAgentChain(projectId, savedIncident)
+      .then(async () => {
+        const updated = await this.incidentModel.findById(savedIncident._id).lean();
+        if (updated) {
+          this.eventsGateway.broadcastIncidentUpdate(projectId, incidentId, updated);
+        }
+      })
       .catch(err => {
         this.logger.error(`Agent chain failed: ${err.message}`);
       });

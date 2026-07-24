@@ -6,9 +6,12 @@ import { PredictiveCrisisService } from './predictive-crisis.service';
 import { Incident, IncidentSchema } from '../../common/schemas/incident.schema';
 import { Event, EventSchema } from '../../common/schemas/event.schema';
 import { Client, ClientSchema } from '../../common/schemas/client.schema';
+import { Audit, AuditSchema } from '../../common/schemas/audit.schema';
 import { AgentsModule } from '../agents/agents.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { PostmortemModule } from '../postmortem/postmortem.module';
+import { EventsModule } from '../events/events.module';
+import { AuditService } from '../../common/services/audit.service';
 
 @Module({
   imports: [
@@ -16,13 +19,15 @@ import { PostmortemModule } from '../postmortem/postmortem.module';
       { name: Incident.name, schema: IncidentSchema },
       { name: Event.name, schema: EventSchema },
       { name: Client.name, schema: ClientSchema },
+      { name: Audit.name, schema: AuditSchema },
     ]),
     forwardRef(() => AgentsModule),
     forwardRef(() => NotificationsModule),
     forwardRef(() => PostmortemModule),
+    forwardRef(() => EventsModule),
   ],
   controllers: [IncidentsController],
-  providers: [IncidentsService, PredictiveCrisisService],
+  providers: [IncidentsService, PredictiveCrisisService, AuditService],
   exports: [IncidentsService],
 })
 export class IncidentsModule {}

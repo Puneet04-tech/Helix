@@ -12,6 +12,9 @@ import { Incident, IncidentSchema } from '../../common/schemas/incident.schema';
 import { Client, ClientSchema } from '../../common/schemas/client.schema';
 import { Event, EventSchema } from '../../common/schemas/event.schema';
 import { PlaywrightService } from '../../common/services/playwright.service';
+import { OllamaService } from '../../common/services/ollama.service';
+import { GroqService } from '../../common/services/groq.service';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 
 @Module({
@@ -25,23 +28,27 @@ import { NotificationsModule } from '../notifications/notifications.module';
   ],
   controllers: [AgentsController],
   providers: [
-    AgentsService, 
-    CorrelationService, 
+    AgentsService,
+    CorrelationService,
     PlaywrightService,
+    OllamaService,
+    GroqService,
+    AgentLLMService,
     FingerprintingService,
     ChaosService,
     ImpactService,
     KnowledgeService,
-    CanaryService
+    CanaryService,
   ],
   exports: [
-    AgentsService, 
+    AgentsService,
     CorrelationService,
     FingerprintingService,
     ChaosService,
     ImpactService,
     KnowledgeService,
-    CanaryService
+    CanaryService,
+    AgentLLMService,
   ],
 })
 export class AgentsModule {}

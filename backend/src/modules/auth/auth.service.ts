@@ -122,12 +122,20 @@ export class AuthService {
   }
 
   async validateApiKey(apiKey: string) {
-    // API Key validation for SDK authentication
-    // In production, store API keys securely and hash them
     if (!apiKey || apiKey.length < 20) {
       throw new UnauthorizedException('Invalid API key');
     }
-    return { valid: true, apiKey };
+
+    const client = await this.clientsService.getClientByApiKey(apiKey);
+    if (!client) {
+      throw new UnauthorizedException('Invalid API key');
+    }
+
+    return {
+      valid: true,
+      clientId: client._id,
+      organizationId: client.organizationId,
+    };
   }
 
   async validateJwt(token: string) {

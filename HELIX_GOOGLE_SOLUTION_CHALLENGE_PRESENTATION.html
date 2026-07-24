@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HELIX - Google Solution Challenge Presentation</title>
+    <style>
+        body {
+            font-family: 'Google Sans', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: white;
+            color: #202124;
+            line-height: 1.6;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid #e8eaed;
+        }
+        
+        .logos {
+            display: flex;
+            gap: 30px;
+        }
+        
+        .logo {
+            font-size: 14px;
+            color: #5f6368;
+            font-weight: 500;
+        }
+        
+        .slide {
+            min-height: 100vh;
+            padding: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+            display: none;
+        }
+        
+        .slide.active {
+            display: block;
+        }
+        
+        .slide-title {
+            font-size: 36px;
+            font-weight: 400;
+            color: #202124;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #4285f4;
+            padding-bottom: 10px;
+        }
+        
+        .content {
+            font-size: 18px;
+            line-height: 1.8;
+        }
+        
+        .content ul {
+            padding-left: 20px;
+        }
+        
+        .content li {
+            margin-bottom: 10px;
+        }
+        
+        .content strong {
+            color: #202124;
+            font-weight: 500;
+        }
+        
+        .navigation {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            gap: 10px;
+            z-index: 1000;
+        }
+        
+        .nav-btn {
+            background: #4285f4;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .nav-btn:hover {
+            background: #3367d6;
+        }
+        
+        .nav-btn:disabled {
+            background: #dadce0;
+            cursor: not-allowed;
+        }
+        
+        .slide-counter {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            font-size: 14px;
+            color: #5f6368;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        
+        th, td {
+            border: 1px solid #e8eaed;
+            padding: 12px;
+            text-align: left;
+        }
+        
+        th {
+            background: #f8f9fa;
+            font-weight: 500;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 20px 0;
+        }
+        
+        .feature-category {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+        }
+        
+        .feature-category h3 {
+            margin-top: 0;
+            color: #4285f4;
+        }
+        
+        .flow-step {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-left: 4px solid #4285f4;
+            border-radius: 4px;
+        }
+        
+        .architecture-layer {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border-radius: 8px;
+        }
+        
+        .architecture-layer h4 {
+            margin-top: 0;
+            color: #4285f4;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header with Logos -->
+    <div class="header">
+        <div class="logos">
+            <div class="logo">Build with AI</div>
+            <div class="logo">Solution Challenge</div>
+            <div class="logo">H2S</div>
+        </div>
+    </div>
+
+    <!-- Slide 1: Guidelines -->
+    <div class="slide active" id="slide1">
+        <h1 class="slide-title">Guidelines</h1>
+        <div class="content">
+            <p><strong>Google Solution Challenge 2026 - HELIX Presentation</strong></p>
+            <ul>
+                <li>This presentation follows the official Google Solution Challenge template</li>
+                <li>All slides are designed with clean white background and Google branding</li>
+                <li>Content is structured for judges to read in under 10 minutes</li>
+                <li>Focus on innovation, technical implementation, and social impact</li>
+                <li>UN SDG alignment highlighted throughout</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 2: Team Details -->
+    <div class="slide" id="slide2">
+        <h1 class="slide-title">Team Details</h1>
+        <div class="content">
+            <ul>
+                <li><strong>a. Team name:</strong> HELIX</li>
+                <li><strong>b. Team leader name:</strong> [Your Full Name]</li>
+                <li><strong>c. Problem Statement:</strong> Hotels, hospitals, and public service platforms lose revenue and patient trust because digital systems fail silently. Existing tools like Datadog detect problems and send alerts — but stop there. A human must still manually diagnose and fix the issue, often at 3 AM, often taking hours. There is no affordable tool that autonomously acts on a crisis, explains it in plain English, and documents it for compliance without requiring a dedicated DevOps team.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 3: Brief About Your Solution -->
+    <div class="slide" id="slide3">
+        <h1 class="slide-title">Brief about your solution</h1>
+        <div class="content">
+            <p><strong>HELIX</strong> is a full-stack, multi-tenant SaaS platform that acts as an autonomous crisis intelligence layer for smart infrastructure. It monitors hotel and hospital applications in real time, detects anomalies using pre-trained AI models via HuggingFace, and autonomously responds to crises through a LangChain 4-agent pipeline and Playwright automation — all without human intervention.</p>
+            
+            <p><strong>The complete loop in under 60 seconds:</strong><br>
+            Event detected → In-memory pattern gate confirms threat → HuggingFace classifies anomaly → LangChain agents detect, analyse, respond, communicate → Playwright restarts service or blocks IP → WebSocket updates dashboard live → Role-personalized emails sent → Incident and PDF postmortem saved to MongoDB</p>
+            
+            <p><strong>Built with:</strong> NestJS, Next.js, MongoDB Atlas, LangChain JS, HuggingFace Inference API, Playwright, Socket.IO, Nodemailer. Deployed on Render (backend) and Netlify (frontend). Total infrastructure cost: $0 using free tiers.</p>
+            
+            <p><strong>Google AI Integration:</strong> Gemini API / Vertex AI used for natural language incident querying and anomaly classification — satisfies the Google Solution Challenge AI model requirement.</p>
+        </div>
+    </div>
+
+    <!-- Slide 4: Opportunities -->
+    <div class="slide" id="slide4">
+        <h1 class="slide-title">Opportunities</h1>
+        <div class="content">
+            <p><strong>a. How different is it from existing ideas?</strong></p>
+            <p>Datadog, PagerDuty, Sentry, and New Relic all detect problems and send alerts. A human still manually responds — often an hour later. HELIX closes the full autonomous loop: detect, analyse, act, document — with zero human involvement. No existing affordable tool does this. Additionally:</p>
+            <ul>
+                <li>Built for non-technical operators (hotel managers, hospital administrators) — not DevOps engineers</li>
+                <li>Runs entirely on free cloud tiers — $0 infrastructure cost vs $15-30/server/month for Datadog</li>
+                <li>Multi-tenant SaaS with data isolation — one platform serves all clients securely</li>
+                <li>Features like Incident DNA Fingerprinting, Silent Canary, and Guest Impact Score exist nowhere else at any price point</li>
+            </ul>
+            
+            <p><strong>b. How will it solve the problem?</strong></p>
+            <p>When a hotel's booking system fails at 3 AM, HELIX detects the pattern within 5 seconds via the in-memory gate, classifies it as a service failure using HuggingFace, autonomously restarts the service via Playwright, sends role-appropriate emails (technical to developer, operational to manager, brief to owner), updates the public status page, and saves a complete postmortem PDF — all before a human would even see the first alert.</p>
+            
+            <p><strong>c. USP of the proposed solution</strong></p>
+            <p>HELIX is the only monitoring platform that: (1) acts autonomously — not just alerts, (2) explains incidents in plain English to non-technical operators, (3) gets smarter after every incident through its self-healing knowledge base, (4) measures business impact in revenue terms not just uptime percentages, and (5) runs at zero infrastructure cost making enterprise-grade autonomous monitoring accessible to small hotels and hospitals in developing markets.</p>
+        </div>
+    </div>
+
+    <!-- Slide 5: List of Features -->
+    <div class="slide" id="slide5">
+        <h1 class="slide-title">List of features offered by the solution</h1>
+        <div class="content">
+            <div class="feature-grid">
+                <div class="feature-category">
+                    <h3>Core Features</h3>
+                    <ol>
+                        <li><strong>Real-Time Anomaly Detection</strong> — HuggingFace zero-shot classification via in-memory 3-strike gate. Fires only on confirmed real threats.</li>
+                        <li><strong>Autonomous Crisis Response</strong> — LangChain 4-agent chain + Playwright restarts services, blocks IPs, enables maintenance mode automatically.</li>
+                        <li><strong>Natural Language Incident Querying</strong> — Hotel managers ask plain English questions and get factual answers from real incident data via AI chatbot.</li>
+                        <li><strong>Role-Based Crisis Communications</strong> — One incident triggers 3 simultaneous emails written differently for developer, manager, and owner.</li>
+                        <li><strong>Automatic Postmortem PDF</strong> — LangChain generates a structured report + pdfkit exports as PDF after every resolved incident.</li>
+                        <li><strong>Guest-Facing Auto Status Page</strong> — Public webpage auto-updated by HELIX. No staff needed. Shows uptime % and incident history.</li>
+                        <li><strong>Multi-System Correlation</strong> — Groups incidents across services within 5 minutes and identifies shared root cause.</li>
+                        <li><strong>Compliance Incident Logging</strong> — Full audit trail + one-click regulatory PDF export for HIPAA/PCI-DSS compliance.</li>
+                    </ol>
+                </div>
+                
+                <div class="feature-category">
+                    <h3>Killer Differentiators (No Existing Tool Has These)</h3>
+                    <ol start="9">
+                        <li><strong>Incident DNA Fingerprinting</strong> — Builds a unique pattern signature per incident. Matches new crises against past fingerprints before they fully form. System gets smarter monthly.</li>
+                        <li><strong>Cascade Failure Simulation</strong> — Weekly micro-failure injection maps exactly which services cascade when any single service fails. Builds a Dependency Risk Map.</li>
+                        <li><strong>Guest Impact Score</strong> — Translates every technical incident into real business numbers: guests affected, revenue at risk, bookings lost.</li>
+                        <li><strong>Self-Healing Knowledge Base</strong> — Every resolution stored permanently. New incidents check this base first. Institutional memory that grows forever.</li>
+                        <li><strong>Silent Canary System</strong> — Real end-to-end synthetic booking transaction runs every 10 minutes to verify system works from a guest's perspective.</li>
+                        <li><strong>Incident Replay</strong> — Watch any incident unfold in real time on the dashboard with millisecond precision — like a flight black box for software.</li>
+                        <li><strong>Cross-Client Anonymous Benchmarking</strong> — Clients see how their performance compares to anonymized peer organizations on the same platform.</li>
+                        <li><strong>Emotional Tone Detection</strong> — Monitors incoming guest support messages for urgency and distress. Alerts front desk before situations escalate.</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Slide 6: Process Flow Diagram -->
+    <div class="slide" id="slide6">
+        <h1 class="slide-title">Process flow diagram</h1>
+        <div class="content">
+            <p><strong>Write this as a numbered flow:</strong></p>
+            
+            <div class="flow-step"><strong>1.</strong> SDK installed in hotel/hospital app captures all HTTP events automatically</div>
+            <div class="flow-step"><strong>2.</strong> Events POSTed to HELIX backend (Render) via HTTP — SDK gets 200 response in under 10ms</div>
+            <div class="flow-step"><strong>3.</strong> NestJS writes event to MongoDB AND in-memory Map simultaneously</div>
+            <div class="flow-step"><strong>4.</strong> In-memory Map runs 3-strike check — are there 3+ same-type events in 5 minutes?</div>
+            <div class="flow-step"><strong>5.</strong> If NO: stop. If YES: check 60-second cooldown cache</div>
+            <div class="flow-step"><strong>6.</strong> HuggingFace Inference API called once — zero-shot classification of event batch</div>
+            <div class="flow-step"><strong>7.</strong> If score is "normal activity" above 0.7: stop. If anomaly confirmed: continue</div>
+            <div class="flow-step"><strong>8.</strong> LangChain fires 4-agent chain: Detection Agent → Analysis Agent → Response Agent → Comms Agent</div>
+            <div class="flow-step"><strong>9.</strong> Response Agent calls Playwright script as a LangChain tool — executes: restart / block IP / maintenance mode</div>
+            <div class="flow-step"><strong>10.</strong> Incident saved to MongoDB with full AI reasoning and actions taken</div>
+            <div class="flow-step"><strong>11.</strong> Socket.IO WebSocket emits incident to connected dashboard sessions in real time</div>
+            <div class="flow-step"><strong>12.</strong> Nodemailer sends 3 simultaneous role-personalized emails</div>
+            <div class="flow-step"><strong>13.</strong> Public status page updates automatically via MongoDB status field</div>
+            
+            <p><strong>Total time: under 60 seconds. Human involvement: zero.</strong></p>
+            
+            <p><strong>Use Case Examples:</strong></p>
+            <ul>
+                <li><strong>Brute force attack:</strong> 50 failed logins → gate confirms → HF classifies 94% brute force → IP blocked → admin emailed</li>
+                <li><strong>Service crash:</strong> 5xx spike → gate confirms → HF classifies 91% service failure → Playwright restarts → all 3 roles emailed</li>
+                <li><strong>Payment gateway down:</strong> 503 repeated → HF 89% failure → restart + maintenance mode enabled → guests see friendly message</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 7: Wireframes / Mock Diagrams -->
+    <div class="slide" id="slide7">
+        <h1 class="slide-title">Wireframes/Mock diagrams of the proposed solution</h1>
+        <div class="content">
+            <p><strong>Describe the 5 dashboard pages:</strong></p>
+            
+            <div class="architecture-layer">
+                <h4>Page 1 — System Health Dashboard</h4>
+                <p>Main page, dark navy background #0A0F1E, sidebar #0D1B3E</p>
+                <ul>
+                    <li>4 metric cards at top: Uptime 99.2% (green), Active Incidents 3 (red), Avg Resolution 47s (amber), Today 12 (blue)</li>
+                    <li>Real-time incident feed below with severity badges (CRITICAL in red, WARNING in amber, RESOLVED in green)</li>
+                    <li>Live WebSocket green dot — incidents appear without page refresh</li>
+                    <li>Service health grid showing each monitored service as green/amber/red dot</li>
+                </ul>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>Page 2 — Incident Detail</h4>
+                <ul>
+                    <li>Full incident timeline with millisecond-precision timestamps</li>
+                    <li>Expandable AI reasoning panel showing LangChain chain-of-thought</li>
+                    <li>Actions taken log showing what Playwright executed</li>
+                    <li>Download Postmortem PDF button</li>
+                </ul>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>Page 3 — AI Chatbot</h4>
+                <ul>
+                    <li>Plain English question input: "Why were guests complaining last night?"</li>
+                    <li>Response grounded in real MongoDB incident data</li>
+                    <li>5 suggested starter question pills</li>
+                    <li>Streaming response with typing indicator</li>
+                </ul>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>Page 4 — Public Status Page</h4>
+                <p>No login — for guests</p>
+                <ul>
+                    <li>Shows all services as green/amber/red</li>
+                    <li>Uptime percentages for last 30 and 90 days</li>
+                    <li>Auto-updates when HELIX detects an incident</li>
+                </ul>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>Page 5 — Settings</h4>
+                <ul>
+                    <li>Alert preferences per role</li>
+                    <li>API key display for SDK integration</li>
+                    <li>Monitored services configuration</li>
+                </ul>
+            </div>
+            
+            <p><strong>Design system:</strong> Background #0A0F1E, Surface #0D1B3E, Cards #112D5E, Accent #2979CC, Text #E2E8F0</p>
+        </div>
+    </div>
+
+    <!-- Slide 8: Architecture Diagram -->
+    <div class="slide" id="slide8">
+        <h1 class="slide-title">Architecture diagram of the proposed solution</h1>
+        <div class="content">
+            <p><strong>Draw or describe these 4 layers:</strong></p>
+            
+            <div class="architecture-layer">
+                <h4>Input Layer:</h4>
+                <p>Hotel App + SDK → Hospital App + SDK → Log Drain / Polling Agent</p>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>Processing Layer:</h4>
+                <p>NestJS Backend (Render) → In-Memory Map (pattern gate, zero DB reads) → Bull Queue (for scale)</p>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>AI Brain Layer:</h4>
+                <p>HuggingFace Inference API → LangChain 4 Agents → Playwright Scripts</p>
+            </div>
+            
+            <div class="architecture-layer">
+                <h4>Data Layer:</h4>
+                <p>MongoDB Atlas M0 → Events Collection (TTL 30 days) → Incidents + Clients Collections</p>
+            </div>
+            
+            <p><strong>Key architecture principles:</strong></p>
+            <ul>
+                <li>Event-driven: no polling, zero wasted API calls</li>
+                <li>In-memory Map handles all hot analysis — MongoDB never read during detection</li>
+                <li>Multi-tenant: every document tagged with projectId — perfect data isolation</li>
+                <li>Free-tier compatible throughout</li>
+                <li>Deployed: Render (backend) + Netlify (frontend) + Atlas M0 (database)</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Slide 9: Technologies Used -->
+    <div class="slide" id="slide9">
+        <h1 class="slide-title">Technologies to be used in the solution</h1>
+        <div class="content">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Layer</th>
+                        <th>Technology</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>AI Classification</td>
+                        <td>HuggingFace Inference API</td>
+                        <td>Zero-shot anomaly classification. No training. Free tier.</td>
+                    </tr>
+                    <tr>
+                        <td>AI Orchestration</td>
+                        <td>LangChain JS</td>
+                        <td>4-agent chain. Native JavaScript. No Python required.</td>
+                    </tr>
+                    <tr>
+                        <td>Backend</td>
+                        <td>NestJS + Express.js</td>
+                        <td>Modular API, WebSocket, JWT auth, cron jobs. Render.</td>
+                    </tr>
+                    <tr>
+                        <td>Automation</td>
+                        <td>Playwright</td>
+                        <td>Headless autonomous recovery — restart, block, maintenance.</td>
+                    </tr>
+                    <tr>
+                        <td>Frontend</td>
+                        <td>Next.js 14 + Tailwind CSS</td>
+                        <td>SSR dashboard, dark navy theme, 5 pages. Netlify.</td>
+                    </tr>
+                    <tr>
+                        <td>Realtime</td>
+                        <td>Socket.IO</td>
+                        <td>Live WebSocket dashboard — incidents appear instantly.</td>
+                    </tr>
+                    <tr>
+                        <td>Database</td>
+                        <td>MongoDB Atlas M0</td>
+                        <td>Events, incidents, clients. In-memory Map handles analysis.</td>
+                    </tr>
+                    <tr>
+                        <td>Alerts</td>
+                        <td>Nodemailer (Gmail SMTP)</td>
+                        <td>Role-personalized emails. Free. Unlimited sends.</td>
+                    </tr>
+                    <tr>
+                        <td>Google AI</td>
+                        <td>Gemini API / Vertex AI</td>
+                        <td>Natural language querying + classification. Satisfies Google requirement.</td>
+                    </tr>
+                    <tr>
+                        <td>Deployment</td>
+                        <td>Render + Netlify + UptimeRobot</td>
+                        <td>Backend + frontend + keep-alive pinging. All free.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Slide 10: Estimated Implementation Cost -->
+    <div class="slide" id="slide10">
+        <h1 class="slide-title">Estimated implementation cost</h1>
+        <div class="content">
+            <p><strong>$0/month — entire system runs on free tiers</strong></p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Service</th>
+                        <th>Platform</th>
+                        <th>Plan</th>
+                        <th>Cost</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>NestJS Backend</td>
+                        <td>Render</td>
+                        <td>Free Web Service</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>Next.js Frontend</td>
+                        <td>Netlify</td>
+                        <td>Free Starter</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>MongoDB Database</td>
+                        <td>Atlas M0</td>
+                        <td>Free Cluster</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>HuggingFace AI</td>
+                        <td>Inference API</td>
+                        <td>Free Tier</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>LangChain JS</td>
+                        <td>npm (open source)</td>
+                        <td>Free</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>Playwright</td>
+                        <td>npm (open source)</td>
+                        <td>Free</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>Nodemailer</td>
+                        <td>Gmail SMTP</td>
+                        <td>Free</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>UptimeRobot</td>
+                        <td>Free Plan</td>
+                        <td>Free</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td>Gemini API</td>
+                        <td>Google AI Studio</td>
+                        <td>Free Tier</td>
+                        <td>$0/mo</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TOTAL</strong></td>
+                        <td></td>
+                        <td></td>
+                        <td><strong>$0/month</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <p><strong>Note:</strong> HuggingFace free tier allows ~1000 API calls/day. Event-driven architecture uses 0-15 calls on a normal day. MongoDB Atlas M0 provides 512MB — demo uses under 5MB.</p>
+        </div>
+    </div>
+
+    <!-- Slide 11: Snapshots of the MVP -->
+    <div class="slide" id="slide11">
+        <h1 class="slide-title">Snapshots of the MVP</h1>
+        <div class="content">
+            <p><strong>Screenshots will be added from the live deployed system at helix.netlify.app</strong></p>
+            
+            <p>Screenshots to include:</p>
+            <ol>
+                <li>System Health Dashboard — showing metric cards and live incident feed</li>
+                <li>Incident detail page — showing AI reasoning panel</li>
+                <li>AI Chatbot — showing a question and answer exchange</li>
+                <li>Public status page — showing green/amber service indicators</li>
+                <li>A live demo moment — showing the Simulate Crisis button triggering a detection</li>
+            </ol>
+            
+            <p><em>The actual deployed system demonstrates all 16 features working in real-time with hotel and hospital management integrations.</em></p>
+        </div>
+    </div>
+
+    <!-- Slide 12: Additional Details / Future Development -->
+    <div class="slide" id="slide12">
+        <h1 class="slide-title">Additional Details/Future Development</h1>
+        <div class="content">
+            <p><strong>Current Status:</strong><br>
+            16 features implemented and deployed. SDK integrated with hotel demo client. Event-driven architecture live. All free tiers in use.</p>
+            
+            <p><strong>Phase 2 — Post Competition:</strong></p>
+            <ul>
+                <li>Multi-client paid onboarding ($30-50/client/month)</li>
+                <li>Redis + Bull queue for handling 20+ simultaneous clients</li>
+                <li>iOS/Android mobile app for managers</li>
+                <li>Gemini API integration deepened with conversation memory</li>
+            </ul>
+            
+            <p><strong>Phase 3 — 6 Months:</strong></p>
+            <ul>
+                <li>ML models trained on accumulated incident data</li>
+                <li>Industry-specific classification models (hospitality, healthcare)</li>
+                <li>HIPAA and PCI-DSS regulatory compliance modules</li>
+                <li>API marketplace for third-party integrations</li>
+            </ul>
+            
+            <p><strong>Phase 4 — 12 Months:</strong></p>
+            <ul>
+                <li>Enterprise tier with SLA guarantees</li>
+                <li>Multi-region deployment: India, Southeast Asia, MENA</li>
+                <li>White-label offering for IT service companies</li>
+                <li>Target: 500 paying clients, Series A fundraise</li>
+            </ul>
+            
+            <p><strong>UN SDG Alignment:</strong> SDG 9 (Industry and Innovation), SDG 3 (Good Health through hospital system reliability), SDG 11 (Sustainable Cities through smart infrastructure)</p>
+        </div>
+    </div>
+
+    <!-- Slide 13: Links -->
+    <div class="slide" id="slide13">
+        <h1 class="slide-title">Provide links to your:</h1>
+        <div class="content">
+            <ol>
+                <li><strong>GitHub Public Repository:</strong> https://github.com/Puneet04-tech/Helix</li>
+                <li><strong>Demo Video Link (3 Minutes):</strong> https://youtu.be/[your-video-id]</li>
+                <li><strong>MVP Link:</strong> https://helix-ujly.onrender.com</li>
+                <li><strong>Working Prototype Link:</strong> https://helix-ujly.onrender.com</li>
+            </ol>
+            
+            <p><em>All links are live and deployed with full functionality demonstrated.</em></p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="navigation">
+        <button class="nav-btn" onclick="previousSlide()" id="prevBtn">Previous</button>
+        <button class="nav-btn" onclick="nextSlide()" id="nextBtn">Next</button>
+    </div>
+    
+    <div class="slide-counter">
+        Slide <span id="currentSlide">1</span> of <span id="totalSlides">13</span>
+    </div>
+
+    <script>
+        let currentSlideNumber = 1;
+        const totalSlides = 13;
+
+        function showSlide(n) {
+            // Hide all slides
+            const slides = document.querySelectorAll('.slide');
+            slides.forEach(slide => slide.classList.remove('active'));
+            
+            // Show current slide
+            const currentSlide = document.getElementById('slide' + n);
+            if (currentSlide) {
+                currentSlide.classList.add('active');
+            }
+            
+            // Update counter
+            document.getElementById('currentSlide').textContent = n;
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = n === 1;
+            document.getElementById('nextBtn').disabled = n === totalSlides;
+        }
+
+        function nextSlide() {
+            if (currentSlideNumber < totalSlides) {
+                currentSlideNumber++;
+                showSlide(currentSlideNumber);
+            }
+        }
+
+        function previousSlide() {
+            if (currentSlideNumber > 1) {
+                currentSlideNumber--;
+                showSlide(currentSlideNumber);
+            }
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'ArrowRight') nextSlide();
+            if (e.key === 'ArrowLeft') previousSlide();
+        });
+
+        // Initialize
+        showSlide(1);
+        document.getElementById('totalSlides').textContent = totalSlides;
+    </script>
+</body>
+</html>

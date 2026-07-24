@@ -6,6 +6,9 @@ import {
   Query,
   Headers,
   UseGuards,
+  Param,
+  Req,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -14,7 +17,6 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 export class EventsController {
   constructor(private eventsService: EventsService) {}
 
-  // Public endpoint for SDK - requires API key
   @Post('ingest')
   async ingestEvent(
     @Headers('x-api-key') apiKey: string,
@@ -23,21 +25,33 @@ export class EventsController {
     return this.eventsService.ingestEvent(apiKey, eventData);
   }
 
-  // Protected endpoints for dashboard
   @UseGuards(JwtAuthGuard)
   @Get('project/:projectId')
   async getProjectEvents(
+    @Param('projectId') projectId: string,
+    @Req() req: any,
     @Query('limit') limit: string = '50',
   ) {
-    return this.eventsService.getEventsByProjectId('', parseInt(limit));
+    const allowed = req.user?.projectIds || [];
+    if (allowed.length > 0 && !allowed.includes(projectId)) {
+      throw new UnauthorizedException('Access denied for this project');
+    }
+    return this.eventsService.getEventsByProjectId(projectId, parseInt(limit, 10));
   }
 
   @UseGuards(JwtAuthGuard)
   @Get('project/:projectId/type/:type')
   async getEventsByType(
+    @Param('projectId') projectId: string,
+    @Param('type') type: string,
+    @Req() req: any,
     @Query('limit') limit: string = '20',
   ) {
-    return this.eventsService.getEventsByType('', '', parseInt(limit));
+    const allowed = req.user?.projectIds || [];
+    if (allowed.length > 0 && !allowed.includes(projectId)) {
+      throw new UnauthorizedException('Access denied for this project');
+    }
+    return this.eventsService.getEventsByType(projectId, type, parseInt(limit, 10));
   }
 
   @UseGuards(JwtAuthGuard)

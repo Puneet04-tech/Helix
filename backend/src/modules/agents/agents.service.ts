@@ -4,6 +4,7 @@ import { Model } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
 import { Client, ClientDocument } from '../../common/schemas/client.schema';
 import { PlaywrightService } from '../../common/services/playwright.service';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AgentsService {
     @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
     @InjectModel(Client.name) private clientModel: Model<ClientDocument>,
     private playwrightService: PlaywrightService,
+    private agentLLMService: AgentLLMService,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -81,7 +83,20 @@ export class AgentsService {
   private async detectionAgent(incident: any) {
     this.logger.log(`[DETECTION] Analyzing incident type: ${incident.type}`);
 
-    // Better detection based on incident type and description
+    const llmResult = await this.agentLLMService.runDetectionAgent({
+      type: incident.type,
+      service: incident.service,
+      title: incident.title,
+      description: incident.description,
+      severity: incident.severity,
+      metadata: incident.metadata,
+    });
+    if (llmResult) {
+      this.logger.log(`[DETECTION] LLM agent result: confidence=${llmResult.confidence}`);
+      return llmResult;
+    }
+
+    // Rule-based fallback when no LLM is available
     let analysis = '';
     let confidence = 0.85;
 
@@ -111,6 +126,21 @@ export class AgentsService {
 
   private async analysisAgent(projectId: string, incident: any) {
     this.logger.log(`[ANALYSIS] Analyzing root cause for incident type: ${incident.type}`);
+
+    const llmResult = await this.agentLLMService.runAnalysisAgent(
+      {
+        type: incident.type,
+        service: incident.service,
+        title: incident.title,
+        description: incident.description,
+        severity: incident.severity,
+      },
+      incident.agentReasoning?.detectionAgent?.analysis,
+    );
+    if (llmResult) {
+      this.logger.log(`[ANALYSIS] LLM agent root cause identified`);
+      return llmResult;
+    }
 
     // Map incident type to detailed root cause
     const rootCauseMap: { [key: string]: { cause: string; systems: string[]; impact: string } } = {
@@ -178,6 +208,18 @@ export class AgentsService {
       success: boolean;
     }> = [];
 
+    const llmPlan = await this.agentLLMService.runResponsePlan({
+      type: incident.type,
+      service: incident.service,
+      severity: incident.severity,
+      metadata: incident.metadata,
+    });
+
+    let playwrightAction: string | null = llmPlan?.playwrightAction ?? null;
+    if (llmPlan?.actions?.length) {
+      actions.push(...llmPlan.actions);
+    }
+
     // Extract room number from title, description, or metadata
     const extractRoomNumber = (text: string) => {
       // Look for "Room XXX" or "room XXX" pattern
@@ -197,10 +239,8 @@ export class AgentsService {
     }
     const location = incident.metadata?.location || roomNumber;
 
-    // Determine and execute Playwright action based on incident type
-    let playwrightAction: string | null = null;
-
-    // Take appropriate response based on incident type and service
+    // Rule-based fallback when LLM did not produce a full plan
+    if (actions.length === 0) {
     switch (incident.type) {
       case 'security_threat':
         playwrightAction = 'kill_process'; // Kill compromised process
@@ -297,13 +337,14 @@ export class AgentsService {
         break;
 
       default:
-        playwrightAction = 'clear_cache'; // Default: clear cache
+        if (!playwrightAction) playwrightAction = 'clear_cache';
         actions.push({
           action: 'escalate_to_team',
           target: incident.service,
           result: 'Incident escalated to operations team for manual review and investigation',
           success: true,
         });
+    }
     }
 
     // AUTOMATICALLY EXECUTE PLAYWRIGHT ACTION IN REAL-TIME
@@ -353,7 +394,17 @@ export class AgentsService {
       status: string;
     }> = [];
 
-    // Determine notification recipients based on severity and type
+    const llmComms = await this.agentLLMService.runCommsPlan({
+      type: incident.type,
+      service: incident.service,
+      severity: incident.severity,
+    });
+    if (llmComms?.notifications?.length) {
+      notifications.push(...llmComms.notifications);
+    }
+
+    // Rule-based fallback when LLM did not produce notifications
+    if (notifications.length === 0) {
     if (incident.severity === 'critical') {
       notifications.push({
         recipient: 'incident-commander',
@@ -405,6 +456,7 @@ export class AgentsService {
       channel: 'email',
       status: 'sent',
     });
+    }
 
     // **IMPORTANT: Send actual email notifications**
     try {

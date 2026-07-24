@@ -3,6 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
 import { Client, ClientDocument } from '../../common/schemas/client.schema';
+import { UptimeCalculatorService } from '../../common/services/uptime-calculator.service';
 
 /**
  * Feature 5: Guest-Facing Auto Status Page
@@ -15,6 +16,7 @@ export class PublicStatusService {
   constructor(
     @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
     @InjectModel(Client.name) private clientModel: Model<ClientDocument>,
+    private uptimeCalculator: UptimeCalculatorService,
   ) {}
 
   /**
@@ -40,8 +42,8 @@ export class PublicStatusService {
 
       // Calculate service status from statusSummary field
       const serviceStatus = (client.statusSummary && typeof client.statusSummary === 'object' && !Array.isArray(client.statusSummary)) 
-        ? this.formatServiceStatus(client.statusSummary as any)
-        : this.generateDefaultServiceStatus();
+        ? await this.formatServiceStatus(clientId, client.statusSummary as any)
+        : await this.generateDefaultServiceStatus(clientId);
 
       // Calculate metrics
       const totalIncidents = await this.incidentModel.countDocuments({
@@ -54,6 +56,7 @@ export class PublicStatusService {
       });
 
       const avgResolutionTime = this.calculateAverageResolutionTime(recentIncidents);
+      const projectUptime = await this.uptimeCalculator.calculateProjectUptime(clientId);
 
       return {
         clientName: client.name,
@@ -64,7 +67,7 @@ export class PublicStatusService {
             activeIncidents,
             resolvedIncidents: recentIncidents.length,
             averageResolutionTimeMinutes: avgResolutionTime,
-            uptime: '99.97%',
+            uptime: this.uptimeCalculator.formatUptime(projectUptime),
             lastUpdated: new Date(),
           },
           recentResolutions: recentIncidents.map((incident: any) => ({
@@ -108,7 +111,7 @@ export class PublicStatusService {
   /**
    * Get default service status (all operational)
    */
-  private generateDefaultServiceStatus(): Array<{ name: string; status: string; uptime: string; responseTime: string; lastUpdated: Date }> {
+  private async generateDefaultServiceStatus(clientId: string): Promise<Array<{ name: string; status: string; uptime: string; responseTime: string; lastUpdated: Date }>> {
     const defaultServices = [
       'API Gateway',
       'Authentication',
@@ -120,26 +123,39 @@ export class PublicStatusService {
       'File Storage',
     ];
 
-    return defaultServices.map(service => ({
-      name: service,
-      status: 'operational',
-      uptime: '99.97%',
-      responseTime: '120ms',
-      lastUpdated: new Date(),
-    }));
+    return Promise.all(
+      defaultServices.map(async service => {
+        const uptimeValue = await this.uptimeCalculator.calculateServiceUptime(clientId, service);
+        return {
+          name: service,
+          status: 'operational',
+          uptime: this.uptimeCalculator.formatUptime(uptimeValue),
+          responseTime: '120ms',
+          lastUpdated: new Date(),
+        };
+      }),
+    );
   }
 
   /**
    * Format service status object to array
    */
-  private formatServiceStatus(statusSummary: { [key: string]: string }): Array<{ name: string; status: string; uptime: string; responseTime: string; lastUpdated: Date }> {
-    return Object.entries(statusSummary).map(([name, status]) => ({
-      name,
-      status,
-      uptime: status === 'operational' ? '99.97%' : status === 'degraded' ? '95.5%' : '0%',
-      responseTime: status === 'operational' ? '120ms' : 'N/A',
-      lastUpdated: new Date(),
-    }));
+  private async formatServiceStatus(
+    clientId: string,
+    statusSummary: { [key: string]: string },
+  ): Promise<Array<{ name: string; status: string; uptime: string; responseTime: string; lastUpdated: Date }>> {
+    return Promise.all(
+      Object.entries(statusSummary).map(async ([name, status]) => {
+        const uptimeValue = await this.uptimeCalculator.calculateServiceUptime(clientId, name);
+        return {
+          name,
+          status,
+          uptime: this.uptimeCalculator.formatUptime(uptimeValue),
+          responseTime: status === 'operational' ? '120ms' : 'N/A',
+          lastUpdated: new Date(),
+        };
+      }),
+    );
   }
 
   /**

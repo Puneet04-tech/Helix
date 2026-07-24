@@ -47,10 +47,11 @@ export class CanaryService {
         systemType: isHospital ? 'Medical/Health' : 'Hospitality'
       };
     } catch (error) {
-      this.logger.error(`Canary Check Failed for ${targetUrl}: ${error.message}`);
+      const err = error as Error;
+      this.logger.error(`Canary Check Failed for ${targetUrl}: ${err.message}`);
       return {
         success: false,
-        message: `Connection failed: ${error.message}`,
+        message: `Connection failed: ${err.message}`,
         checkedAt: new Date()
       };
     }

@@ -2,13 +2,21 @@ import { config } from 'dotenv';
 config();
 
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, Logger } from '@nestjs/common';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
+  const logger = new Logger('Bootstrap');
+
+  if (
+    process.env.NODE_ENV === 'production' &&
+    (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-change-in-production')
+  ) {
+    throw new Error('JWT_SECRET must be set to a strong value in production');
+  }
+
   const app = await NestFactory.create(AppModule);
 
-  // Global validation
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
@@ -17,19 +25,23 @@ async function bootstrap() {
     }),
   );
 
-  // CORS - allow all origins in production for stability, or specific ones
+  const allowedOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:3000',
+    'https://helix-threat.netlify.app',
+  ].filter(Boolean) as string[];
+
   app.enableCors({
-    origin: true, // This will reflect the request origin, allowing any domain to access
+    origin: process.env.NODE_ENV === 'production' ? allowedOrigins : true,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type,Authorization,Cache-Control,Pragma',
+    allowedHeaders: 'Content-Type,Authorization,Cache-Control,Pragma,x-api-key',
   });
 
   const port = process.env.PORT || 5000;
-  console.log(`Setting up listener on port ${port}...`);
   await app.listen(port, '0.0.0.0');
-  console.log(`🚀 Helix Backend running on port ${port}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+  logger.log(`Helix Backend running on port ${port}`);
+  logger.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 }
 
 bootstrap();
