@@ -14,10 +14,10 @@ export class StatusController {
 
   /**
    * Feature 5: Public Status Page
-   * GET /status/:clientId
+   * GET /status/public/:clientId
    * NO authentication required - suitable for embedding or public display
    */
-  @Get(':clientId')
+  @Get('public/:clientId')
   async getPublicStatus(@Param('clientId') clientId: string) {
     try {
       const statusData = await this.publicStatusService.getPublicStatusPage(clientId);
