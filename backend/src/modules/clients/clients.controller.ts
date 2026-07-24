@@ -10,9 +10,9 @@ export class ClientsController {
   @Post()
   async createClient(@Body() clientData: any) {
     return this.clientsService.createClient(
+      clientData.organizationId || 'default',
       clientData.name,
-      clientData.apiKey,
-      clientData.monitoredServices,
+      clientData.monitoredServices || [],
     );
   }
 
@@ -20,12 +20,6 @@ export class ClientsController {
   @UseGuards(JwtAuthGuard)
   @Get()
   async getAllClients() {
-    return this.clientsService.getAllClients();
-  }
-
-  @UseGuards(JwtAuthGuard)
-  @Get(':id')
-  async getClientById(@Query('id') id: string) {
-    return this.clientsService.getClientById(id);
+    return this.clientsService.getClientByOrganizationId('default');
   }
 }
