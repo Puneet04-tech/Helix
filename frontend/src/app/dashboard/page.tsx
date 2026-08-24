@@ -237,10 +237,14 @@ export default function Dashboard() {
   };
 
   const runCanary = async (isDryRun = false) => {
-    if (!token) return;
+    if (!token) {
+      setCanaryResult({ success: false, criticalStep: 'No authentication token available', isDryRun });
+      return;
+    }
     setIsRunningCanary(true);
     setCanaryResult(null);
     try {
+      console.log('Running canary with token:', token ? 'Token present' : 'No token');
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL!}/agents/canary/run`, {
         method: 'POST',
         headers: { 
@@ -254,12 +258,17 @@ export default function Dashboard() {
         })
       });
       
+      console.log('Canary response status:', res.status);
+      
       if (!res.ok) {
-        setCanaryResult({ success: false, criticalStep: `Server Error (${res.status})`, isDryRun });
+        const errorText = await res.text();
+        console.error('Canary error response:', errorText);
+        setCanaryResult({ success: false, criticalStep: `Server Error (${res.status}): ${errorText}`, isDryRun });
         return;
       }
 
       const data = await res.json();
+      console.log('Canary success response:', data);
       setCanaryResult(data);
     } catch (err: any) {
       console.error('Canary failed:', err);
