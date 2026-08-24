@@ -255,18 +255,15 @@ export default function Dashboard() {
       });
       
       if (!res.ok) {
-        setCanaryResult({ success: false, criticalStep: `Server Error (${res.status})` });
+        setCanaryResult({ success: false, criticalStep: `Server Error (${res.status})`, isDryRun });
         return;
       }
 
       const data = await res.json();
-      setCanaryResult({
-        ...data,
-        isDryRun
-      });
+      setCanaryResult(data);
     } catch (err: any) {
       console.error('Canary failed:', err);
-      setCanaryResult({ success: false, criticalStep: err.message || 'Connection Failed' });
+      setCanaryResult({ success: false, criticalStep: err.message || 'Connection Failed', isDryRun });
     } finally {
       setIsRunningCanary(false);
     }

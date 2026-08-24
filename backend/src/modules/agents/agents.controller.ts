@@ -30,8 +30,14 @@ export class AgentsController {
 
   // Feature 5: Silent Canary
   @Post('canary/run')
-  async runCanary(@Body('url') url: string, @Body('flow') flow: 'hotel'|'hospital') {
-    return await this.canaryService.runCanary(url, flow);
+  async runCanary(
+    @Body('url') url: string,
+    @Body('targetUrl') targetUrl: string,
+    @Body('flow') flow: 'hotel'|'hospital',
+    @Body('dryRun') dryRun: boolean = false
+  ) {
+    const effectiveUrl = url || targetUrl;
+    return await this.canaryService.runCanary(effectiveUrl, flow, dryRun);
   }
 
   // Feature 4: Knowledge Base Search

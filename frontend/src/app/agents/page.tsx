@@ -22,6 +22,7 @@ export default function AgentsPage() {
 
   const [canaryUrl, setCanaryUrl] = useState('');
   const [canaryFlow, setCanaryFlow] = useState<'hotel' | 'hospital'>('hospital');
+  const [canaryDryRun, setCanaryDryRun] = useState(false);
   const [canaryResult, setCanaryResult] = useState<any>(null);
   const [canaryLoading, setCanaryLoading] = useState(false);
   const [canaryError, setCanaryError] = useState('');
@@ -76,6 +77,7 @@ export default function AgentsPage() {
           body: JSON.stringify({
             url: canaryUrl.trim(),
             flow: canaryFlow,
+            dryRun: canaryDryRun,
           }),
         },
       );
@@ -245,6 +247,17 @@ export default function AgentsPage() {
                   </button>
                 ))}
                 <button
+                  type="button"
+                  onClick={() => setCanaryDryRun(!canaryDryRun)}
+                  className={`px-3 py-1.5 rounded-lg text-sm capitalize transition-colors ${
+                    canaryDryRun
+                      ? 'bg-yellow-600 text-white'
+                      : 'bg-[#1A3A6E] text-slate-300'
+                  }`}
+                >
+                  {canaryDryRun ? 'Dry Run' : 'Live'}
+                </button>
+                <button
                   type="submit"
                   disabled={canaryLoading}
                   className="ml-auto flex items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-slate-600 text-white px-4 py-2 rounded-lg text-sm"
@@ -262,25 +275,26 @@ export default function AgentsPage() {
                 <div className="flex items-center gap-3">
                   <span
                     className={`px-3 py-1 rounded-full border text-xs font-medium ${
-                      canaryResult.up || canaryResult.success
+                      canaryResult.success
                         ? 'bg-green-500/10 text-green-400 border-green-500/30'
                         : 'bg-red-500/10 text-red-400 border-red-500/30'
                     }`}
                   >
-                    {canaryResult.up || canaryResult.success
-                      ? 'Up'
-                      : 'Down'}
+                    {canaryResult.success ? 'Up' : 'Down'}
                   </span>
                   <span className="text-sm text-slate-300">
                     Latency:{' '}
                     <span className="text-[#5BA4F5]">
-                      {canaryResult.latency ?? canaryResult.totalLatencyMs}ms
+                      {canaryResult.avgLatency || canaryResult.latency || canaryResult.totalLatencyMs}ms
                     </span>
                   </span>
+                  {canaryResult.isDryRun && (
+                    <span className="text-xs text-yellow-400">Dry Run Mode</span>
+                  )}
                 </div>
-                {canaryResult.steps?.length ? (
+                {canaryResult.fullLog?.length ? (
                   <div className="mt-3 space-y-2">
-                    {canaryResult.steps.map((s: any, i: number) => (
+                    {canaryResult.fullLog.map((s: any, i: number) => (
                       <div
                         key={i}
                         className="flex justify-between bg-[#0A1428] border border-[#1E3A5F] rounded-lg px-3 py-2"
@@ -289,12 +303,15 @@ export default function AgentsPage() {
                           {s.name || s.step}
                         </span>
                         <span className="text-xs text-slate-400">
-                          {s.latencyMs ?? s.durationMs}ms
+                          {s.latencyMs ?? s.latency}ms
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : null}
+                {!canaryResult.success && canaryResult.criticalStep && (
+                  <p className="mt-2 text-sm text-red-400">Error: {canaryResult.criticalStep}</p>
+                )}
               </div>
             )}
           </div>
