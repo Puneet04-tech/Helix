@@ -45,12 +45,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   // Holds the expiry-check timer so we can clear it between logins/logouts.
-  const expiryTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+  const expiryTimer = useRef<NodeJS.Timeout | number | null>(null);
 
   // Annul any previous expiry timer.
   const clearExpiryTimer = () => {
     if (expiryTimer.current) {
-      window.clearTimeout(expiryTimer.current);
+      clearTimeout(expiryTimer.current);
       expiryTimer.current = null;
     }
   };
@@ -89,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       clearExpiryTimer();
       const delay = Math.max(0, expiresAt - Date.now());
       // Cap delay to the max setTimeout value to avoid overflow issues.
-      expiryTimer.current = window.setTimeout(() => {
+      expiryTimer.current = setTimeout(() => {
         console.warn('[AuthContext] Session token expired - logging out.');
         setUser(null);
         setToken(null);
@@ -126,7 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const exp = getTokenExpiry(data.access_token);
     if (exp !== null) {
       const delay = Math.max(0, exp - Date.now());
-      expiryTimer.current = window.setTimeout(() => {
+      expiryTimer.current = setTimeout(() => {
         console.warn('[AuthContext] Session token expired - logging out.');
         setUser(null);
         setToken(null);
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const exp = getTokenExpiry(data.access_token);
     if (exp !== null) {
       const delay = Math.max(0, exp - Date.now());
-      expiryTimer.current = window.setTimeout(() => {
+      expiryTimer.current = setTimeout(() => {
         console.warn('[AuthContext] Session token expired - logging out.');
         setUser(null);
         setToken(null);
