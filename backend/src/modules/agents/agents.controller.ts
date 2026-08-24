@@ -7,7 +7,6 @@ import { KnowledgeService } from './knowledge.service';
 import { ImpactService } from './impact.service';
 
 @Controller('agents')
-@UseGuards(JwtAuthGuard)
 export class AgentsController {
   constructor(
     private readonly agentsService: AgentsService,
@@ -18,18 +17,21 @@ export class AgentsController {
   ) {}
 
   @Get('playwright/status')
+  @UseGuards(JwtAuthGuard)
   async getPlaywrightStatus() {
     return await this.agentsService.getPlaywrightStatus();
   }
 
   // Feature 2: Chaos Mode Simulation
   @Post('chaos/simulate')
+  @UseGuards(JwtAuthGuard)
   async simulateChaos(@Body('service') service: string) {
     return await this.chaosService.simulateFailure(service);
   }
 
   // Feature 5: Silent Canary
   @Post('canary/run')
+  @UseGuards(JwtAuthGuard)
   async runCanary(
     @Body('url') url: string,
     @Body('targetUrl') targetUrl: string,
@@ -42,23 +44,27 @@ export class AgentsController {
 
   // Feature 4: Knowledge Base Search
   @Get('knowledge/search')
+  @UseGuards(JwtAuthGuard)
   async searchKnowledge(@Query('query') query: string) {
     return await this.knowledgeService.queryKnowledge(query);
   }
 
   // Feature 10: Crystallize Knowledge
   @Post('knowledge/crystallize/:incidentId')
+  @UseGuards(JwtAuthGuard)
   async crystallizeKnowledge(@Param('incidentId') incidentId: string) {
     return await this.knowledgeService.crystallizeKnowledge(incidentId);
   }
 
   // Feature 7: Benchmarking
   @Get('benchmarking/:projectId')
+  @UseGuards(JwtAuthGuard)
   async getBenchmarking(@Param('projectId') projectId: string) {
     return await this.impactService.getAnonymousBenchmarking(projectId);
   }
 
   @Post('playwright/test/:action')
+  @UseGuards(JwtAuthGuard)
   async testPlaywrightAction(
     @Param('action') action: string,
     @Body() body?: any,

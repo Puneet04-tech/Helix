@@ -155,8 +155,14 @@ export class AuthService {
       projectIds: user.projectIds,
     };
 
+    const secret = process.env.JWT_SECRET || 'your-secret-key-change-in-production';
+    console.log('Generating token with secret:', secret ? 'configured' : 'default');
+    
     return {
-      access_token: this.jwtService.sign(payload, { expiresIn: '24h' }),
+      access_token: this.jwtService.sign(payload, { 
+        secret: secret,
+        expiresIn: '24h' 
+      }),
       user: {
         id: user._id,
         email: user.email,
