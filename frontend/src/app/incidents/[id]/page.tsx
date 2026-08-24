@@ -39,7 +39,7 @@ export default function IncidentDetailPage() {
       }
 
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/incidents/${incidentId}`, {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
           headers: {
             Authorization: `Bearer ${token}`,
             'Content-Type': 'application/json',
@@ -62,10 +62,10 @@ export default function IncidentDetailPage() {
 
   const handleAnalyzeIncident = async () => {
     if (!incidentId) return;
-    
+
     setAnalyzing(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/incidents/${incidentId}/analyze`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ export default function IncidentDetailPage() {
       if (response.ok) {
         // Small delay to ensure backend has saved all data
         await new Promise(resolve => setTimeout(resolve, 500));
-        
+
         // Re-fetch the incident data
         const refreshResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}`, {
           headers: {
@@ -104,12 +104,36 @@ export default function IncidentDetailPage() {
     }
   };
 
+  const handleCrystallizeKnowledge = async () => {
+    if (!incidentId || !token) return;
+    try {
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL}/agents/knowledge/crystallize/${incidentId}`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.message || 'Failed to crystallize knowledge');
+      }
+      const data = await response.json();
+      alert(`Knowledge crystallized for "${data.incidentType}": ${data.rootCause || 'root cause recorded'}`);
+    } catch (err: any) {
+      alert(err.message || 'Failed to crystallize knowledge');
+    }
+  };
+
   const handleGeneratePostmortem = async () => {
     if (!incidentId) return;
     
     setGeneratingPostmortem(true);
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/incidents/${incidentId}/postmortem/generate`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/incidents/${incidentId}/postmortem/generate`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -198,37 +222,36 @@ export default function IncidentDetailPage() {
               AI DNA Re-Sync
             </button>
             <button
-                className="flex items-center gap-2 bg-gray-800 hover:bg-gray-700 text-gray-200 px-4 py-2 rounded-lg font-medium border border-gray-700 transition-colors"
-                onClick={() => alert('Crystallizing knowledge base entry...')}
+              onClick={handleCrystallizeKnowledge}
+              className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
             >
-                <Brain className="w-4 h-4" />
-                Crystallize Knowledge
+              <Brain className="w-4 h-4" />
+              Crystallize Knowledge
             </button>
           </div>
         </div>
 
         {/* Feature 3: Guest Impact Score Cards */}
-        <ImpactScoreCard 
-          impact={incident.businessImpact || {
-              guestImpactScore: incident.severity === 'critical' ? 88 : 42,
-              estimatedRevenueAtRisk: incident.severity === 'critical' ? 12400 : 2500,
-              affectedGuestCount: incident.affectedUsers || 12,
-              conversionLossCount: 4,
-              experienceScore: incident.severity === 'critical' ? 15 : 68
-          }} 
-          sentiment={incident.sentimentAnalysis} 
-        />
+        {incident.businessImpact && (
+          <ImpactScoreCard
+            impact={incident.businessImpact}
+            sentiment={incident.sentimentAnalysis}
+          />
+        )}
 
         {/* Feature 6 & 1: Incident Replay & DNA Fingerprinting */}
-        <div className="mb-8">
-          <IncidentReplay 
-            events={incident.eventIds?.map((id: string) => ({ type: 'Generic Event', timestamp: incident.createdAt || new Date().toISOString(), severity: incident.severity })) || [
-                { type: 'Service Error', timestamp: new Date().toISOString(), severity: 'critical' },
-                { type: 'DB Timeout', timestamp: new Date().toISOString(), severity: 'critical' }
-            ]} 
-            fingerprint={incident.fingerprint || { signature: '82% Match found with Service Crash Mar-3' }}
-          />
-        </div>
+        {incident.eventIds && incident.eventIds.length > 0 && (
+          <div className="mb-8">
+            <IncidentReplay
+              events={incident.eventIds.map((id: string) => ({
+                type: 'Related Event',
+                timestamp: incident.createdAt || new Date().toISOString(),
+                severity: incident.severity
+              }))}
+              fingerprint={incident.fingerprint}
+            />
+          </div>
+        )}
 
         {/* Title Section */}
         <div>
@@ -271,7 +294,7 @@ export default function IncidentDetailPage() {
           {/* Confidence Score */}
           <div className="bg-blue-500/20 border border-blue-500/50 rounded-lg p-6">
             <div className="text-xs font-semibold uppercase opacity-75 text-slate-400 mb-2">Confidence</div>
-            <div className="text-2xl font-bold text-blue-300">{incident.confidence || '87.2'}%</div>
+            <div className="text-2xl font-bold text-blue-300">{incident.confidence || '—'}%</div>
           </div>
 
           {/* Affected Users */}

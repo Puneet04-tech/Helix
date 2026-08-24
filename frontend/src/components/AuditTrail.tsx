@@ -27,7 +27,7 @@ export const AuditTrail: React.FC<{ incidentId?: string }> = ({ incidentId }) =>
 
     const io = require('socket.io-client').default || require('socket.io-client');
     const socket = io(
-      process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3000',
+      process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000',
       {
         path: '/socket.io',
         auth: { token },
@@ -61,8 +61,8 @@ export const AuditTrail: React.FC<{ incidentId?: string }> = ({ incidentId }) =>
     const fetchAuditTrail = async () => {
       try {
         const endpoint = incidentId 
-          ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit/incident/${incidentId}`
-          : `${process.env.NEXT_PUBLIC_BACKEND_URL}/audit`;
+          ? `${process.env.NEXT_PUBLIC_API_URL}/audit/incident/${incidentId}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/audit`;
         
         const response = await fetch(endpoint, {
           headers: { Authorization: `Bearer ${token}` },

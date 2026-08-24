@@ -39,13 +39,26 @@ export class KnowledgeService {
   async queryKnowledge(query: string): Promise<any[]> {
     // In a real app, this would use Atlas Search or a Vector DB.
     // For this demo, we'll use regex on the rootCause and fix descriptions.
-    const keywords = query.toLowerCase().split(' ');
-    
+    // Guard against a missing query and escape each keyword so user input can't
+    // be interpreted as a regular expression (regex injection / ReDoS).
+    const keywords = (query || '')
+      .toLowerCase()
+      .split(' ')
+      .map(k => k.trim())
+      .filter(Boolean)
+      .map(k => k.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+
+    if (keywords.length === 0) {
+      return [];
+    }
+
+    const pattern = keywords.join('|');
+
     const matches = await this.incidentModel.find({
       status: 'resolved',
       $or: [
-        { type: { $regex: keywords.join('|'), $options: 'i' } },
-        { 'agentReasoning.analysisAgent.rootCause': { $regex: keywords.join('|'), $options: 'i' } }
+        { type: { $regex: pattern, $options: 'i' } },
+        { 'agentReasoning.analysisAgent.rootCause': { $regex: pattern, $options: 'i' } }
       ]
     }).limit(5).exec();
 

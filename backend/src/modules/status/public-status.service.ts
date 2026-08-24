@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
 import { Client, ClientDocument } from '../../common/schemas/client.schema';
 import { UptimeCalculatorService } from '../../common/services/uptime-calculator.service';
@@ -25,7 +25,11 @@ export class PublicStatusService {
    */
   async getPublicStatusPage(clientId: string): Promise<any> {
     try {
-      const client = await this.clientModel.findOne({ projectId: clientId }).lean();
+      // clientId is the Client's Mongo _id (same value stored on incidents as projectId).
+      if (!Types.ObjectId.isValid(clientId)) {
+        return { error: 'Client not found' };
+      }
+      const client = await this.clientModel.findById(clientId).lean();
       if (!client) {
         return { error: 'Client not found' };
       }
@@ -90,7 +94,8 @@ export class PublicStatusService {
    */
   async updateServiceStatus(projectId: string, serviceName: string, status: 'operational' | 'degraded' | 'outage'): Promise<void> {
     try {
-      const client = await this.clientModel.findOne({ projectId });
+      if (!Types.ObjectId.isValid(projectId)) return;
+      const client = await this.clientModel.findById(projectId);
       if (!client) return;
 
       if (!client.statusSummary || typeof client.statusSummary !== 'object' || Array.isArray(client.statusSummary)) {

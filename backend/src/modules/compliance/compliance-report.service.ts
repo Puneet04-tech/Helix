@@ -119,9 +119,8 @@ export class ComplianceReportService {
         doc.fontSize(11).font('Helvetica');
         doc.text(`Total Incidents: ${incidents.length}`);
         doc.text(`Critical Incidents: ${summary.critical}`);
-        doc.text(`High Severity: ${summary.high}`);
-        doc.text(`Medium Severity: ${summary.medium}`);
-        doc.text(`Low Severity: ${summary.low}`);
+        doc.text(`Warnings: ${summary.warning}`);
+        doc.text(`Informational: ${summary.info}`);
         doc.text(`Average Resolution Time: ${summary.avgResolutionTime} minutes`);
         doc.moveDown();
 
@@ -212,9 +211,8 @@ export class ComplianceReportService {
   private generateExecutiveSummary(incidents: any[]): any {
     const severityGroups = {
       critical: incidents.filter((i: any) => i.severity === 'critical').length,
-      high: incidents.filter((i: any) => i.severity === 'high').length,
-      medium: incidents.filter((i: any) => i.severity === 'medium').length,
-      low: incidents.filter((i: any) => i.severity === 'low').length,
+      warning: incidents.filter((i: any) => i.severity === 'warning').length,
+      info: incidents.filter((i: any) => i.severity === 'info').length,
     };
 
     const resolvedIncidents = incidents.filter((i: any) => i.resolutionTime);

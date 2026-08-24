@@ -1,11 +1,11 @@
+// Must be first: loads .env and fixes JWT_SECRET before JwtModule.register() runs.
+import './config/load-env';
+
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ScheduleModule } from '@nestjs/schedule';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
-import { config } from 'dotenv';
-
-config();
 
 // Modules
 import { AuthModule } from './modules/auth/auth.module';

@@ -21,6 +21,9 @@ export default function IncidentsPage() {
   const [incidents, setIncidents] = useState<IncidentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(20);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -31,9 +34,10 @@ export default function IncidentsPage() {
 
       try {
         const projectId = user.projectIds?.[0];
+        const offset = (page - 1) * limit;
         const url = projectId
-          ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}`
-          : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
+          ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}?limit=${limit}&offset=${offset}`
+          : `${process.env.NEXT_PUBLIC_API_URL}/incidents?limit=${limit}&offset=${offset}`;
 
         const response = await fetch(url, {
           headers: {
@@ -62,6 +66,17 @@ export default function IncidentsPage() {
           : [];
 
         setIncidents(transformed);
+        // Fetch total count for pagination
+        const countUrl = projectId
+          ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}/count`
+          : `${process.env.NEXT_PUBLIC_API_URL}/incidents/count`;
+        const countRes = await fetch(countUrl, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (countRes.ok) {
+          const countData = await countRes.json();
+          setTotal(countData.count || 0);
+        }
       } catch (err) {
         console.error('Fetch error:', err);
         setError('Failed to load incidents');
@@ -119,6 +134,32 @@ export default function IncidentsPage() {
             )}
           </div>
         </div>
+
+        {/* Pagination */}
+        {total > limit && (
+          <div className="flex items-center justify-between pt-4">
+            <p className="text-sm text-slate-400">
+              Showing {incidents.length} of {total} incidents
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="bg-[#1A3A6E] hover:bg-[#1E3A5F] disabled:opacity-40 text-slate-200 px-4 py-2 rounded-lg text-sm"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setPage(p => Math.min(Math.ceil(total / limit), p + 1))}
+                disabled={page >= Math.ceil(total / limit)}
+                className="bg-[#1A3A6E] hover:bg-[#1E3A5F] disabled:opacity-40 text-slate-200 px-4 py-2 rounded-lg text-sm"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </DashboardLayout>
   );

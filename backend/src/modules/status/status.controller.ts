@@ -28,6 +28,8 @@ export class StatusController {
 
       return statusData;
     } catch (error) {
+      // Preserve the intentional 404 instead of masking it as a 500.
+      if (error instanceof HttpException) throw error;
       const err = error as Error;
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -26,8 +26,8 @@ export default function StatusPage() {
 
       try {
         const projectId = user.projectIds?.[0];
-        
-        // Try to fetch from status endpoint
+
+        // Fetch from status endpoint - returns services derived from real incidents
         const response = await fetch(
           projectId
             ? `${process.env.NEXT_PUBLIC_API_URL}/status/project/${projectId}`
@@ -44,42 +44,7 @@ export default function StatusPage() {
           const data = await response.json();
           setServices(Array.isArray(data) ? data : []);
         } else {
-          // Fallback: get services from incidents
-          const incidentsUrl = projectId
-            ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}`
-            : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
-
-          const incidentsResponse = await fetch(incidentsUrl, {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-
-          if (incidentsResponse.ok) {
-            const incidents = await incidentsResponse.json();
-            // Extract unique services from incidents
-            const serviceSet = new Set<string>();
-            const serviceMap: Record<string, number> = {};
-
-            Array.isArray(incidents) &&
-              incidents.forEach((incident: any) => {
-                if (incident.service) {
-                  serviceSet.add(incident.service);
-                  serviceMap[incident.service] = (serviceMap[incident.service] || 0) + 1;
-                }
-              });
-
-            const servicesData = Array.from(serviceSet).map(name => ({
-              name,
-              status: 'operational' as const,
-              uptime: 99.97,
-            }));
-
-            setServices(servicesData);
-          } else {
-            throw new Error('Failed to fetch services');
-          }
+          throw new Error('Failed to fetch service status');
         }
       } catch (err) {
         console.error('Fetch error:', err);
@@ -136,10 +101,28 @@ export default function StatusPage() {
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                  <span className="text-sm font-medium text-green-400">
-                    Operational
-                  </span>
+                  {service.status === 'operational' ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-400" />
+                      <span className="text-sm font-medium text-green-400">
+                        Operational
+                      </span>
+                    </>
+                  ) : service.status === 'degraded' ? (
+                    <>
+                      <AlertCircle className="w-5 h-5 text-yellow-400" />
+                      <span className="text-sm font-medium text-yellow-400">
+                        Degraded
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-5 h-5 text-red-400" />
+                      <span className="text-sm font-medium text-red-400">
+                        Down
+                      </span>
+                    </>
+                  )}
                 </div>
               </div>
             ))

@@ -21,7 +21,7 @@ export class ComplianceController {
     @Res() res: Response,
   ) {
     try {
-      const projectId = req.user?.projectId;
+      const projectId = req.user?.projectIds?.[0];
 
       if (!projectId) {
         throw new HttpException('Project ID not found in token', HttpStatus.UNAUTHORIZED);
@@ -54,6 +54,8 @@ export class ComplianceController {
       );
       res.send(pdfBuffer);
     } catch (error) {
+      // Preserve intentional HTTP errors (401/400) instead of masking them as 500.
+      if (error instanceof HttpException) throw error;
       const err = error as Error;
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -70,7 +72,7 @@ export class ComplianceController {
     @Req() req: any,
   ) {
     try {
-      const projectId = req.user?.projectId;
+      const projectId = req.user?.projectIds?.[0];
 
       if (!projectId) {
         throw new HttpException('Project ID not found in token', HttpStatus.UNAUTHORIZED);
@@ -87,6 +89,8 @@ export class ComplianceController {
         generatedAt: new Date(),
       };
     } catch (error) {
+      // Preserve intentional HTTP errors (401/400) instead of masking them as 500.
+      if (error instanceof HttpException) throw error;
       const err = error as Error;
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

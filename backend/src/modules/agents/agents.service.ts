@@ -283,17 +283,18 @@ export class AgentsService {
         playwrightAction = 'clear_cache'; // Clear cache as general remediation
         // Action for Hotel Operations
         if (incident.service === 'hotel-management') {
+          const ticketId = `HTL-${Date.now().toString().slice(-5)}`;
           actions.push({
             action: 'dispatch_maintenance',
             target: incident.service,
-            result: `Maintenance ticket #HTL-${Date.now().toString().slice(-5)} created for Room ${roomNumber} - Technician dispatched via PMS API - ETA: 5 minutes`,
+            result: `Maintenance ticket #${ticketId} created for Room ${roomNumber} - Technician dispatched via PMS API - ETA: 5 minutes`,
             success: true,
           });
           
           actions.push({
             action: 'notify_front_desk',
             target: 'front-desk-console',
-            result: 'Front desk console alert: URGENT - Room 305 requires immediate maintenance attention - ticket #HTL-${Date.now().toString().slice(-5)}',
+            result: `Front desk console alert: URGENT - Room ${roomNumber} requires immediate maintenance attention - ticket #${ticketId}`,
             success: true,
           });
 
@@ -362,7 +363,7 @@ export class AgentsService {
           action: `playwright_${playwrightAction}`,
           target: 'browser-automation',
           result: playwrightResult.result,
-          success: playwrightResult.success || true,
+          success: playwrightResult.success,
         });
         
         this.logger.log(`[RESPONSE] Real-time execution completed: ${playwrightAction}`);

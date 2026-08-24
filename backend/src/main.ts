@@ -1,5 +1,5 @@
-import { config } from 'dotenv';
-config();
+// Must be first: loads .env and fixes JWT_SECRET before any module captures it.
+import './config/load-env';
 
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, Logger } from '@nestjs/common';
@@ -7,18 +7,6 @@ import { AppModule } from './app.module';
 
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
-
-  // Generate JWT_SECRET if not set (for deployment convenience)
-  if (!process.env.JWT_SECRET || process.env.JWT_SECRET === 'your-secret-key-change-in-production') {
-    if (process.env.NODE_ENV === 'production') {
-      const crypto = require('crypto');
-      process.env.JWT_SECRET = crypto.randomBytes(64).toString('hex');
-      logger.warn('JWT_SECRET not set, generated random secret for production');
-    } else {
-      process.env.JWT_SECRET = 'dev-secret-key-change-in-production';
-      logger.warn('JWT_SECRET not set, using development default');
-    }
-  }
 
   const app = await NestFactory.create(AppModule);
 

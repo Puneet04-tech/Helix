@@ -35,10 +35,46 @@ export class PlaywrightService {
   }
 
   async executeAction(action: string, targetUrl: string, parameters?: any): Promise<ActionResult> {
-    // Always use simulation mode - real-time execution of realistic outcomes
-    // This is production-ready: no browser dependencies, instant execution
-    this.logger.log(`[REAL-TIME] Executing Playwright action: ${action}`);
-    return this.simulateAction(action, parameters);
+    // Prefer REAL browser automation. If Playwright browsers are not installed the
+    // target is unreachable, gracefully fall back to a simulated outcome (with a
+    // warning) so incident response never hard-crashes.
+    this.logger.log(`[PLAYWRIGHT] Executing action: ${action} on ${targetUrl}`);
+    try {
+      await this.initBrowser();
+      const context = await this.browser!.newContext();
+      const page = await context.newPage();
+
+      const handler: { [key: string]: (p: Page, t: string, a?: any) => Promise<ActionResult> } = {
+        restart_service: this.handleRestartService,
+        scale_up: this.handleScaleUp,
+        clear_cache: this.handleClearCache,
+        failover: this.handleFailover,
+        kill_process: this.handleKillProcess,
+      };
+
+      const fn = handler[action];
+      if (!fn) {
+        await context.close();
+        return {
+          success: false,
+          action,
+          result: 'Unknown action - no browser handler registered',
+          timestamp: Date.now(),
+        };
+      }
+
+      try {
+        return await fn.call(this, page, targetUrl, parameters);
+      } finally {
+        await context.close();
+      }
+    } catch (error) {
+      const err = error as Error;
+      this.logger.warn(
+        `[PLAYWRIGHT] Real browser execution failed (${err.message}). Falling back to simulated outcome for action: ${action}`,
+      );
+      return this.simulateAction(action, parameters);
+    }
   }
 
   private simulateAction(action: string, parameters?: any): ActionResult {

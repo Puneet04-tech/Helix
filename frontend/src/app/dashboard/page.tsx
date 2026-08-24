@@ -48,6 +48,9 @@ export default function Dashboard() {
   const [kbResults, setKbResults] = useState<any[]>([]);
   const [canaryResult, setCanaryResult] = useState<any>(null);
   const [isRunningCanary, setIsRunningCanary] = useState(false);
+  const [incidentPage, setIncidentPage] = useState(1);
+  const [incidentLimit, setIncidentLimit] = useState(20);
+  const [totalIncidents, setTotalIncidents] = useState(0);
 
   const projectId = user?.projectIds?.[0];
   const { connected, incidents: wsIncidents } = useWebSocket(projectId || '');
@@ -99,10 +102,11 @@ export default function Dashboard() {
       }
 
       // Always fetch incidents (with or without projectId)
+      const offset = (incidentPage - 1) * incidentLimit;
       const incidentUrl = projectId
-        ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}`
-        : `${process.env.NEXT_PUBLIC_API_URL}/incidents`;
-      
+        ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}?limit=${incidentLimit}&offset=${offset}`
+        : `${process.env.NEXT_PUBLIC_API_URL}/incidents?limit=${incidentLimit}&offset=${offset}`;
+
       endpoints.push(
         fetch(incidentUrl, {
           headers: {
@@ -155,6 +159,17 @@ export default function Dashboard() {
         : [];
 
       setIncidents(transformedIncidents);
+      // Fetch total count for pagination
+      const countUrl = projectId
+        ? `${process.env.NEXT_PUBLIC_API_URL}/incidents/project/${projectId}/count`
+        : `${process.env.NEXT_PUBLIC_API_URL}/incidents/count`;
+      const countRes = await fetch(countUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (countRes.ok) {
+        const countData = await countRes.json();
+        setTotalIncidents(countData.count || 0);
+      }
 
       // Use real metrics from backend or calculate from incidents
       if (statsData) {
@@ -232,10 +247,10 @@ export default function Dashboard() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}` 
         },
-        body: JSON.stringify({ 
-          targetUrl: 'http://localhost:5001', // Checking the Hospital System Backend
+        body: JSON.stringify({
+          targetUrl: process.env.NEXT_PUBLIC_CANARY_TARGET_URL || 'http://localhost:5001',
           flow: 'hospital',
-          dryRun: isDryRun 
+          dryRun: isDryRun
         })
       });
       
@@ -483,6 +498,31 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
+        {/* Pagination for incidents */}
+        {totalIncidents > incidentLimit && (
+          <div className="flex items-center justify-between pt-4">
+            <p className="text-sm text-slate-400">
+              Showing {incidents.length} of {totalIncidents} incidents
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setIncidentPage(p => Math.max(1, p - 1))}
+                disabled={incidentPage === 1}
+                className="bg-[#1A3A6E] hover:bg-[#1E3A5F] disabled:opacity-40 text-slate-200 px-4 py-2 rounded-lg text-sm"
+              >
+                Previous
+              </button>
+              <button
+                onClick={() => setIncidentPage(p => Math.min(Math.ceil(totalIncidents / incidentLimit), p + 1))}
+                disabled={incidentPage >= Math.ceil(totalIncidents / incidentLimit)}
+                className="bg-[#1A3A6E] hover:bg-[#1E3A5F] disabled:opacity-40 text-slate-200 px-4 py-2 rounded-lg text-sm"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Footer Info */}
         <div className="bg-[#112D5E]/50 rounded-lg px-4 py-3 text-xs text-slate-400 border border-[#1E3A5F]">

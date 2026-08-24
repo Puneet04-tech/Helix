@@ -23,7 +23,7 @@ export class ChatbotController {
     @Res() res: Response,
   ) {
     try {
-      const projectId = body.projectId || req.user?.projectId || 'default-project';
+      const projectId = body.projectId || req.user?.projectIds?.[0] || 'default-project';
       
       if (!body.message) {
         return res.status(400).json({ error: 'Message is required' });
@@ -74,7 +74,7 @@ export class ChatbotController {
   @Get('insights')
   async getInsights(@Req() req: any) {
     try {
-      const projectId = req.user?.projectId || 'default-project';
+      const projectId = req.user?.projectIds?.[0] || 'default-project';
 
       const response = await this.nlQueryService.queryIncidents(
         projectId,

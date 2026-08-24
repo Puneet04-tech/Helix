@@ -42,7 +42,7 @@ export class NotificationsService {
       const emailPromises: Promise<any>[] = [];
 
       // Developer Emails - Technical Details
-      if (usersByRole['developer'].length > 0) {
+      if (usersByRole['developer']?.length) {
         emailPromises.push(
           this.sendTypeSpecificAlert(
             usersByRole['developer'],
@@ -54,7 +54,7 @@ export class NotificationsService {
       }
 
       // Manager Emails - Business Impact
-      if (usersByRole['manager'].length > 0) {
+      if (usersByRole['manager']?.length) {
         emailPromises.push(
           this.sendTypeSpecificAlert(
             usersByRole['manager'],
@@ -66,7 +66,7 @@ export class NotificationsService {
       }
 
       // Owner Emails - Executive Summary
-      if (usersByRole['owner'].length > 0) {
+      if (usersByRole['owner']?.length) {
         emailPromises.push(
           this.sendTypeSpecificAlert(
             usersByRole['owner'],

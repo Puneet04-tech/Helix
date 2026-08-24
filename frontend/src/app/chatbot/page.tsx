@@ -44,7 +44,8 @@ export default function ChatbotPage() {
     try {
       const projectId = user.projectIds?.[0];
       
-      // Call backend chatbot endpoint
+      // Call backend chatbot endpoint - it returns a Server-Sent Events (SSE)
+      // stream, so read it incrementally and reconstruct the final answer.
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/chatbot/query`,
         {
@@ -60,15 +61,53 @@ export default function ChatbotPage() {
         }
       );
 
-      if (!response.ok) {
-        throw new Error('Failed to get response from AI');
+      if (!response.ok || !response.body) {
+        const text = await response.text().catch(() => '');
+        throw new Error(text || 'Failed to get response from AI');
       }
 
-      const data = await response.json();
+      // Read the SSE stream line by line.
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullAnswer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        // Each SSE event is separated by a blank line.
+        const events = buffer.split('\n\n');
+        buffer = events.pop() || '';
+
+        for (const event of events) {
+          const line = event
+            .split('\n')
+            .find(l => l.startsWith('data: '));
+          if (!line) continue;
+          const payload = line.slice('data: '.length);
+          try {
+            const parsed = JSON.parse(payload);
+            if (parsed.error) throw new Error(parsed.error);
+            if (parsed.type === 'complete' && parsed.answer) {
+              fullAnswer = parsed.answer;
+            } else if (typeof parsed.word === 'string') {
+              fullAnswer += parsed.word + ' ';
+            }
+          } catch {
+            // Ignore non-JSON payloads; fall through.
+          }
+        }
+      }
+
+      if (!fullAnswer.trim()) {
+        throw new Error('Empty response from AI.');
+      }
 
       const aiMessage = {
         id: messages.length + 2,
-        text: data.response || 'I encountered an error processing your request.',
+        text: fullAnswer.trim(),
         sender: 'ai',
         timestamp: new Date(),
       };

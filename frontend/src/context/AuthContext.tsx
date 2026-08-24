@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface User {
@@ -23,6 +23,20 @@ interface AuthContextType {
   isAuthenticated: boolean;
 }
 
+/** Decode the JWT `exp` claim (seconds since epoch) without a library. Returns ms or null. */
+function getTokenExpiry(token: string): number | null {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    let b64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+    while (b64.length % 4) b64 += '='; // atob requires correct padding
+    const decoded = JSON.parse(atob(b64));
+    return typeof decoded?.exp === 'number' ? decoded.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -30,6 +44,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // Holds the expiry-check timer so we can clear it between logins/logouts.
+  const expiryTimer = useRef<ReturnType<typeof window.setTimeout> | null>(null);
+
+  // Annul any previous expiry timer.
+  const clearExpiryTimer = () => {
+    if (expiryTimer.current) {
+      window.clearTimeout(expiryTimer.current);
+      expiryTimer.current = null;
+    }
+  };
 
   // Check if user is already logged in on mount
   useEffect(() => {
@@ -39,8 +63,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const storedUser = localStorage.getItem('user');
 
         if (storedToken && storedUser) {
-          setToken(storedToken);
-          setUser(JSON.parse(storedUser));
+          const expiresAt = getTokenExpiry(storedToken);
+          // If the token is already expired (or unparseable), clear the session.
+          if (expiresAt === null || expiresAt <= Date.now()) {
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user');
+          } else {
+            setToken(storedToken);
+            setUser(JSON.parse(storedUser));
+            armExpiryTimer(expiresAt);
+          }
         }
       } catch (error) {
         console.error('Failed to restore auth:', error);
@@ -51,7 +83,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // Auto-logout at the exact moment the JWT expires, so the app never keeps a
+    // session that the backend would reject.
+    const armExpiryTimer = (expiresAt: number) => {
+      clearExpiryTimer();
+      const delay = Math.max(0, expiresAt - Date.now());
+      // Cap delay to the max setTimeout value to avoid overflow issues.
+      expiryTimer.current = window.setTimeout(() => {
+        console.warn('[AuthContext] Session token expired - logging out.');
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        router.push('/login');
+      }, Math.min(delay, 2147483647));
+    };
+
     restoreAuth();
+    return () => clearExpiryTimer();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const login = async (email: string, password: string) => {
@@ -71,6 +121,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
+    // Arm an expiry timer for the freshly-issued token.
+    if (expiryTimer.current) clearExpiryTimer();
+    const exp = getTokenExpiry(data.access_token);
+    if (exp !== null) {
+      const delay = Math.max(0, exp - Date.now());
+      expiryTimer.current = window.setTimeout(() => {
+        console.warn('[AuthContext] Session token expired - logging out.');
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        router.push('/login');
+      }, Math.min(delay, 2147483647));
+    }
   };
 
   const register = async (registerData: any) => {
@@ -90,9 +154,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
     localStorage.setItem('auth_token', data.access_token);
     localStorage.setItem('user', JSON.stringify(data.user));
+    // Arm an expiry timer for the freshly-issued token.
+    if (expiryTimer.current) clearExpiryTimer();
+    const exp = getTokenExpiry(data.access_token);
+    if (exp !== null) {
+      const delay = Math.max(0, exp - Date.now());
+      expiryTimer.current = window.setTimeout(() => {
+        console.warn('[AuthContext] Session token expired - logging out.');
+        setUser(null);
+        setToken(null);
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        router.push('/login');
+      }, Math.min(delay, 2147483647));
+    }
   };
 
   const logout = () => {
+    clearExpiryTimer();
     setUser(null);
     setToken(null);
     localStorage.removeItem('auth_token');

@@ -1,5 +1,6 @@
 import { Controller, Get, Put, Post, Delete, Param, Body, UseGuards, Req, Headers, Res, HttpException, HttpStatus, Query } from '@nestjs/common';
 import { IncidentsService } from './incidents.service';
+import { CorrelationService } from './correlation.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { PostmortemPDFService } from '../postmortem/postmortem-pdf.service';
 import { Response } from 'express';
@@ -8,6 +9,7 @@ import { Response } from 'express';
 export class IncidentsController {
   constructor(
     private incidentsService: IncidentsService,
+    private correlationService: CorrelationService,
     private postmortemService: PostmortemPDFService,
   ) {}
 
@@ -37,24 +39,57 @@ export class IncidentsController {
   }
 
   @Get('project/:projectId')
-  async getIncidents(@Param('projectId') projectId: string) {
-    return this.incidentsService.getIncidentsByProjectId(projectId);
+  async getIncidents(
+    @Param('projectId') projectId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const l = limit ? parseInt(limit, 10) : 50;
+    const o = offset ? parseInt(offset, 10) : 0;
+    return this.incidentsService.getIncidentsByProjectId(projectId, l, o);
   }
 
   @Get()
-  async getAllIncidents() {
+  async getAllIncidents(
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
     // Public endpoint for demo - returns all incidents regardless of project
-    return this.incidentsService.getAllIncidents();
+    const l = limit ? parseInt(limit, 10) : 100;
+    const o = offset ? parseInt(offset, 10) : 0;
+    return this.incidentsService.getAllIncidents(l, o);
   }
 
   @Get('project/:projectId/active')
-  async getActiveIncidents(@Param('projectId') projectId: string) {
-    return this.incidentsService.getActiveIncidents(projectId);
+  async getActiveIncidents(
+    @Param('projectId') projectId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const l = limit ? parseInt(limit, 10) : 50;
+    const o = offset ? parseInt(offset, 10) : 0;
+    return this.incidentsService.getActiveIncidents(projectId, l, o);
   }
 
   @Get('project/:projectId/resolved')
-  async getResolvedIncidents(@Param('projectId') projectId: string) {
-    return this.incidentsService.getResolvedIncidents(projectId);
+  async getResolvedIncidents(
+    @Param('projectId') projectId: string,
+    @Query('limit') limit?: string,
+    @Query('offset') offset?: string,
+  ) {
+    const l = limit ? parseInt(limit, 10) : 20;
+    const o = offset ? parseInt(offset, 10) : 0;
+    return this.incidentsService.getResolvedIncidents(projectId, l, o);
+  }
+
+  @Get('project/:projectId/count')
+  async getIncidentsCount(@Param('projectId') projectId: string) {
+    return { count: await this.incidentsService.countIncidentsByProjectId(projectId) };
+  }
+
+  @Get('count')
+  async getAllIncidentsCount() {
+    return { count: await this.incidentsService.countAllIncidents() };
   }
 
   @Get(':incidentId')
@@ -141,6 +176,8 @@ export class IncidentsController {
       res.setHeader('Content-Disposition', `attachment; filename="postmortem-${incidentId}.pdf"`);
       res.send(pdfBuffer);
     } catch (error) {
+      // Preserve 404 (not found / not available) instead of masking it as 500.
+      if (error instanceof HttpException) throw error;
       const err = error as Error;
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
@@ -154,15 +191,11 @@ export class IncidentsController {
   @Get('correlations/groups')
   async getCorrelatedIncidents(@Req() req: any) {
     try {
-      const projectId = req.user?.projectId || 'default-project';
-      const correlationService = require('./correlation.service').CorrelationService;
-      
-      // Note: This would need to be injected, adding for reference
-      return {
-        message: 'Correlated incidents feature available',
-        projectId,
-      };
+      const projectId = req.user?.projectIds?.[0] || 'default-project';
+      const groups = await this.correlationService.getProjectCorrelations(projectId);
+      return { projectId, groups };
     } catch (error) {
+      if (error instanceof HttpException) throw error;
       const err = error as Error;
       throw new HttpException(err.message, HttpStatus.INTERNAL_SERVER_ERROR);
     }

@@ -114,10 +114,11 @@ export class IncidentsService {
     return incident.save();
   }
 
-  async getIncidentsByProjectId(projectId: string, limit: number = 50) {
+  async getIncidentsByProjectId(projectId: string, limit: number = 50, offset: number = 0) {
     return this.incidentModel
       .find({ projectId })
       .sort({ createdAt: -1 })
+      .skip(offset)
       .limit(limit)
       .lean();
   }
@@ -129,20 +130,23 @@ export class IncidentsService {
       .lean();
   }
 
-  async getActiveIncidents(projectId: string) {
+  async getActiveIncidents(projectId: string, limit: number = 50, offset: number = 0) {
     return this.incidentModel
       .find({
         projectId,
         status: { $in: ['detecting', 'analyzing', 'responding'] },
       })
       .sort({ detectedAt: -1 })
+      .skip(offset)
+      .limit(limit)
       .lean();
   }
 
-  async getResolvedIncidents(projectId: string, limit: number = 20) {
+  async getResolvedIncidents(projectId: string, limit: number = 20, offset: number = 0) {
     return this.incidentModel
       .find({ projectId, status: 'resolved' })
       .sort({ resolvedAt: -1 })
+      .skip(offset)
       .limit(limit)
       .lean();
   }
@@ -156,13 +160,22 @@ export class IncidentsService {
     return incident;
   }
 
-  async getAllIncidents(limit: number = 100) {
+  async getAllIncidents(limit: number = 100, offset: number = 0) {
     // Public method for demo - returns all incidents across all projects
     return this.incidentModel
       .find()
       .sort({ detectedAt: -1 })
+      .skip(offset)
       .limit(limit)
       .lean();
+  }
+
+  async countIncidentsByProjectId(projectId: string): Promise<number> {
+    return this.incidentModel.countDocuments({ projectId }).exec();
+  }
+
+  async countAllIncidents(): Promise<number> {
+    return this.incidentModel.countDocuments().exec();
   }
 
   async checkForCorrelation(projectId: string): Promise<void> {

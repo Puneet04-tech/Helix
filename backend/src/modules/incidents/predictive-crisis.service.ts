@@ -4,6 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Event, EventDocument } from '../../common/schemas/event.schema';
 import { Client, ClientDocument } from '../../common/schemas/client.schema';
+import { User, UserDocument } from '../../common/schemas/user.schema';
 import { NotificationsService } from '../notifications/notifications.service';
 
 /**
@@ -17,6 +18,7 @@ export class PredictiveCrisisService {
   constructor(
     @InjectModel(Event.name) private eventModel: Model<EventDocument>,
     @InjectModel(Client.name) private clientModel: Model<ClientDocument>,
+    @InjectModel(User.name) private userModel: Model<UserDocument>,
     private notificationsService: NotificationsService,
   ) {}
 
@@ -28,7 +30,7 @@ export class PredictiveCrisisService {
     try {
       this.logger.debug('Running predictive crisis detection...');
       
-      const clients = await this.clientModel.find({ active: true });
+      const clients = await this.clientModel.find({ status: 'active' });
       
       for (const client of clients) {
         await this.analyzeCrisisPatterns(client._id.toString());
@@ -151,15 +153,14 @@ export class PredictiveCrisisService {
         Consider preparing your team or investigating root causes for this time window.
       `;
 
-      // Store as predictive alert in database
-      const adminUsers = await this.clientModel.findById(projectId).populate('userIds');
-      if (adminUsers) {
-        for (const admin of (adminUsers as any).userIds) {
-          await this.notificationsService.sendEmail(
-            admin.email,
-            subject,
-            message,
-          );
+      // userIds is a plain array of id strings (not a populate ref), so load the
+      // user documents directly to get their email addresses.
+      if (client.userIds?.length) {
+        const users = await this.userModel.find({ _id: { $in: client.userIds } });
+        for (const user of users) {
+          if (user.email) {
+            await this.notificationsService.sendEmail(user.email, subject, message);
+          }
         }
       }
 

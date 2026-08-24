@@ -23,12 +23,7 @@ export class ChaosService {
       affectedServices: { $exists: true, $not: { $size: 0 } }
     }).exec();
 
-    let cascade = Array.from(new Map<string, number>().entries())
-      .map(([service, count]) => ({
-        service,
-        probability: count / (history.length || 1),
-        impactLevel: this.calculateImpactLevel(count)
-      }));
+    let cascade: Array<{ service: string; probability: number; impactLevel: string }> = [];
 
     if (history.length > 0) {
       const dependencyMap = new Map<string, number>();

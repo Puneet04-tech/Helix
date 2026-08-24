@@ -40,6 +40,12 @@ export class AgentsController {
     return await this.knowledgeService.queryKnowledge(query);
   }
 
+  // Feature 10: Crystallize Knowledge
+  @Post('knowledge/crystallize/:incidentId')
+  async crystallizeKnowledge(@Param('incidentId') incidentId: string) {
+    return await this.knowledgeService.crystallizeKnowledge(incidentId);
+  }
+
   // Feature 7: Benchmarking
   @Get('benchmarking/:projectId')
   async getBenchmarking(@Param('projectId') projectId: string) {

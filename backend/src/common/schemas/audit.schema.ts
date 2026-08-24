@@ -1,11 +1,13 @@
 import { Schema, Prop, SchemaFactory } from '@nestjs/mongoose';
-import { Document, Types } from 'mongoose';
+import { Document } from 'mongoose';
 
 export type AuditDocument = Audit & Document;
 
 @Schema({ timestamps: true })
 export class Audit {
-  @Prop({ type: Types.ObjectId, ref: 'Client', required: true })
+  // projectId is a free-form string (client id, organizationId, or a literal
+  // like 'hospital_001'), not a Mongo ObjectId, so store it as a plain string.
+  @Prop({ required: true })
   projectId: string;
 
   @Prop({ required: true })
@@ -26,7 +28,8 @@ export class Audit {
   @Prop({ default: 'info' })
   level: 'debug' | 'info' | 'warn' | 'error';
 
-  @Prop({ type: Types.ObjectId, ref: 'Incident', required: false })
+  // incidentId is a uuid() string, not a Mongo ObjectId.
+  @Prop({ required: false })
   incidentId?: string;
 }
 

@@ -13,7 +13,7 @@ export class AuditController {
     @Query('limit') limit: string = '50',
     @Query('offset') offset: string = '0',
   ) {
-    const projectId = req.user.projectId || req.user.sub;
+    const projectId = req.user?.projectIds?.[0];
     const { logs, total } = await this.auditService.getAuditTrail(
       projectId,
       parseInt(limit),
