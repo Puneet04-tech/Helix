@@ -145,7 +145,7 @@ export default function AgentsPage() {
                 value={chaosService}
                 onChange={e => setChaosService(e.target.value)}
                 placeholder="Seed service (e.g. API Gateway)"
-                className={input}
+                className={inputClass}
               />
               <button
                 type="submit"
@@ -227,7 +227,7 @@ export default function AgentsPage() {
                 value={canaryUrl}
                 onChange={e => setCanaryUrl(e.target.value)}
                 placeholder="Target URL (e.g. http://localhost:5001/health)"
-                className={input}
+                className={inputClass}
               />
               <div className="flex gap-2">
                 {(['hospital', 'hotel'] as const).map(flow => (

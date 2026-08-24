@@ -13,7 +13,7 @@ import {
   BarChart3,
   FileClock,
   ScrollText,
-  Heartbeat,
+  Activity,
   MessageSquare,
   Settings,
   LogOut,
@@ -31,7 +31,7 @@ export default function Sidebar() {
     { name: 'Analytics', href: '/analytics', icon: BarChart3 },
     { name: 'Audit Trail', href: '/audit', icon: FileClock },
     { name: 'Compliance', href: '/compliance', icon: ScrollText },
-    { name: 'Status', href: '/status', icon: Heartbeat },
+    { name: 'Status', href: '/status', icon: Activity },
     { name: 'Chatbot', href: '/chatbot', icon: MessageSquare },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
