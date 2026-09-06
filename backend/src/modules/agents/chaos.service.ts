@@ -1,14 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
+import { EventsGateway } from '../../common/gateways/events.gateway';
 
 @Injectable()
 export class ChaosService {
   private readonly logger = new Logger(ChaosService.name);
 
   constructor(
-    @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>
+    @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
+    @Inject(forwardRef(() => EventsGateway))
+    private eventsGateway: EventsGateway,
   ) {}
 
   /**
@@ -45,7 +48,7 @@ export class ChaosService {
       cascade = [];
     }
 
-    return {
+    const result = {
       seedService,
       timestamp: new Date(),
       status: history.length > 0 ? 'analysis_complete' : 'no_history_available',
@@ -53,6 +56,12 @@ export class ChaosService {
       riskLevel: cascade.length > 3 ? 'High' : (cascade.length > 0 ? 'Low' : 'None'),
       dependencyRiskMap: this.generateRiskMapMetadata(seedService, cascade)
     };
+
+    if (this.eventsGateway) {
+      this.eventsGateway.broadcastChaosUpdate('default', result);
+    }
+
+    return result;
   }
 
   private calculateImpactLevel(frequency: number): string {

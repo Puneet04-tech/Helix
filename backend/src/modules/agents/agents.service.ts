@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
@@ -6,6 +6,7 @@ import { Client, ClientDocument } from '../../common/schemas/client.schema';
 import { PlaywrightService } from '../../common/services/playwright.service';
 import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { NotificationsService } from '../notifications/notifications.service';
+import { EventsGateway } from '../../common/gateways/events.gateway';
 
 @Injectable()
 export class AgentsService {
@@ -17,6 +18,8 @@ export class AgentsService {
     private playwrightService: PlaywrightService,
     private agentLLMService: AgentLLMService,
     private notificationsService: NotificationsService,
+    @Inject(forwardRef(() => EventsGateway))
+    private eventsGateway: EventsGateway,
   ) {}
 
   async runAgentChain(projectId: string, incident: any) {
@@ -31,15 +34,25 @@ export class AgentsService {
     try {
       // Agent 1: Detection Agent
       this.logger.log(`[DETECTION AGENT] Starting analysis for ${incidentId}`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'detection_start', { status: 'detecting' });
+      }
       const detectionResult = await this.detectionAgent(incident);
       this.logger.log(`[DETECTION AGENT] Result: ${JSON.stringify(detectionResult)}`);
       incident.agentReasoning.detectionAgent = detectionResult;
       incident.markModified('agentReasoning');
       await incident.save();
       this.logger.log(`[DETECTION AGENT] Saved successfully`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'detection_complete', detectionResult);
+        this.eventsGateway.broadcastIncidentUpdate(projectId, String(incidentId), incident.toObject());
+      }
 
       // Agent 2: Analysis Agent
       this.logger.log(`[ANALYSIS AGENT] Starting root cause analysis for ${incidentId}`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'analysis_start', { status: 'analyzing' });
+      }
       const analysisResult = await this.analysisAgent(projectId, incident);
       this.logger.log(`[ANALYSIS AGENT] Result: ${JSON.stringify(analysisResult)}`);
       incident.agentReasoning.analysisAgent = analysisResult;
@@ -47,9 +60,16 @@ export class AgentsService {
       incident.markModified('agentReasoning');
       await incident.save();
       this.logger.log(`[ANALYSIS AGENT] Saved successfully`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'analysis_complete', analysisResult);
+        this.eventsGateway.broadcastIncidentUpdate(projectId, String(incidentId), incident.toObject());
+      }
 
       // Agent 3: Response Agent
       this.logger.log(`[RESPONSE AGENT] Starting action execution for ${incidentId}`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'response_start', { status: 'responding' });
+      }
       const responseResult = await this.responseAgent(projectId, incident);
       this.logger.log(`[RESPONSE AGENT] Result: ${JSON.stringify(responseResult)}`);
       incident.agentReasoning.responseAgent = responseResult;
@@ -59,18 +79,31 @@ export class AgentsService {
       incident.markModified('automaticActions');
       await incident.save();
       this.logger.log(`[RESPONSE AGENT] Saved successfully`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'response_complete', responseResult);
+        this.eventsGateway.broadcastIncidentUpdate(projectId, String(incidentId), incident.toObject());
+      }
 
       // Agent 4: Communications Agent
       this.logger.log(`[COMMS AGENT] Starting notification dispatch for ${incidentId}`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'comms_start', { status: 'notifying' });
+      }
       const commsResult = await this.commsAgent(projectId, incident);
       this.logger.log(`[COMMS AGENT] Result: ${JSON.stringify(commsResult)}`);
       incident.agentReasoning.commsAgent = commsResult;
       incident.markModified('agentReasoning');
       await incident.save();
       this.logger.log(`[COMMS AGENT] Saved successfully`);
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastAgentStep(projectId, String(incidentId), 'comms_complete', commsResult);
+      }
 
       incident.status = 'analyzed';
       await incident.save();
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastIncidentUpdate(projectId, String(incidentId), incident.toObject());
+      }
       
       this.logger.log(`[AGENT CHAIN END] Successfully completed for ${incidentId}`);
     } catch (error) {
@@ -359,23 +392,32 @@ export class AgentsService {
           {}
         );
         
-        actions.push({
+        const actionObj = {
           action: `playwright_${playwrightAction}`,
           target: 'browser-automation',
           result: playwrightResult.result,
           success: playwrightResult.success,
-        });
+        };
+        actions.push(actionObj);
+
+        if (this.eventsGateway) {
+          this.eventsGateway.broadcastPlaywrightAction(projectId, playwrightAction, actionObj);
+        }
         
         this.logger.log(`[RESPONSE] Real-time execution completed: ${playwrightAction}`);
       } catch (error) {
         const err = error as Error;
         this.logger.error(`[RESPONSE] Real-time execution failed: ${playwrightAction} - ${err.message}`);
-        actions.push({
+        const actionObj = {
           action: `playwright_${playwrightAction}`,
           target: 'browser-automation',
           result: `Playwright automation: ${playwrightAction}`,
           success: false,
-        });
+        };
+        actions.push(actionObj);
+        if (this.eventsGateway) {
+          this.eventsGateway.broadcastPlaywrightAction(projectId, playwrightAction, actionObj);
+        }
       }
     }
 
@@ -636,12 +678,16 @@ ${
       );
 
       this.logger.log(`[PLAYWRIGHT TEST] Completed: ${JSON.stringify(result)}`);
-      return {
+      const output = {
         status: 'success',
         action,
         result,
         message: `Playwright action '${action}' executed successfully`,
       };
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastPlaywrightAction('default', action, output);
+      }
+      return output;
     } catch (error) {
       const err = error as Error;
       this.logger.error(`[PLAYWRIGHT TEST] Failed: ${err.message}`);

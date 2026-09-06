@@ -1,14 +1,17 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
+import { EventsGateway } from '../../common/gateways/events.gateway';
 
 @Injectable()
 export class CanaryService {
   private readonly logger = new Logger(CanaryService.name);
 
   constructor(
-    @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>
+    @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
+    @Inject(forwardRef(() => EventsGateway))
+    private eventsGateway: EventsGateway,
   ) {}
 
   /**
@@ -59,7 +62,7 @@ export class CanaryService {
         ];
       }
 
-      return {
+      const result = {
         success: true,
         avgLatency: latency,
         fullLog: steps,
@@ -67,15 +70,23 @@ export class CanaryService {
         systemType: isHospital ? 'Medical/Health' : 'Hospitality',
         isDryRun: dryRun
       };
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastCanaryUpdate('default', result);
+      }
+      return result;
     } catch (error) {
       const err = error as Error;
       this.logger.error(`Canary Check Failed for ${targetUrl}: ${err.message}`);
-      return {
+      const errResult = {
         success: false,
         criticalStep: err.message || 'Connection failed',
         checkedAt: new Date(),
         isDryRun: dryRun
       };
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastCanaryUpdate('default', errResult);
+      }
+      return errResult;
     }
   }
 }

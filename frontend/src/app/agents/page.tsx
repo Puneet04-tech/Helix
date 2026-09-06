@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import {
   Bot,
   Play,
@@ -13,7 +14,9 @@ import {
 } from 'lucide-react';
 
 export default function AgentsPage() {
-  const { token } = useAuth();
+  const { user, token } = useAuth();
+  const projectId = user?.projectIds?.[0] || '';
+  const { canaryUpdate: wsCanaryUpdate, chaosUpdate: wsChaosUpdate } = useWebSocket(projectId);
 
   const [chaosService, setChaosService] = useState('');
   const [chaosResult, setChaosResult] = useState<any>(null);
@@ -26,6 +29,14 @@ export default function AgentsPage() {
   const [canaryResult, setCanaryResult] = useState<any>(null);
   const [canaryLoading, setCanaryLoading] = useState(false);
   const [canaryError, setCanaryError] = useState('');
+
+  useEffect(() => {
+    if (wsCanaryUpdate) setCanaryResult(wsCanaryUpdate);
+  }, [wsCanaryUpdate]);
+
+  useEffect(() => {
+    if (wsChaosUpdate) setChaosResult(wsChaosUpdate);
+  }, [wsChaosUpdate]);
 
   const [kbQuery, setKbQuery] = useState('');
   const [kbResults, setKbResults] = useState<any[]>([]);

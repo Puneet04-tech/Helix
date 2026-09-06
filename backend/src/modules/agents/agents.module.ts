@@ -16,6 +16,7 @@ import { OllamaService } from '../../common/services/ollama.service';
 import { GroqService } from '../../common/services/groq.service';
 import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { EventsModule } from '../events/events.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
       { name: Event.name, schema: EventSchema },
     ]),
     forwardRef(() => NotificationsModule),
+    forwardRef(() => EventsModule),
   ],
   controllers: [AgentsController],
   providers: [

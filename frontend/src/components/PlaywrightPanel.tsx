@@ -25,13 +25,40 @@ interface Incident {
   createdAt: string;
 }
 
+import { useWebSocket } from '../hooks/useWebSocket';
+
 export default function PlaywrightPanel() {
   const { token, user } = useAuth();
+  const projectId = user?.projectIds?.[0] || '';
+  const { playwrightActions: wsPlaywrightActions } = useWebSocket(projectId);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [results, setResults] = useState<ActionResult[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [lastChecked, setLastChecked] = useState<Date | null>(null);
+
+  // Update when real-time socket events arrive
+  useEffect(() => {
+    if (!wsPlaywrightActions || wsPlaywrightActions.length === 0) return;
+    const liveItems: ActionResult[] = wsPlaywrightActions.map(p => ({
+      action: p.action || p.data?.action || 'playwright_action',
+      target: p.data?.target || 'browser-automation',
+      result: p.data?.result || p.data?.message || 'Execution completed',
+      success: p.data?.success !== false,
+      timestamp: p.timestamp || new Date().toISOString(),
+    }));
+
+    setResults(prev => {
+      const combined = [...liveItems, ...prev];
+      const seen = new Set();
+      return combined.filter(item => {
+        const key = `${item.action}-${item.result}-${item.timestamp}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      }).slice(0, 20);
+    });
+  }, [wsPlaywrightActions]);
 
   // Fetch incidents with Playwright actions
   const fetchIncidents = async (isManualRefresh: boolean = false) => {

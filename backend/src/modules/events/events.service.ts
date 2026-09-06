@@ -9,6 +9,9 @@ import { AuditService } from '../../common/services/audit.service';
 import { IncidentsService } from '../incidents/incidents.service';
 import { IngestRateLimitService } from '../../common/services/ingest-rate-limit.service';
 
+import { EventsGateway } from '../../common/gateways/events.gateway';
+import { Inject, forwardRef } from '@nestjs/common';
+
 @Injectable()
 export class EventsService {
   private readonly logger = new Logger(EventsService.name);
@@ -21,6 +24,8 @@ export class EventsService {
     private auditService: AuditService,
     private incidentsService: IncidentsService,
     private rateLimitService: IngestRateLimitService,
+    @Inject(forwardRef(() => EventsGateway))
+    private eventsGateway: EventsGateway,
   ) {
     // Initialize MemoryService with AuditService to avoid circular dependency
     this.memoryService.setAuditService(this.auditService);
@@ -63,7 +68,11 @@ export class EventsService {
       processed: false,
     });
 
-    event.save().catch(err => {
+    event.save().then(saved => {
+      if (this.eventsGateway) {
+        this.eventsGateway.broadcastNewEvent(projectId, saved.toObject());
+      }
+    }).catch(err => {
       this.logger.error(`Failed to save event: ${err.message}`);
     });
 

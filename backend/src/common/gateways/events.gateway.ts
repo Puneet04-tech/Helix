@@ -69,8 +69,8 @@ export class EventsGateway
           client.disconnect();
           return;
         }
-      } catch (error) {
-        this.logger.warn(`Token validation failed, allowing connection anyway: ${error.message}`);
+      } catch (error: any) {
+        this.logger.warn(`Token validation failed, allowing connection anyway: ${error?.message || error}`);
       }
     }
 
@@ -84,24 +84,105 @@ export class EventsGateway
   }
 
   broadcastNewIncident(projectId: string, incident: any) {
-    this.server.to(`project_${projectId}`).emit('new_incident', {
+    const payload = {
       incident,
       timestamp: new Date().toISOString(),
-    });
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('new_incident', payload);
+    }
+    this.server.emit('new_incident', payload);
   }
 
   broadcastAuditLog(projectId: string, auditLog: any) {
-    this.server.to(`project_${projectId}`).emit('audit_log', {
+    const payload = {
       log: auditLog,
       timestamp: new Date().toISOString(),
-    });
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('audit_log', payload);
+    }
+    this.server.emit('audit_log', payload);
   }
 
   broadcastIncidentUpdate(projectId: string, incidentId: string, update: any) {
-    this.server.to(`project_${projectId}`).emit('incident_update', {
+    const payload = {
       incidentId,
       update,
       timestamp: new Date().toISOString(),
-    });
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('incident_update', payload);
+    }
+    this.server.emit('incident_update', payload);
+  }
+
+  broadcastNewEvent(projectId: string, event: any) {
+    const payload = {
+      event,
+      timestamp: new Date().toISOString(),
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('new_event', payload);
+    }
+    this.server.emit('new_event', payload);
+  }
+
+  broadcastAgentStep(projectId: string, incidentId: string, step: string, data: any) {
+    const payload = {
+      incidentId,
+      step,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('agent_step', payload);
+    }
+    this.server.emit('agent_step', payload);
+  }
+
+  broadcastPlaywrightAction(projectId: string, action: string, data: any) {
+    const payload = {
+      action,
+      data,
+      timestamp: new Date().toISOString(),
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('playwright_action', payload);
+    }
+    this.server.emit('playwright_action', payload);
+  }
+
+  broadcastCanaryUpdate(projectId: string, result: any) {
+    const payload = {
+      result,
+      timestamp: new Date().toISOString(),
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('canary_update', payload);
+    }
+    this.server.emit('canary_update', payload);
+  }
+
+  broadcastChaosUpdate(projectId: string, simulation: any) {
+    const payload = {
+      simulation,
+      timestamp: new Date().toISOString(),
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('chaos_update', payload);
+    }
+    this.server.emit('chaos_update', payload);
+  }
+
+  broadcastStatusUpdate(projectId: string, statusData: any) {
+    const payload = {
+      statusData,
+      timestamp: new Date().toISOString(),
+    };
+    if (projectId) {
+      this.server.to(`project_${projectId}`).emit('status_update', payload);
+    }
+    this.server.emit('status_update', payload);
   }
 }

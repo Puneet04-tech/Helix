@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 export default function StatusPage() {
   type Service = {
@@ -13,9 +14,41 @@ export default function StatusPage() {
   };
 
   const { user, token } = useAuth();
+  const projectId = user?.projectIds?.[0] || '';
+  const { incidents: wsIncidents, statusUpdate } = useWebSocket(projectId);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Real-time update when wsIncidents or statusUpdate arrive
+  useEffect(() => {
+    if (statusUpdate && Array.isArray(statusUpdate)) {
+      setServices(statusUpdate);
+      return;
+    }
+
+    if (!wsIncidents || wsIncidents.length === 0) return;
+    setServices(prev => {
+      const map = new Map<string, Service>();
+      prev.forEach(s => map.set(s.name, s));
+
+      wsIncidents.forEach(incident => {
+        if (!incident.service) return;
+        const current = map.get(incident.service) || {
+          name: incident.service,
+          status: 'operational',
+          uptime: 99.9,
+        };
+
+        if (incident.severity === 'critical' && incident.status !== 'resolved') {
+          current.status = 'degraded';
+        }
+        map.set(incident.service, current);
+      });
+
+      return Array.from(map.values());
+    });
+  }, [wsIncidents, statusUpdate]);
 
   useEffect(() => {
     const fetchStatus = async () => {

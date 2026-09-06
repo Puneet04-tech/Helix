@@ -50,7 +50,7 @@ export class CorrelationService {
 
       const incidentId = incident.incidentId || incident._id?.toString();
       const cluster: string[] = [incidentId];
-      const clusterTimeStart = incident.detectedAt || incident.createdAt;
+      const clusterTimeStart = incident.detectedAt || (incident as any).createdAt;
       const clusterTimeEnd = new Date(
         (clusterTimeStart as Date).getTime() + timeWindowHours * 60 * 60 * 1000,
       );
@@ -60,7 +60,7 @@ export class CorrelationService {
         const otherId = other.incidentId || other._id?.toString();
         if (otherId === incidentId || processed.has(otherId)) continue;
 
-        const otherTime = other.detectedAt || other.createdAt;
+        const otherTime = other.detectedAt || (other as any).createdAt;
         if (!otherTime) continue;
 
         // Check time window overlap
@@ -87,11 +87,11 @@ export class CorrelationService {
         const timeSpan =
           Math.max(...cluster.map(id => {
             const inc = incidents.find(i => (i.incidentId || i._id?.toString()) === id);
-            return inc ? new Date(inc.detectedAt || inc.createdAt || 0).getTime() : 0;
+            return inc ? new Date(inc.detectedAt || (inc as any).createdAt || 0).getTime() : 0;
           })) -
           Math.min(...cluster.map(id => {
             const inc = incidents.find(i => (i.incidentId || i._id?.toString()) === id);
-            return inc ? new Date(inc.detectedAt || inc.createdAt || 0).getTime() : 0;
+            return inc ? new Date(inc.detectedAt || (inc as any).createdAt || 0).getTime() : 0;
           }));
 
         const maxTimeSpan = timeWindowHours * 60 * 60 * 1000;

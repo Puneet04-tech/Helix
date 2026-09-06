@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import { FileClock, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export default function AuditPage() {
@@ -21,7 +22,9 @@ export default function AuditPage() {
     createdAt?: string;
   };
 
-  const { token } = useAuth();
+  const { user, token } = useAuth();
+  const projectId = user?.projectIds?.[0] || '';
+  const { auditLogs: wsAuditLogs } = useWebSocket(projectId);
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -29,6 +32,20 @@ export default function AuditPage() {
   const [limit, setLimit] = useState(50);
   const [offset, setOffset] = useState(0);
   const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    if (!wsAuditLogs || wsAuditLogs.length === 0) return;
+    setLogs(prev => {
+      const combined = [...wsAuditLogs, ...prev];
+      const seen = new Set();
+      return combined.filter(item => {
+        const key = item._id || item.id || `${item.timestamp}-${item.action}`;
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    });
+  }, [wsAuditLogs]);
 
   const fetchLogs = useCallback(async () => {
     if (!token) return;

@@ -5,6 +5,7 @@ import DashboardLayout from '../../components/DashboardLayout';
 import IncidentCard from '../../components/IncidentCard';
 import { AlertTriangle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
 
 export default function IncidentsPage() {
   type IncidentType = {
@@ -18,12 +19,40 @@ export default function IncidentsPage() {
   };
 
   const { user, token } = useAuth();
+  const projectId = user?.projectIds?.[0] || '';
+  const { incidents: wsIncidents } = useWebSocket(projectId);
   const [incidents, setIncidents] = useState<IncidentType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [page, setPage] = useState(1);
   const [limit, setLimit] = useState(20);
   const [total, setTotal] = useState(0);
+
+  useEffect(() => {
+    if (!wsIncidents || wsIncidents.length === 0) return;
+    setIncidents(prev => {
+      const map = new Map<string, IncidentType>();
+      prev.forEach(i => map.set(i.id, i));
+      wsIncidents.forEach(item => {
+        const id = item._id || item.incidentId || item.id;
+        if (id) {
+          const transformed: IncidentType = {
+            id,
+            type: item.type || 'unknown',
+            service: item.service || 'Unknown Service',
+            severity: item.severity || 'info',
+            status: item.status || 'detecting',
+            timestamp: item.detectedAt
+              ? new Date(item.detectedAt).toLocaleString()
+              : 'Just now',
+            isLive: item.status !== 'resolved',
+          };
+          map.set(id, { ...map.get(id), ...transformed });
+        }
+      });
+      return Array.from(map.values());
+    });
+  }, [wsIncidents]);
 
   useEffect(() => {
     const fetchIncidents = async () => {

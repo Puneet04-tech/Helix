@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import DashboardLayout from '../../components/DashboardLayout';
 import { useAuth } from '../../context/AuthContext';
+import { useWebSocket } from '../../hooks/useWebSocket';
 import { BarChart3, Filter } from 'lucide-react';
 
 export default function AnalyticsPage() {
@@ -18,10 +19,25 @@ export default function AnalyticsPage() {
   };
 
   const { user, token } = useAuth();
+  const projectId = user?.projectIds?.[0] || '';
+  const { events: wsEvents } = useWebSocket(projectId);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
+
+  useEffect(() => {
+    if (!wsEvents || wsEvents.length === 0) return;
+    setEvents(prev => {
+      const combined = [...wsEvents, ...prev];
+      const map = new Map<string, Event>();
+      combined.forEach(e => {
+        const id = e._id || (e as any).id || `${e.timestamp}-${e.type}`;
+        if (id) map.set(id, e);
+      });
+      return Array.from(map.values());
+    });
+  }, [wsEvents]);
 
   const fetchEvents = async () => {
     if (!user || !token) return;

@@ -8,17 +8,31 @@ import { IncidentReplay } from '../../../components/IncidentReplay';
 import { ImpactScoreCard } from '../../../components/ImpactScoreCard';
 import { ArrowLeft, AlertTriangle, CheckCircle, Clock, Shield, Users, Zap, TrendingUp, Loader, FileText, Fingerprint, Brain } from 'lucide-react';
 import { useAuth } from '../../../context/AuthContext';
+import { useWebSocket } from '../../../hooks/useWebSocket';
 
 export default function IncidentDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { token } = useAuth();
-  const incidentId = params.id;
+  const { user, token } = useAuth();
+  const incidentId = params.id as string;
+  const projectId = user?.projectIds?.[0] || '';
+  const { incidents: wsIncidents } = useWebSocket(projectId);
 
   const [incident, setIncident] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [analyzing, setAnalyzing] = useState(false);
   const [generatingPostmortem, setGeneratingPostmortem] = useState(false);
+
+  // Listen for real-time WebSocket incident updates for this specific incident
+  useEffect(() => {
+    if (!wsIncidents || wsIncidents.length === 0 || !incidentId) return;
+    const matching = wsIncidents.find(
+      i => (i.incidentId || i._id || i.id) === incidentId
+    );
+    if (matching) {
+      setIncident((prev: any) => ({ ...prev, ...matching }));
+    }
+  }, [wsIncidents, incidentId]);
 
   useEffect(() => {
     const loadIncident = async () => {
