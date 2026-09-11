@@ -4,8 +4,8 @@ import { Model } from 'mongoose';
 import PDFDocument from 'pdfkit';
 import * as fs from 'fs';
 import * as path from 'path';
-import axios from 'axios';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 
 /**
  * Feature 4: Automatic Postmortem PDF Generation
@@ -14,11 +14,11 @@ import { Incident, IncidentDocument } from '../../common/schemas/incident.schema
 @Injectable()
 export class PostmortemPDFService {
   private readonly logger = new Logger(PostmortemPDFService.name);
-  private ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
   private uploadsDir = process.env.UPLOADS_DIR || './uploads/postmortems';
 
   constructor(
     @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
+    private agentLLMService: AgentLLMService,
   ) {
     // Ensure uploads directory exists
     if (!fs.existsSync(this.uploadsDir)) {
@@ -54,7 +54,7 @@ export class PostmortemPDFService {
   }
 
   /**
-   * Generate postmortem content using LLM
+   * Generate postmortem content using LangChain LLM (Ollama -> Gemini -> Mistral)
    */
   private async generatePostmortemContent(incident: IncidentDocument): Promise<any> {
     try {
@@ -77,7 +77,11 @@ Incident Details:
 
 Return the response as plain text with clear section headers.`;
 
-      const response = await this.callOllama(prompt);
+      const response = await this.agentLLMService.completeText(
+        'You are an incident postmortem author. Generate a professional postmortem with the requested sections.',
+        prompt,
+      );
+      if (!response) throw new Error('No LLM response');
 
       return this.parsePostmortemSections(response);
     } catch (error) {
@@ -203,28 +207,6 @@ Return the response as plain text with clear section headers.`;
         reject(error);
       }
     });
-  }
-
-  /**
-   * Call Ollama for content generation
-   */
-  private async callOllama(prompt: string): Promise<string> {
-    try {
-      const response = await axios.post(
-        `${this.ollamaUrl}/api/generate`,
-        {
-          model: process.env.OLLAMA_MODEL || 'mistral',
-          prompt,
-          stream: false,
-          temperature: 0.5,
-        },
-        { timeout: 30000 },
-      );
-
-      return response.data.response;
-    } catch (error) {
-      throw error;
-    }
   }
 
   /**

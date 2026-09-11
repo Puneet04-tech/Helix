@@ -8,12 +8,12 @@ import { ChaosService } from './chaos.service';
 import { ImpactService } from './impact.service';
 import { KnowledgeService } from './knowledge.service';
 import { CanaryService } from './canary.service';
+import { SemanticSearchService } from './semantic-search.service';
 import { Incident, IncidentSchema } from '../../common/schemas/incident.schema';
 import { Client, ClientSchema } from '../../common/schemas/client.schema';
 import { Event, EventSchema } from '../../common/schemas/event.schema';
 import { PlaywrightService } from '../../common/services/playwright.service';
 import { OllamaService } from '../../common/services/ollama.service';
-import { GroqService } from '../../common/services/groq.service';
 import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { EventsModule } from '../events/events.module';
@@ -34,8 +34,8 @@ import { EventsModule } from '../events/events.module';
     CorrelationService,
     PlaywrightService,
     OllamaService,
-    GroqService,
     AgentLLMService,
+    SemanticSearchService,
     FingerprintingService,
     ChaosService,
     ImpactService,
@@ -51,6 +51,7 @@ import { EventsModule } from '../events/events.module';
     KnowledgeService,
     CanaryService,
     AgentLLMService,
+    SemanticSearchService,
   ],
 })
 export class AgentsModule {}

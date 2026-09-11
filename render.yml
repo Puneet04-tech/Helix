@@ -11,7 +11,7 @@ services:
     # This is a robust fallback for the Render Hobby/Starter tiers
     rootDir: backend
     
-    buildCommand: npm install
+    buildCommand: npm install && npx playwright install chromium --with-deps && npm run build
     startCommand: npm run start:prod
     
     # Auto-deploy
@@ -19,7 +19,7 @@ services:
     branch: main
     
     # Port
-    port: 3000
+    port: 5000
     
     # Environment variables
     envVars:
@@ -44,11 +44,17 @@ services:
       - key: JWT_EXPIRATION
         value: "24h"
       
-      # Groq AI (set via dashboard)
-      - key: GROQ_API_KEY
+      # Gemini AI (set via dashboard)
+      - key: GEMINI_API_KEY
         sync: false
-      - key: GROQ_MODEL
-        value: llama-3.1-8b-instant
+      - key: GEMINI_MODEL
+        value: gemini-2.0-flash
+      
+      # Mistral AI (set via dashboard)
+      - key: MISTRAL_API_KEY
+        sync: false
+      - key: MISTRAL_MODEL
+        value: mistral-small-latest
       
       # HuggingFace (optional, set via dashboard)
       - key: HUGGINGFACE_API_KEY

@@ -17,12 +17,28 @@ export class PlaywrightService {
     if (!this.browser) {
       this.logger.debug('Initializing Playwright browser');
       try {
+        // Try to install browsers if not present
+        const { exec } = require('child_process');
+        await new Promise<void>((resolve, reject) => {
+          exec('npx playwright install chromium --with-deps', (error: any) => {
+            if (error) {
+              this.logger.warn(`Playwright install warning: ${error.message}`);
+            }
+            resolve();
+          });
+        });
+
         this.browser = await chromium.launch({
           headless: true,
+          executablePath: process.env.PLAYWRIGHT_CHROMIUM_PATH || undefined,
           args: [
             '--disable-blink-features=AutomationControlled',
             '--disable-dev-shm-usage',
             '--no-first-run',
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-gpu',
+            '--disable-software-rasterizer',
           ],
         });
         this.logger.debug('Browser initialized successfully');
@@ -35,9 +51,6 @@ export class PlaywrightService {
   }
 
   async executeAction(action: string, targetUrl: string, parameters?: any): Promise<ActionResult> {
-    // Prefer REAL browser automation. If Playwright browsers are not installed the
-    // target is unreachable, gracefully fall back to a simulated outcome (with a
-    // warning) so incident response never hard-crashes.
     this.logger.log(`[PLAYWRIGHT] Executing action: ${action} on ${targetUrl}`);
     try {
       await this.initBrowser();
@@ -70,54 +83,14 @@ export class PlaywrightService {
       }
     } catch (error) {
       const err = error as Error;
-      this.logger.warn(
-        `[PLAYWRIGHT] Real browser execution failed (${err.message}). Falling back to simulated outcome for action: ${action}`,
-      );
-      return this.simulateAction(action, parameters);
+      this.logger.error(`[PLAYWRIGHT] Browser execution failed for ${action}: ${err.message}`);
+      return {
+        success: false,
+        action,
+        result: `Playwright did not run: ${err.message}. Install browsers with npx playwright install chromium (Render also needs --no-sandbox).`,
+        timestamp: Date.now(),
+      };
     }
-  }
-
-  private simulateAction(action: string, parameters?: any): ActionResult {
-    const simulations: { [key: string]: () => ActionResult } = {
-      restart_service: () => ({
-        success: true,
-        action: 'restart_service',
-        result: '✅ Service restarted successfully - Uptime: 0s, Health: Nominal',
-        timestamp: Date.now(),
-      }),
-      scale_up: () => ({
-        success: true,
-        action: 'scale_up',
-        result: `✅ Scaled to ${parameters?.instances || 2} instances - CPU Load: 45% → 30%`,
-        timestamp: Date.now(),
-      }),
-      clear_cache: () => ({
-        success: true,
-        action: 'clear_cache',
-        result: '✅ Cache cleared - 2.4GB freed, Response time: 240ms → 85ms',
-        timestamp: Date.now(),
-      }),
-      failover: () => ({
-        success: true,
-        action: 'failover',
-        result: '✅ Failover completed - Primary: OFFLINE → Backup: ACTIVE, RTO: 1.2s',
-        timestamp: Date.now(),
-      }),
-      kill_process: () => ({
-        success: true,
-        action: 'kill_process',
-        result: `✅ Process ${parameters?.processId || 'rogue'} terminated - Memory freed: 512MB`,
-        timestamp: Date.now(),
-      }),
-    };
-
-    const simulator = simulations[action];
-    return simulator ? simulator() : {
-      success: false,
-      action,
-      result: 'Unknown action',
-      timestamp: Date.now(),
-    };
   }
 
   private async handleRestartService(

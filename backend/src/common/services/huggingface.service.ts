@@ -1,14 +1,15 @@
 import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 import { OllamaService } from './ollama.service';
-import { GroqService } from './groq.service';
+import { AgentLLMService } from './agent-llm.service';
+import { MLModelService } from './ml-model.service';
 
 interface AnalysisResult {
   isAnomaly: boolean;
   category: string;
   confidence: number;
   reasoning: string;
-  source: 'ollama' | 'groq' | 'hf_api' | 'statistical' | 'behavioral' | 'pattern' | 'fallback';
+  source: 'ollama' | 'gemini' | 'mistral' | 'hf_api' | 'ml_model' | 'statistical' | 'behavioral' | 'pattern' | 'fallback';
   details?: {
     scores?: { [key: string]: number };
     signals?: string[];
@@ -47,10 +48,11 @@ export class HuggingFaceService {
 
   constructor(
     private readonly ollamaService: OllamaService,
-    private readonly groqService: GroqService,
+    private readonly agentLLMService: AgentLLMService,
+    private readonly mlModelService: MLModelService,
   ) {}
 
-  async analyzeEvents(projectId: string, eventText: string): Promise<AnalysisResult> {
+  async analyzeEvents(projectId: string, events: any[]): Promise<AnalysisResult> {
     // Check cache
     const cacheKey = `${projectId}`;
     const cachedResult = this.analysisCache.get(cacheKey);
@@ -63,10 +65,16 @@ export class HuggingFaceService {
       }
     }
 
+    // Combine events into a single text for analysis
+    const eventText = events.map(e => {
+      const timestamp = new Date(e.timestamp).toISOString();
+      return `[${timestamp}] Type: ${e.type}, Data: ${JSON.stringify(e.data)}`;
+    }).join('\n');
+
     // Update baseline with this event
     this.updateBaseline(projectId, eventText);
 
-    // Try analysis chain: Ollama → Groq → HF API → Statistical → Behavioral → Pattern → Fallback
+    // Try analysis chain: Ollama → Gemini/Mistral → HF API → Statistical → Behavioral → Pattern → Fallback
     let result: AnalysisResult | null = null;
 
     // Tier 0: Ollama (Local LLM - BEST if available)
@@ -76,9 +84,16 @@ export class HuggingFaceService {
       return result;
     }
 
-    // Tier 0.5: Groq API (Fast cloud LLM - Great if available)
-    result = await this.groqService.analyzeWithGroq(eventText);
-    if (result) {
+    // Tier 0.5: Gemini/Mistral API (Fast cloud LLM - Great if available)
+    const llmResult = await this.agentLLMService.analyzeEventText(eventText);
+    if (llmResult) {
+      result = {
+        isAnomaly: llmResult.isAnomaly,
+        category: llmResult.category,
+        confidence: llmResult.confidence,
+        reasoning: llmResult.reasoning,
+        source: llmResult.source === 'gemini' ? 'gemini' : 'mistral',
+      };
       this.analysisCache.set(cacheKey, { result, timestamp: Date.now() });
       return result;
     }
@@ -89,6 +104,27 @@ export class HuggingFaceService {
       if (result) {
         this.analysisCache.set(cacheKey, { result, timestamp: Date.now() });
         return result;
+      }
+    }
+
+    // Tier 1.5: TensorFlow.js Neural Network (real ML) - strong anomaly/strong normal signal
+    if (await this.mlModelService.isReady()) {
+      const vector = this.mlModelService.extractFeatures(eventText);
+      const mlPrediction = await this.mlModelService.predictAnomaly(vector);
+      if (mlPrediction && mlPrediction.mlConfidence >= 0.65) {
+        const mlResult: AnalysisResult = {
+          isAnomaly: mlPrediction.isAnomaly,
+          category: mlPrediction.isAnomaly ? 'security_threat' : 'normal_activity',
+          confidence: mlPrediction.anomalyProbability,
+          reasoning: `TensorFlow.js neural network: ${(mlPrediction.anomalyProbability * 100).toFixed(1)}% anomaly probability`,
+          source: 'ml_model',
+          details: {
+            scores: { ml_anomaly_probability: mlPrediction.anomalyProbability, ml_confidence: mlPrediction.mlConfidence },
+            signals: ['ML neural network classification'],
+          },
+        };
+        this.analysisCache.set(cacheKey, { result: mlResult, timestamp: Date.now() });
+        return mlResult;
       }
     }
 
@@ -123,47 +159,110 @@ export class HuggingFaceService {
   async analyzeSentiment(text: string): Promise<any> {
     try {
       this.logger.log(`Analyzing sentiment for Feature 8: ${text.substring(0, 30)}...`);
-      // Standard sentiment model
-      const sentimentUrl = 'https://router.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment';
-      
-      const response = await axios.post(
-        sentimentUrl,
-        { inputs: text },
-        { 
-          headers: { 
-            Authorization: `Bearer ${this.API_KEY}`,
-            'Content-Type': 'application/json'
-          },
-          timeout: 5000
+
+      // Local heuristic sentiment as a fast fallback (works without external API)
+      const localSentiment = this.localSentimentAnalysis(text);
+
+      // Try external HF sentiment model if API key is present
+      if (this.API_KEY) {
+        try {
+          // Standard sentiment model
+          const sentimentUrl = 'https://router.huggingface.co/models/cardiffnlp/twitter-roberta-base-sentiment';
+
+          const response = await axios.post(
+            sentimentUrl,
+            { inputs: text },
+            {
+              headers: {
+                Authorization: `Bearer ${this.API_KEY}`,
+                'Content-Type': 'application/json',
+              },
+              timeout: 5000,
+            },
+          );
+
+          const scores = response.data[0];
+          if (Array.isArray(scores)) {
+            const labels = ['negative', 'neutral', 'positive'];
+            const topScore = scores.reduce((prev: any, current: any) => (prev.score > current.score) ? prev : current);
+            const labelIndex = parseInt(topScore.label.split('_')[1]);
+
+            let emotionalTone = 'neutral';
+            if (text.toLowerCase().includes('help') || text.toLowerCase().includes('urgent')) emotionalTone = 'urgent';
+            if (text.toLowerCase().includes('angry') || text.toLowerCase().includes('unacceptable')) emotionalTone = 'angry';
+            if (labelIndex === 0 && emotionalTone === 'neutral') emotionalTone = 'distressed';
+
+            return {
+              score: labelIndex === 0 ? -topScore.score : labelIndex === 1 ? 0 : topScore.score,
+              label: labels[labelIndex],
+              emotionalTone,
+              highlightedQuotes: [text.substring(0, 80) + (text.length > 80 ? '...' : '')],
+              source: 'huggingface-roberta',
+            };
+          }
+        } catch (err) {
+          this.logger.warn(`HF sentiment API failed, using local analysis: ${(err as Error).message}`);
+          return {
+            ...localSentiment,
+            source: 'local-heuristic',
+          };
         }
-      );
-
-      const scores = response.data[0]; 
-      if (!Array.isArray(scores)) throw new Error('Invalid HF response');
-
-      const labels = ['negative', 'neutral', 'positive'];
-      const topScore = scores.reduce((prev: any, current: any) => (prev.score > current.score) ? prev : current);
-      const labelIndex = parseInt(topScore.label.split('_')[1]);
-
-      let emotionalTone = 'neutral';
-      if (text.toLowerCase().includes('help') || text.toLowerCase().includes('urgent')) emotionalTone = 'urgent';
-      if (text.toLowerCase().includes('angry') || text.toLowerCase().includes('unacceptable')) emotionalTone = 'angry';
-      if (labelIndex === 0 && emotionalTone === 'neutral') emotionalTone = 'distressed';
+      }
 
       return {
-        score: labelIndex === 0 ? -topScore.score : labelIndex === 1 ? 0 : topScore.score,
-        label: labels[labelIndex],
-        emotionalTone,
-        highlightedQuotes: [text.substring(0, 80) + (text.length > 80 ? '...' : '')]
+        ...localSentiment,
+        source: 'local-heuristic',
       };
     } catch (err) {
       return {
         score: -0.85,
         label: 'negative',
         emotionalTone: 'urgent',
-        highlightedQuotes: [text.substring(0, 80)]
+        highlightedQuotes: [text.substring(0, 80)],
+        source: 'fallback',
       };
     }
+  }
+
+  /**
+   * Local heuristic sentiment analysis (fast, offline sentiment scoring).
+   */
+  private localSentimentAnalysis(text: string): { score: number; label: string; emotionalTone: string; highlightedQuotes: string[] } {
+    const lower = text?.toLowerCase() || '';
+
+    const negativeWords = ['angry', 'unacceptable', 'terrible', 'awful', 'horrible', 'bad', 'broken', 'not working',
+      'frustrated', 'disappointed', 'rude', 'dirty', 'cold', 'noise', 'slow', 'worst', 'hate'];
+    const positiveWords = ['great', 'excellent', 'wonderful', 'amazing', 'happy', 'good', 'love', 'perfect',
+      'thank', 'fantastic', 'best', 'clean', 'comfortable', 'friendly'];
+    const urgentWords = ['urgent', 'emergency', 'immediately', 'right now', 'asap', 'help', 'critical'];
+
+    let score = 0;
+    let negHits = 0;
+    let posHits = 0;
+    let urgentHits = 0;
+
+    for (const w of negativeWords) if (lower.includes(w)) { negHits++; score -= 0.2; }
+    for (const w of positiveWords) if (lower.includes(w)) { posHits++; score += 0.2; }
+    for (const w of urgentWords) if (lower.includes(w)) { urgentHits++; }
+
+    let label = 'neutral';
+    if (score > 0.15) label = 'positive';
+    else if (score < -0.15) label = 'negative';
+
+    let emotionalTone = 'neutral';
+    if (score < -0.2) emotionalTone = negHits >= 2 ? 'angry' : 'distressed';
+    if (urgentHits > 0 && negHits > 0) emotionalTone = 'urgent';
+    if (score > 0.3) emotionalTone = 'happy';
+
+    // Bound score between -1 and 1
+    score = Math.max(-1, Math.min(1, score));
+
+    return {
+      score,
+      label,
+      emotionalTone,
+      highlightedQuotes: [text.substring(0, 80) + (text.length > 80 ? '...' : '')],
+    };
   }
 
   /**

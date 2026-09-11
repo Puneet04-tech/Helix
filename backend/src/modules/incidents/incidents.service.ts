@@ -43,6 +43,7 @@ export class IncidentsService {
       description: incidentData.description || incidentData.analysis?.reasoning || 'Incident detected by Helix',
       status: 'detecting',
       metadata: incidentData.metadata || {},
+      sentimentAnalysis: incidentData.sentimentAnalysis || undefined,
       eventIds: recentEvents.map(e => e._id.toString()),
       detectedAt: new Date(),
       agentReasoning: {

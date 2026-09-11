@@ -1,8 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import axios from 'axios';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 
 /**
  * Feature 7: Multi-System Correlation
@@ -11,11 +11,11 @@ import { Incident, IncidentDocument } from '../../common/schemas/incident.schema
 @Injectable()
 export class CorrelationService {
   private readonly logger = new Logger(CorrelationService.name);
-  private ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
   private recentIncidents = new Map<string, any[]>(); // projectId -> [incidents with timestamp]
 
   constructor(
     @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
+    private agentLLMService: AgentLLMService,
   ) {}
 
   /**
@@ -101,7 +101,7 @@ export class CorrelationService {
   }
 
   /**
-   * Use LLM to analyze root cause correlation
+   * Use LangChain LLM to analyze root cause correlation
    */
   private async analyzeWithLLM(incidentDetails: string): Promise<string> {
     try {
@@ -117,18 +117,15 @@ What is the most likely shared root cause? Consider:
 
 Return your hypothesis as ONE plain English sentence only (no elaboration).`;
 
-      const response = await axios.post(
-        `${this.ollamaUrl}/api/generate`,
-        {
-          model: process.env.OLLAMA_MODEL || 'mistral',
-          prompt,
-          stream: false,
-          temperature: 0.3,
-        },
-        { timeout: 30000 },
+      const response = await this.agentLLMService.completeText(
+        'You are a correlation analysis agent. Find the shared root cause across multiple service incidents.',
+        prompt,
       );
 
-      return response.data.response.trim().split('\n')[0]; // Get first line only
+      if (response) {
+        return response.trim().split('\n')[0];
+      }
+      throw new Error('No LLM response');
     } catch (error) {
       this.logger.warn('LLM correlation analysis failed, using default');
       return 'Multiple services experienced issues in the same time window, suggesting a shared infrastructure problem.';

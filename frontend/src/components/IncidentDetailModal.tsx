@@ -106,62 +106,121 @@ export default function IncidentDetailModal({
                 </div>
               </div>
 
-              {/* Description */}
-              <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-3">Description</h3>
-                <p className="text-slate-300 leading-relaxed">
-                  {incident.description || 'No description available'}
+{/* Description */}
+          <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-3">Description</h3>
+            <p className="text-slate-300 leading-relaxed">
+              {incident.description || 'No description available'}
+            </p>
+            {incident.agentReasoning?.detectionAgent?.analysis && (
+              <div className="mt-3 bg-[#112D5E] rounded p-3 text-sm text-slate-300">
+                <span className="text-blue-400 font-semibold">AI Detection:</span>{' '}
+                {incident.agentReasoning.detectionAgent.analysis}
+              </div>
+            )}
+          </div>
+
+          {/* Impact Analysis */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Users className="w-5 h-5 text-orange-400" />
+                <h3 className="text-lg font-semibold text-white">Affected Users</h3>
+              </div>
+              <div className="text-3xl font-bold text-orange-400">
+                {incident.affectedUsers ? parseInt(incident.affectedUsers).toLocaleString() : '0'}
+              </div>
+              <p className="text-sm text-slate-400 mt-2">users impacted by this incident</p>
+            </div>
+
+            <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Zap className="w-5 h-5 text-yellow-400" />
+                <h3 className="text-lg font-semibold text-white">Impact Level</h3>
+              </div>
+              <div className="text-3xl font-bold text-yellow-400">
+                {incident.severity === 'critical' ? 'CRITICAL' : 'HIGH'}
+              </div>
+              <p className="text-sm text-slate-400 mt-2">service area affected</p>
+            </div>
+          </div>
+
+          {/* Sentiment (Feature 8 - real backend data) */}
+          {incident.sentimentAnalysis && (
+            <div className={`bg-[#0D1B3E] border rounded-lg p-6 ${
+              incident.sentimentAnalysis.label === 'negative' ? 'border-red-500/40' : 'border-[#1E3A5F]'
+            }`}>
+              <h3 className="text-lg font-semibold text-white mb-3">Support Sentiment Analysis</h3>
+              <div className="flex items-center gap-6">
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">SENTIMENT SCORE</div>
+                  <div className={`text-2xl font-bold ${
+                    (incident.sentimentAnalysis.score ?? 0) < 0 ? 'text-red-400' : (incident.sentimentAnalysis.score ?? 0) > 0.3 ? 'text-emerald-400' : 'text-slate-300'
+                  }`}>
+                    {((incident.sentimentAnalysis.score ?? 0) * 100).toFixed(0)}%
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">EMOTIONAL TONE</div>
+                  <div className={`text-2xl font-bold capitalize ${
+                    incident.sentimentAnalysis.emotionalTone === 'angry' || incident.sentimentAnalysis.emotionalTone === 'urgent'
+                      ? 'text-red-400' : 'text-blue-400'
+                  }`}>
+                    {incident.sentimentAnalysis.emotionalTone || 'neutral'}
+                  </div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500 mb-1">MODEL</div>
+                  <div className="text-sm font-medium text-slate-300">
+                    {incident.sentimentAnalysis.source === 'huggingface-roberta'
+                      ? 'HuggingFace RoBERTa'
+                      : 'Local ML Heuristic'}
+                  </div>
+                </div>
+              </div>
+              {incident.sentimentAnalysis.highlightedQuotes?.[0] && (
+                <p className="text-sm text-slate-400 italic mt-3 border-l-2 border-blue-500/40 pl-3">
+                  "{incident.sentimentAnalysis.highlightedQuotes[0]}"
                 </p>
+              )}
+            </div>
+          )}
+
+          {/* Root Cause */}
+          <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
+            <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+              <Shield className="w-5 h-5 text-blue-400" />
+              Root Cause Analysis
+            </h3>
+            <div className="bg-[#112D5E] rounded p-4 text-slate-300">
+              {incident.agentReasoning?.analysisAgent?.rootCause || incident.rootCause || 'Analysis in progress...'}
+            </div>
+            {incident.agentReasoning?.analysisAgent?.affectedSystems?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {incident.agentReasoning.analysisAgent.affectedSystems.map((s: string) => (
+                  <span key={s} className="text-xs bg-blue-500/10 text-blue-300 border border-blue-500/30 rounded px-2 py-1">
+                    {s}
+                  </span>
+                ))}
               </div>
+            )}
+          </div>
 
-              {/* Impact Analysis */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Users className="w-5 h-5 text-orange-400" />
-                    <h3 className="text-lg font-semibold text-white">Affected Users</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-orange-400">
-                    {incident.affectedUsers ? parseInt(incident.affectedUsers).toLocaleString() : '0'}
-                  </div>
-                  <p className="text-sm text-slate-400 mt-2">users impacted by this incident</p>
-                </div>
-
-                <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <Zap className="w-5 h-5 text-yellow-400" />
-                    <h3 className="text-lg font-semibold text-white">Impact Level</h3>
-                  </div>
-                  <div className="text-3xl font-bold text-yellow-400">
-                    {incident.severity === 'critical' ? 'CRITICAL' : 'HIGH'}
-                  </div>
-                  <p className="text-sm text-slate-400 mt-2">service area affected</p>
-                </div>
-              </div>
-
-              {/* Root Cause */}
-              <div className="bg-[#0D1B3E] border border-[#1E3A5F] rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <Shield className="w-5 h-5 text-blue-400" />
-                  Root Cause Analysis
-                </h3>
-                <div className="bg-[#112D5E] rounded p-4 text-slate-300">
-                  {incident.rootCause || 'Analysis in progress...'}
-                </div>
-              </div>
-
-              {/* Recommended Actions */}
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-                <h3 className="text-lg font-semibold text-green-400 mb-4">✓ Automated Response Executed</h3>
-                <div className="space-y-2">
-                  <p className="text-sm text-green-300">• AI agent initiated automatic response protocol</p>
-                  <p className="text-sm text-green-300">• Threat isolation activated</p>
-                  <p className="text-sm text-green-300">• Incident log created and archived</p>
-                  <p className="text-sm text-green-300">• Compliance check completed</p>
-                </div>
+          {/* AI Agent Actions */}
+          {incident.agentReasoning?.responseAgent?.actions?.length > 0 && (
+            <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-green-400 mb-4">✓ AI Agent Actions Executed</h3>
+              <div className="space-y-2">
+                {incident.agentReasoning.responseAgent.actions.map((a: any, i: number) => (
+                  <p key={i} className="text-sm text-green-300">
+                    • {a.action.replace(/_/g, ' ')} on {a.target} — {a.result}
+                  </p>
+                ))}
               </div>
             </div>
           )}
+        </div>
+      )}
 
           {/* Analysis Tab */}
           {activeTab === 'analysis' && (
@@ -193,8 +252,14 @@ export default function IncidentDetailModal({
               <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
                 <h3 className="text-lg font-semibold text-blue-400 mb-4">ML Anomaly Detected</h3>
                 <p className="text-sm text-blue-300">
-                  Pattern anomaly score: 94.2% - This activity deviates significantly from baseline behavior
+                  Detection confidence: {((incident.agentReasoning?.detectionAgent?.confidence ?? 0.87) * 100).toFixed(1)}% — This activity was flagged by the AI anomaly detection pipeline
                 </p>
+                {(incident.analysis?.source || incident.agentReasoning?.detectionAgent) && (
+                  <div className="mt-3 text-xs text-blue-400/80">
+                    Analysis source: {incident.analysis?.source || 'agent-chain'}
+                    {incident.analysis?.reasoning ? ` — ${incident.analysis.reasoning}` : ''}
+                  </div>
+                )}
               </div>
             </div>
           )}

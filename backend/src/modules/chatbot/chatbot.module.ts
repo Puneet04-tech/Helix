@@ -4,12 +4,13 @@ import { ChatbotService } from './chatbot.service';
 import { NaturalLanguageQueryService } from './natural-language-query.service';
 import { ChatbotController } from './chatbot.controller';
 import { Incident, IncidentSchema } from '../../common/schemas/incident.schema';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 
 @Module({
   imports: [
     MongooseModule.forFeature([{ name: Incident.name, schema: IncidentSchema }]),
   ],
-  providers: [ChatbotService, NaturalLanguageQueryService],
+  providers: [ChatbotService, NaturalLanguageQueryService, AgentLLMService],
   controllers: [ChatbotController],
   exports: [ChatbotService, NaturalLanguageQueryService],
 })

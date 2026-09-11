@@ -14,6 +14,7 @@ import { NotificationsModule } from '../notifications/notifications.module';
 import { PostmortemModule } from '../postmortem/postmortem.module';
 import { EventsModule } from '../events/events.module';
 import { AuditService } from '../../common/services/audit.service';
+import { MLModelService } from '../../common/services/ml-model.service';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { AuditService } from '../../common/services/audit.service';
     forwardRef(() => EventsModule),
   ],
   controllers: [IncidentsController],
-  providers: [IncidentsService, PredictiveCrisisService, CorrelationService, AuditService],
-  exports: [IncidentsService, CorrelationService],
+  providers: [IncidentsService, PredictiveCrisisService, CorrelationService, AuditService, MLModelService],
+  exports: [IncidentsService, CorrelationService, MLModelService],
 })
 export class IncidentsModule {}

@@ -85,17 +85,10 @@ export class MemoryService {
     return events.filter(e => e.timestamp > cutoffTime);
   }
 
-  getAllEventsForAnalysis(projectId: string, limit: number = 15): string {
+  getAllEventsForAnalysis(projectId: string, limit: number = 15): any[] {
     const events = this.getClientEvents(projectId);
     const sortedEvents = events.sort((a, b) => b.timestamp - a.timestamp);
-    const recentEvents = sortedEvents.slice(0, limit);
-
-    return recentEvents
-      .map(
-        e =>
-          `[${new Date(e.timestamp).toISOString()}] Type: ${e.type}, Data: ${JSON.stringify(e.data)}`,
-      )
-      .join('\n');
+    return sortedEvents.slice(0, limit);
   }
 
   clearProjectEvents(projectId: string): void {

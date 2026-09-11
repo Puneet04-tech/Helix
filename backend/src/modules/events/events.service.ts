@@ -113,7 +113,20 @@ export class EventsService {
           ? 'hospital-integration'
           : 'hotel-integration';
 
-        // For hospital incidents, also go through Groq analysis pipeline
+        // Feature 8: Run sentiment analysis on complaint/incident messages
+        // (real HuggingFace sentiment model when key present, local heuristic otherwise)
+        let sentimentResult = null;
+        try {
+          const text = eventData.metadata?.description || eventData.message || '';
+          sentimentResult = await this.huggingFaceService.analyzeSentiment(text);
+          this.logger.debug(
+            `Sentiment analysis for Feature 8: ${sentimentResult.label} (${(sentimentResult.score * 100).toFixed(1)}), tone: ${sentimentResult.emotionalTone}`,
+          );
+        } catch (err) {
+          this.logger.warn(`Sentiment analysis failed: ${(err as Error).message}`);
+        }
+
+        // For hospital incidents, also go through AI analysis pipeline
         // Add to memory for pattern detection
         this.memoryService.addEvent(projectId, {
           type: eventData.type || 'info',
@@ -129,7 +142,7 @@ export class EventsService {
 
         let analysisResult;
         if (hasSuspiciousPattern) {
-          // Use Groq analysis through HuggingFace service
+          // Use AI analysis through HuggingFace service
           const eventsForAnalysis = this.memoryService.getAllEventsForAnalysis(
             projectId,
             15,
@@ -139,7 +152,7 @@ export class EventsService {
             eventsForAnalysis,
           );
           this.logger.debug(
-            `Groq analysis for hospital incident: ${analysisResult.category} (${(analysisResult.confidence * 100).toFixed(1)}%)`,
+            `AI analysis for hospital incident: ${analysisResult.category} (${(analysisResult.confidence * 100).toFixed(1)}%)`,
           );
         } else {
           // Fallback analysis for single incident
@@ -170,6 +183,7 @@ export class EventsService {
               severity: eventData.metadata?.severity,
             },
             analysis: analysisResult,
+            sentimentAnalysis: sentimentResult,
             events: [eventData],
           },
         );

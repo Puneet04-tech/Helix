@@ -129,6 +129,7 @@ export class Incident {
     label: string; // 'negative', 'neutral', 'positive'
     emotionalTone: string; // 'angry', 'distressed', 'urgent', 'happy'
     highlightedQuotes: string[];
+    source?: string; // 'huggingface-roberta' | 'local-heuristic'
   };
 
   @Prop()

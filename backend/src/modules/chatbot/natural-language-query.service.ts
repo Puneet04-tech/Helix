@@ -1,7 +1,8 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import axios from 'axios';
+import { Ollama } from '@langchain/ollama';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
 
 @Injectable()
@@ -9,12 +10,19 @@ export class NaturalLanguageQueryService {
   private readonly logger = new Logger(NaturalLanguageQueryService.name);
   private readonly ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
   private readonly ollamaModel = process.env.OLLAMA_MODEL || 'mistral';
-  private readonly groqApiKey = process.env.GROQ_API_KEY;
-  private readonly groqModel = 'llama-3.1-8b-instant';
+
+  private ollamaChat: Ollama;
 
   constructor(
     @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
-  ) {}
+    private agentLLMService: AgentLLMService,
+  ) {
+    this.ollamaChat = new Ollama({
+      baseUrl: this.ollamaUrl,
+      model: this.ollamaModel,
+      temperature: 0.3,
+    });
+  }
 
   async queryIncidents(projectId: string, query: string): Promise<string> {
     try {
@@ -76,59 +84,28 @@ User Question: ${query}`;
     const ollama = await this.tryOllama(systemPrompt, userPrompt);
     if (ollama) return ollama;
 
-    const groq = await this.tryGroq(systemPrompt, userPrompt);
-    if (groq) return groq;
+    const geminiMistral = await this.agentLLMService.completeText(systemPrompt, userPrompt);
+    if (geminiMistral) return geminiMistral;
 
     return null;
   }
 
+  /**
+   * Call Ollama through LangChain's Ollama chat model.
+   */
   private async tryOllama(systemPrompt: string, userPrompt: string): Promise<string | null> {
     try {
-      await axios.get(`${this.ollamaUrl}/api/tags`, { timeout: 5000 });
-      const response = await axios.post(
-        `${this.ollamaUrl}/api/generate`,
-        {
-          model: this.ollamaModel,
-          prompt: userPrompt,
-          system: systemPrompt,
-          stream: false,
-          temperature: 0.3,
-        },
-        { timeout: 30000 },
-      );
-      return response.data?.response?.trim() || null;
-    } catch {
-      return null;
-    }
-  }
-
-  private async tryGroq(systemPrompt: string, userPrompt: string): Promise<string | null> {
-    if (!this.groqApiKey) return null;
-
-    try {
-      const response = await axios.post(
-        'https://api.groq.com/openai/v1/chat/completions',
-        {
-          model: this.groqModel,
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: userPrompt },
-          ],
-          temperature: 0.3,
-          max_tokens: 500,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${this.groqApiKey}`,
-            'Content-Type': 'application/json',
-          },
-          timeout: 30000,
-        },
-      );
-      return response.data?.choices?.[0]?.message?.content?.trim() || null;
+      const messages = [
+        { role: 'system' as const, content: systemPrompt },
+        { role: 'user' as const, content: userPrompt },
+      ];
+      const response = await this.ollamaChat.invoke(messages);
+      const msg = response as unknown as { content?: unknown };
+      const text = typeof msg.content === 'string' ? msg.content : msg.content ? JSON.stringify(msg.content) : '';
+      return text?.trim() || null;
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      this.logger.warn(`Groq NLP fallback failed: ${message}`);
+      this.logger.debug(`Ollama NLP failed via LangChain: ${message}`);
       return null;
     }
   }

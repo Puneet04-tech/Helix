@@ -29,7 +29,13 @@ export class NotificationsService {
 
   async sendRoleBasedAlerts(incident: any) {
     try {
-      const client = await this.clientModel.findById(incident.projectId);
+      // Try to find client by both _id and projectId field to handle string IDs
+      const client = await this.clientModel.findOne({
+        $or: [
+          { _id: incident.projectId },
+          { projectId: incident.projectId }
+        ]
+      });
       if (!client || !client.userIds.length) {
         this.logger.warn(`No users found for client ${incident.projectId}`);
         return;

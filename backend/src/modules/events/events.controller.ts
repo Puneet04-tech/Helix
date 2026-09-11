@@ -11,11 +11,15 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { EventsService } from './events.service';
+import { MLAnomalyService } from '../../common/services/ml-anomaly.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 
 @Controller('events')
 export class EventsController {
-  constructor(private eventsService: EventsService) {}
+  constructor(
+    private eventsService: EventsService,
+    private mlAnomalyService: MLAnomalyService,
+  ) {}
 
   @Post('ingest')
   async ingestEvent(
@@ -23,6 +27,23 @@ export class EventsController {
     @Body() eventData: any,
   ) {
     return this.eventsService.ingestEvent(apiKey, eventData);
+  }
+
+  /**
+   * Real TensorFlow.js ML scoring of a raw event text.
+   * GET /events/ml/score?text=... — returns neural network anomaly probability
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('ml/score')
+  async scoreEvent(@Query('text') text: string) {
+    if (!text) return { error: 'text query param required' };
+    const result = await this.mlAnomalyService.scoreEvent(text);
+    return {
+      text,
+      mlResult: result,
+      model: 'tensorflow-js-dense-classifier',
+      status: this.mlAnomalyService.getMLStatus(),
+    };
   }
 
   @UseGuards(JwtAuthGuard)

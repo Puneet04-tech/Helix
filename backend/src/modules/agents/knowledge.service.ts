@@ -2,13 +2,15 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Incident, IncidentDocument } from '../../common/schemas/incident.schema';
+import { SemanticSearchService } from './semantic-search.service';
 
 @Injectable()
 export class KnowledgeService {
   private readonly logger = new Logger(KnowledgeService.name);
 
   constructor(
-    @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>
+    @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
+    private semanticSearchService: SemanticSearchService,
   ) {}
 
   /**
@@ -34,13 +36,22 @@ export class KnowledgeService {
   }
 
   /**
-   * Natural language search for past resolutions.
+   * Natural language semantic search for past resolutions.
+   * Uses real vector embeddings (HuggingFace sentence-transformers when available,
+   * deterministic local hashing otherwise) for genuine semantic retrieval.
    */
   async queryKnowledge(query: string): Promise<any[]> {
-    // In a real app, this would use Atlas Search or a Vector DB.
-    // For this demo, we'll use regex on the rootCause and fix descriptions.
-    // Guard against a missing query and escape each keyword so user input can't
-    // be interpreted as a regular expression (regex injection / ReDoS).
+    try {
+      // Real semantic search via vector embeddings
+      const results = await this.semanticSearchService.semanticSearch(query || '', 5);
+      if (results.length > 0) {
+        return results;
+      }
+    } catch (err) {
+      this.logger.warn(`Semantic search failed: ${(err as Error).message}`);
+    }
+
+    // Safety fallback to regex search if semantic search is unavailable
     const keywords = (query || '')
       .toLowerCase()
       .split(' ')
@@ -58,15 +69,15 @@ export class KnowledgeService {
       status: 'resolved',
       $or: [
         { type: { $regex: pattern, $options: 'i' } },
-        { 'agentReasoning.analysisAgent.rootCause': { $regex: pattern, $options: 'i' } }
-      ]
+        { 'agentReasoning.analysisAgent.rootCause': { $regex: pattern, $options: 'i' } },
+      ],
     }).limit(5).exec();
 
     return matches.map(m => ({
       incidentId: m.incidentId,
       type: m.type,
       resolution: m.agentReasoning?.responseAgent?.actions,
-      summary: `Fixed in ${Math.round((m.resolutionTime || 0) / 1000)}s via ${m.agentReasoning?.responseAgent?.actions?.[0]?.action || 'manual intervention'}`
+      summary: `Fixed in ${Math.round((m.resolutionTime || 0) / 1000)}s via ${m.agentReasoning?.responseAgent?.actions?.[0]?.action || 'manual intervention'}`,
     }));
   }
 }

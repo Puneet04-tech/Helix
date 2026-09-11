@@ -1,7 +1,8 @@
-import { Injectable, Logger, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, Logger, Inject, forwardRef, Optional } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { Audit, AuditDocument } from '../schemas/audit.schema';
+import { Incident, IncidentDocument } from '../schemas/incident.schema';
 import { EventsGateway } from '../gateways/events.gateway';
 
 @Injectable()
@@ -10,9 +11,25 @@ export class AuditService {
 
   constructor(
     @InjectModel(Audit.name) private auditModel: Model<AuditDocument>,
-    @Inject(forwardRef(() => EventsGateway)) 
+    @Optional() @InjectModel(Incident.name) private incidentModel: Model<IncidentDocument>,
+    @Inject(forwardRef(() => EventsGateway))
     private eventsGateway: EventsGateway,
   ) {}
+
+  expandProjectIds(user: {
+    projectIds?: string[];
+    organizationId?: string;
+    email?: string;
+  }): string[] {
+    const ids = new Set<string>();
+    (user?.projectIds || []).forEach(id => id && ids.add(String(id)));
+    if (user?.organizationId) ids.add(String(user.organizationId));
+
+    const blob = `${user?.organizationId || ''} ${user?.email || ''}`.toLowerCase();
+    if (blob.includes('hospital')) ids.add('hospital_001');
+    if (blob.includes('hotel')) ids.add('hotel_001');
+    return Array.from(ids);
+  }
 
   async logAudit(
     projectId: string,
@@ -24,6 +41,8 @@ export class AuditService {
     incidentId?: string,
   ): Promise<AuditDocument> {
     try {
+      this.logger.debug(`Logging audit: projectId=${projectId}, service=${service}, action=${action}`);
+      
       const audit = new this.auditModel({
         projectId,
         service,
@@ -36,12 +55,13 @@ export class AuditService {
       });
 
       const saved = await audit.save();
+      this.logger.debug(`Audit log saved successfully: ${saved._id}`);
 
-      // Emit to connected clients via WebSocket if gateway is available
       try {
         if (this.eventsGateway) {
           this.eventsGateway.broadcastAuditLog(projectId, {
             id: saved._id.toString(),
+            _id: saved._id.toString(),
             service,
             action,
             message,
@@ -49,6 +69,7 @@ export class AuditService {
             timestamp: saved.timestamp,
             level,
             incidentId,
+            projectId,
           });
         }
       } catch (error) {
@@ -63,21 +84,24 @@ export class AuditService {
   }
 
   async getAuditTrail(
-    projectId: string,
+    projectIds: string | string[],
     limit: number = 50,
     offset: number = 0,
   ): Promise<{ logs: AuditDocument[]; total: number }> {
     try {
+      const ids = Array.isArray(projectIds) ? projectIds.filter(Boolean) : [projectIds].filter(Boolean);
+      
+      this.logger.debug(`Fetching audit trail for projectIds: ${JSON.stringify(ids)}`);
+      
+      const filter = ids.length > 1 ? { projectId: { $in: ids } } : { projectId: ids[0] || '__none__' };
+
       const [logs, total] = await Promise.all([
-        this.auditModel
-          .find({ projectId })
-          .sort({ timestamp: -1 })
-          .skip(offset)
-          .limit(limit)
-          .exec(),
-        this.auditModel.countDocuments({ projectId }),
+        this.auditModel.find(filter).sort({ timestamp: -1 }).skip(offset).limit(limit).exec(),
+        this.auditModel.countDocuments(filter),
       ]);
 
+      this.logger.debug(`Audit trail query result: ${logs.length} logs, total: ${total}`);
+      
       return { logs, total };
     } catch (error) {
       this.logger.error(`Failed to fetch audit trail: ${error instanceof Error ? error.message : String(error)}`);
@@ -87,12 +111,24 @@ export class AuditService {
 
   async getIncidentAuditTrail(incidentId: string): Promise<AuditDocument[]> {
     try {
-      const logs = await this.auditModel
-        .find({ incidentId })
+      const keys = new Set<string>([incidentId].filter(Boolean));
+
+      if (this.incidentModel) {
+        const clauses: Record<string, unknown>[] = [{ incidentId }];
+        if (Types.ObjectId.isValid(incidentId)) {
+          clauses.push({ _id: incidentId });
+        }
+        const incident = await this.incidentModel.findOne({ $or: clauses }).select('_id incidentId').lean();
+        if (incident) {
+          keys.add(String(incident._id));
+          if (incident.incidentId) keys.add(String(incident.incidentId));
+        }
+      }
+
+      return this.auditModel
+        .find({ incidentId: { $in: Array.from(keys) } })
         .sort({ timestamp: -1 })
         .exec();
-
-      return logs;
     } catch (error) {
       this.logger.error(`Failed to fetch incident audit trail: ${error instanceof Error ? error.message : String(error)}`);
       throw error;

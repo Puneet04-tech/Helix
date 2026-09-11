@@ -28,9 +28,11 @@ import { AppService } from './app.service';
 import { MemoryService } from './common/services/memory.service';
 import { HuggingFaceService } from './common/services/huggingface.service';
 import { OllamaService } from './common/services/ollama.service';
-import { GroqService } from './common/services/groq.service';
+import { AgentLLMService } from './common/services/agent-llm.service';
 import { PlaywrightService } from './common/services/playwright.service';
 import { AuditService } from './common/services/audit.service';
+import { MLModelService } from './common/services/ml-model.service';
+import { MLAnomalyService } from './common/services/ml-anomaly.service';
 
 // Schemas
 import { Audit, AuditSchema } from './common/schemas/audit.schema';
@@ -68,6 +70,17 @@ import { EventsGateway } from './common/gateways/events.gateway';
     ComplianceModule,
   ],
   controllers: [AppController, AuditController],
-  providers: [AppService, MemoryService, OllamaService, GroqService, HuggingFaceService, PlaywrightService, AuditService, EventsGateway],
+  providers: [
+    AppService,
+    MemoryService,
+    OllamaService,
+    AgentLLMService,
+    HuggingFaceService,
+    PlaywrightService,
+    AuditService,
+    EventsGateway,
+    MLModelService,
+    MLAnomalyService,
+  ],
 })
 export class AppModule {}

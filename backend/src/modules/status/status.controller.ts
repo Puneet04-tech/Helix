@@ -3,6 +3,8 @@ import { StatusService } from './status.service';
 import { PublicStatusService } from './public-status.service';
 import { IncidentsService } from '../incidents/incidents.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { MLModelService } from '../../common/services/ml-model.service';
+import { MLAnomalyService } from '../../common/services/ml-anomaly.service';
 
 @Controller('status')
 export class StatusController {
@@ -10,7 +12,26 @@ export class StatusController {
     private statusService: StatusService,
     private publicStatusService: PublicStatusService,
     private incidentsService: IncidentsService,
+    private mlModelService: MLModelService,
+    private mlAnomalyService: MLAnomalyService,
   ) {}
+
+  /**
+   * Real AI/ML model status for the dashboard
+   * GET /status/ml — shows the actual state of the TensorFlow.js models
+   */
+  @UseGuards(JwtAuthGuard)
+  @Get('ml')
+  async getMLStatus() {
+    const modelReady = await this.mlModelService.isReady();
+    return {
+      ai: {
+        framework: 'TensorFlow.js',
+        anomalyModelReady: modelReady,
+        stats: this.mlModelService.getModelStats(),
+      },
+    };
+  }
 
   /**
    * Feature 5: Public Status Page

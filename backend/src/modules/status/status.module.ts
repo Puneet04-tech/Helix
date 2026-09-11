@@ -8,6 +8,8 @@ import { Client, ClientSchema } from '../../common/schemas/client.schema';
 import { Incident, IncidentSchema } from '../../common/schemas/incident.schema';
 import { Event, EventSchema } from '../../common/schemas/event.schema';
 import { UptimeCalculatorService } from '../../common/services/uptime-calculator.service';
+import { MLModelService } from '../../common/services/ml-model.service';
+import { MLAnomalyService } from '../../common/services/ml-anomaly.service';
 
 @Module({
   imports: [
@@ -18,7 +20,7 @@ import { UptimeCalculatorService } from '../../common/services/uptime-calculator
     ]),
     IncidentsModule,
   ],
-  providers: [StatusService, PublicStatusService, UptimeCalculatorService],
+  providers: [StatusService, PublicStatusService, UptimeCalculatorService, MLModelService, MLAnomalyService],
   controllers: [StatusController],
   exports: [StatusService, PublicStatusService],
 })

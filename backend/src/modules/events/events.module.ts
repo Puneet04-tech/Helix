@@ -9,9 +9,11 @@ import { Audit, AuditSchema } from '../../common/schemas/audit.schema';
 import { MemoryService } from '../../common/services/memory.service';
 import { HuggingFaceService } from '../../common/services/huggingface.service';
 import { OllamaService } from '../../common/services/ollama.service';
-import { GroqService } from '../../common/services/groq.service';
+import { AgentLLMService } from '../../common/services/agent-llm.service';
 import { AuditService } from '../../common/services/audit.service';
 import { IngestRateLimitService } from '../../common/services/ingest-rate-limit.service';
+import { MLModelService } from '../../common/services/ml-model.service';
+import { MLAnomalyService } from '../../common/services/ml-anomaly.service';
 import { EventsGateway } from '../../common/gateways/events.gateway';
 import { IncidentsModule } from '../incidents/incidents.module';
 import { AuditController } from '../../common/controllers/audit.controller';
@@ -33,19 +35,23 @@ import { AuditController } from '../../common/controllers/audit.controller';
     EventsService,
     MemoryService,
     OllamaService,
-    GroqService,
+    AgentLLMService,
     HuggingFaceService,
     AuditService,
     IngestRateLimitService,
+    MLModelService,
+    MLAnomalyService,
     EventsGateway,
   ],
   exports: [
     EventsService,
     MemoryService,
     OllamaService,
-    GroqService,
+    AgentLLMService,
     HuggingFaceService,
     AuditService,
+    MLModelService,
+    MLAnomalyService,
     EventsGateway,
   ],
 })
