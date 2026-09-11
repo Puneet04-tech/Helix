@@ -48,7 +48,7 @@ services:
       - key: GEMINI_API_KEY
         sync: false
       - key: GEMINI_MODEL
-        value: gemini-2.0-flash
+        value: gemini-1.5-flash
       
       # Mistral AI (set via dashboard)
       - key: MISTRAL_API_KEY

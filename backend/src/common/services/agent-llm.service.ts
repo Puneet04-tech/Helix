@@ -15,10 +15,10 @@ export class AgentLLMService {
     process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
   private readonly geminiModels = [
     process.env.GEMINI_MODEL,
-    'gemini-2.0-flash',  // Free tier available
-    'gemini-1.5-flash',  // Free tier available  
-    'gemini-flash-latest', // Free tier available
-    'gemini-2.5-flash',  // Might require paid tier
+    'gemini-1.5-flash',  // Stable, widely available
+    'gemini-1.5-flash-001',  // Specific version
+    'gemini-2.5-flash',  // Current generation
+    'gemini-3.5-flash',  // Latest if available
   ].filter((m, i, arr): m is string => !!m && arr.indexOf(m) === i);
 
   private readonly mistralKey = process.env.MISTRAL_API_KEY;
@@ -27,7 +27,20 @@ export class AgentLLMService {
   lastProvider: LlmProvider | null = null;
 
   async isAvailable(): Promise<boolean> {
-    return !!(this.geminiKey || this.mistralKey);
+    const hasGemini = !!this.geminiKey;
+    const hasMistral = !!this.mistralKey;
+    
+    if (!hasGemini && !hasMistral) {
+      this.logger.error('No AI API keys configured. Set GEMINI_API_KEY and/or MISTRAL_API_KEY environment variables.');
+    } else if (!hasGemini) {
+      this.logger.warn('GEMINI_API_KEY not set, will use Mistral only');
+    } else if (!hasMistral) {
+      this.logger.warn('MISTRAL_API_KEY not set, will use Gemini only');
+    } else {
+      this.logger.log('Both Gemini and Mistral API keys configured');
+    }
+    
+    return hasGemini || hasMistral;
   }
 
   async completeText(systemPrompt: string, userPrompt: string): Promise<string | null> {
@@ -256,9 +269,13 @@ Include 2-5 stakeholders based on severity and incident type. Status must be que
       return null;
     }
 
+    this.logger.debug(`Attempting Gemini with ${this.geminiModels.length} models: ${this.geminiModels.join(', ')}`);
+
     for (const model of this.geminiModels) {
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.geminiKey}`;
+        this.logger.debug(`Trying Gemini model: ${model}`);
+        
         const response = await axios.post(
           url,
           {
@@ -320,7 +337,11 @@ Include 2-5 stakeholders based on severity and incident type. Status must be que
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const status = axios.isAxiosError(err) ? err.response?.status : undefined;
-      this.logger.warn(`Mistral failed${status ? ` (${status})` : ''}: ${message}`);
+      if (status === 429) {
+        this.logger.warn(`Mistral rate limited (429) - free tier quota exceeded. Consider upgrading or adding delay between requests.`);
+      } else {
+        this.logger.warn(`Mistral failed${status ? ` (${status})` : ''}: ${message}`);
+      }
     }
     return null;
   }
