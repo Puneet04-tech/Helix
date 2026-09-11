@@ -15,10 +15,10 @@ export class AgentLLMService {
     process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
   private readonly geminiModels = [
     process.env.GEMINI_MODEL,
-    'gemini-2.0-flash',
-    'gemini-2.5-flash',
-    'gemini-1.5-flash',
-    'gemini-flash-latest',
+    'gemini-2.0-flash',  // Free tier available
+    'gemini-1.5-flash',  // Free tier available  
+    'gemini-flash-latest', // Free tier available
+    'gemini-2.5-flash',  // Might require paid tier
   ].filter((m, i, arr): m is string => !!m && arr.indexOf(m) === i);
 
   private readonly mistralKey = process.env.MISTRAL_API_KEY;
