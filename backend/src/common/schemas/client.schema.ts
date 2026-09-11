@@ -58,5 +58,4 @@ export class Client {
 
 export const ClientSchema = SchemaFactory.createForClass(Client);
 ClientSchema.index({ organizationId: 1 });
-ClientSchema.index({ apiKey: 1 });
 ClientSchema.index({ status: 1 });
