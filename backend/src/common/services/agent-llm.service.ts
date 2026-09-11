@@ -2,15 +2,20 @@ import { Injectable, Logger } from '@nestjs/common';
 import axios from 'axios';
 
 export type AgentRole = 'detection' | 'analysis' | 'response' | 'comms';
-export type LlmProvider = 'gemini' | 'mistral';
+export type LlmProvider = 'groq' | 'gemini' | 'mistral' | 'ollama';
 
 /**
- * Cloud LLM: Gemini first, Mistral if Gemini fails.
+ * Cloud LLM: Groq first (fastest free), then Gemini, then Mistral, finally Ollama fallback.
  */
 @Injectable()
 export class AgentLLMService {
   private readonly logger = new Logger(AgentLLMService.name);
 
+  // Groq - Fastest free tier (30K TPM, sub-second responses)
+  private readonly groqKey = process.env.GROQ_API_KEY;
+  private readonly groqModel = process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+
+  // Gemini - Frontier quality (5 RPM, 100 RPD, 250K TPM)
   private readonly geminiKey =
     process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY || process.env.GOOGLE_GEMINI_API_KEY;
   private readonly geminiModels = [
@@ -18,29 +23,37 @@ export class AgentLLMService {
     'gemini-1.5-flash',  // Stable, widely available
     'gemini-1.5-flash-001',  // Specific version
     'gemini-2.5-flash',  // Current generation
-    'gemini-3.5-flash',  // Latest if available
   ].filter((m, i, arr): m is string => !!m && arr.indexOf(m) === i);
 
+  // Mistral - Good quality (1B tokens/month free)
   private readonly mistralKey = process.env.MISTRAL_API_KEY;
   private readonly mistralModel = process.env.MISTRAL_MODEL || 'mistral-small-latest';
+
+  // Ollama - Local fallback (no API costs, slower)
+  private readonly ollamaUrl = process.env.OLLAMA_URL || 'http://localhost:11434';
+  private readonly ollamaModel = process.env.OLLAMA_MODEL || 'llama3.2:3b';
 
   lastProvider: LlmProvider | null = null;
 
   async isAvailable(): Promise<boolean> {
+    const hasGroq = !!this.groqKey;
     const hasGemini = !!this.geminiKey;
     const hasMistral = !!this.mistralKey;
+    const hasOllama = !!this.ollamaUrl;
     
-    if (!hasGemini && !hasMistral) {
-      this.logger.error('No AI API keys configured. Set GEMINI_API_KEY and/or MISTRAL_API_KEY environment variables.');
-    } else if (!hasGemini) {
-      this.logger.warn('GEMINI_API_KEY not set, will use Mistral only');
-    } else if (!hasMistral) {
-      this.logger.warn('MISTRAL_API_KEY not set, will use Gemini only');
-    } else {
-      this.logger.log('Both Gemini and Mistral API keys configured');
+    if (!hasGroq && !hasGemini && !hasMistral && !hasOllama) {
+      this.logger.error('No AI API keys configured. Set GROQ_API_KEY (recommended), GEMINI_API_KEY, MISTRAL_API_KEY, or OLLAMA_URL environment variables.');
+    } else if (hasGroq) {
+      this.logger.log('Groq API configured (recommended - fastest free tier)');
+    } else if (hasGemini) {
+      this.logger.warn('GEMINI_API_KEY set (frontier quality but low RPM)');
+    } else if (hasMistral) {
+      this.logger.warn('MISTRAL_API_KEY set (may have rate limits)');
+    } else if (hasOllama) {
+      this.logger.log('Ollama configured (local fallback - no API costs)');
     }
     
-    return hasGemini || hasMistral;
+    return hasGroq || hasGemini || hasMistral || hasOllama;
   }
 
   async completeText(systemPrompt: string, userPrompt: string): Promise<string | null> {
@@ -245,20 +258,36 @@ Include 2-5 stakeholders based on severity and incident type. Status must be que
   private async complete(systemPrompt: string, userPrompt: string): Promise<string | null> {
     this.lastProvider = null;
 
+    // Try Groq first (fastest free tier)
+    const groqResult = await this.tryGroq(systemPrompt, userPrompt);
+    if (groqResult) {
+      this.lastProvider = 'groq';
+      return groqResult;
+    }
+
+    // Fallback to Gemini (frontier quality)
     const geminiResult = await this.tryGemini(systemPrompt, userPrompt);
     if (geminiResult) {
       this.lastProvider = 'gemini';
       return geminiResult;
     }
 
+    // Fallback to Mistral (good quality)
     const mistralResult = await this.tryMistral(systemPrompt, userPrompt);
     if (mistralResult) {
       this.lastProvider = 'mistral';
       return mistralResult;
     }
 
+    // Final fallback to Ollama (local, no API costs)
+    const ollamaResult = await this.tryOllama(systemPrompt, userPrompt);
+    if (ollamaResult) {
+      this.lastProvider = 'ollama';
+      return ollamaResult;
+    }
+
     this.logger.error(
-      'Gemini and Mistral both failed. Set GEMINI_API_KEY (or GOOGLE_API_KEY) and MISTRAL_API_KEY on the host.',
+      'All LLM providers failed. Set GROQ_API_KEY (recommended), GEMINI_API_KEY, MISTRAL_API_KEY, or OLLAMA_URL on the host.',
     );
     return null;
   }
@@ -342,6 +371,85 @@ Include 2-5 stakeholders based on severity and incident type. Status must be que
       } else {
         this.logger.warn(`Mistral failed${status ? ` (${status})` : ''}: ${message}`);
       }
+    }
+    return null;
+  }
+
+  private async tryGroq(systemPrompt: string, userPrompt: string): Promise<string | null> {
+    if (!this.groqKey) {
+      this.logger.debug('GROQ_API_KEY not set');
+      return null;
+    }
+
+    try {
+      this.logger.debug(`Trying Groq with model: ${this.groqModel}`);
+      
+      const response = await axios.post(
+        'https://api.groq.com/openai/v1/chat/completions',
+        {
+          model: this.groqModel,
+          temperature: 0.2,
+          max_tokens: 1024,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+        },
+        {
+          timeout: 25000,
+          headers: {
+            Authorization: `Bearer ${this.groqKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+      
+      const text = response.data?.choices?.[0]?.message?.content?.trim();
+      if (text) {
+        this.logger.log(`Groq completion succeeded (${this.groqModel})`);
+        return text;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      const status = axios.isAxiosError(err) ? err.response?.status : undefined;
+      this.logger.warn(`Groq failed${status ? ` (${status})` : ''}: ${message}`);
+    }
+    return null;
+  }
+
+  private async tryOllama(systemPrompt: string, userPrompt: string): Promise<string | null> {
+    if (!this.ollamaUrl) {
+      this.logger.debug('OLLAMA_URL not set');
+      return null;
+    }
+
+    try {
+      this.logger.debug(`Trying Ollama with model: ${this.ollamaModel}`);
+      
+      const response = await axios.post(
+        `${this.ollamaUrl}/api/chat`,
+        {
+          model: this.ollamaModel,
+          stream: false,
+          messages: [
+            { role: 'system', content: systemPrompt },
+            { role: 'user', content: userPrompt },
+          ],
+        },
+        {
+          timeout: 60000, // Ollama can be slower on CPU
+          headers: { 'Content-Type': 'application/json' },
+        },
+      );
+      
+      const text = response.data?.message?.content?.trim();
+      if (text) {
+        this.logger.log(`Ollama completion succeeded (${this.ollamaModel})`);
+        return text;
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.logger.warn(`Ollama failed: ${message}`);
     }
     return null;
   }

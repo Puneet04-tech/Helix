@@ -44,6 +44,12 @@ services:
       - key: JWT_EXPIRATION
         value: "24h"
       
+      # Groq AI (recommended - fastest free tier)
+      - key: GROQ_API_KEY
+        sync: false
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      
       # Gemini AI (set via dashboard)
       - key: GEMINI_API_KEY
         sync: false
@@ -55,6 +61,12 @@ services:
         sync: false
       - key: MISTRAL_MODEL
         value: mistral-small-latest
+      
+      # Ollama (local fallback - optional)
+      - key: OLLAMA_URL
+        value: http://localhost:11434
+      - key: OLLAMA_MODEL
+        value: llama3.2:3b
       
       # HuggingFace (optional, set via dashboard)
       - key: HUGGINGFACE_API_KEY
